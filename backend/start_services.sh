@@ -1,110 +1,156 @@
 #!/bin/bash
 
-# NexaFi Backend Services Startup Script
-# This script starts all microservices in the correct order
+# Enhanced NexaFi Backend Startup Script
+# This script starts all microservices with infrastructure support
 
-echo "🚀 Starting NexaFi Backend Services..."
-echo "======================================"
+echo "🚀 Starting Enhanced NexaFi Backend Services..."
+
+# Create logs directory
+mkdir -p logs
 
 # Function to start a service
 start_service() {
     local service_name=$1
     local port=$2
-    local service_dir="/home/ubuntu/NexaFi/backend/$service_name"
     
-    echo "Starting $service_name on port $port..."
+    echo "🔄 Starting $service_name on port $port..."
     
-    if [ -d "$service_dir" ]; then
-        cd "$service_dir"
-        
-        # Activate virtual environment and start service
-        source venv/bin/activate
-        
-        # Start service in background
-        python src/main.py > logs/${service_name}.log 2>&1 &
-        
-        # Store PID
-        echo $! > logs/${service_name}.pid
-        
-        echo "✅ $service_name started (PID: $!)"
-        
-        # Wait a moment for service to start
-        sleep 2
-    else
-        echo "❌ Service directory not found: $service_dir"
-        exit 1
-    fi
+    cd $service_name
+    
+    # Activate virtual environment
+    source venv/bin/activate
+    
+    # Install additional dependencies if requirements have changed
+    pip install -q redis pika elasticsearch flask-limiter
+    
+    # Update requirements
+    pip freeze > requirements.txt
+    
+    # Start the service in background
+    nohup python src/main.py > ../logs/$service_name.log 2>&1 &
+    
+    # Store PID
+    echo $! > ../logs/$service_name.pid
+    
+    cd ..
+    
+    echo "✅ $service_name started (PID: $(cat logs/$service_name.pid))"
 }
 
-# Function to check if service is running
-check_service() {
+# Function to check if port is available
+check_port() {
+    local port=$1
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
+        echo "⚠️  Port $port is already in use"
+        return 1
+    fi
+    return 0
+}
+
+# Function to wait for service to be ready
+wait_for_service() {
     local service_name=$1
     local port=$2
+    local max_attempts=30
+    local attempt=1
     
-    echo "Checking $service_name health..."
+    echo "⏳ Waiting for $service_name to be ready..."
     
-    # Wait for service to be ready
-    for i in {1..10}; do
-        if curl -s "http://localhost:$port/api/v1/health" > /dev/null 2>&1; then
-            echo "✅ $service_name is healthy"
+    while [ $attempt -le $max_attempts ]; do
+        if curl -s http://localhost:$port/health > /dev/null 2>&1; then
+            echo "✅ $service_name is ready"
             return 0
         fi
-        echo "⏳ Waiting for $service_name to be ready... ($i/10)"
-        sleep 3
+        
+        sleep 2
+        attempt=$((attempt + 1))
     done
     
-    echo "❌ $service_name failed to start properly"
+    echo "❌ $service_name failed to start within timeout"
     return 1
 }
 
-# Create logs directory
-mkdir -p /home/ubuntu/NexaFi/backend/logs
+# Check if infrastructure is running
+echo "🔍 Checking infrastructure services..."
 
-# Start services in order
-echo "Starting microservices..."
+if ! redis-cli -h localhost -p 6379 ping > /dev/null 2>&1; then
+    echo "⚠️  Redis is not running. Starting infrastructure..."
+    cd infrastructure
+    ./start-infrastructure.sh
+    cd ..
+    sleep 10
+fi
 
-start_service "user-service" 5001
-check_service "user-service" 5001
+# Start all services
+echo "🚀 Starting microservices..."
 
-start_service "ledger-service" 5002
-check_service "ledger-service" 5002
+# API Gateway (Port 5000)
+if check_port 5000; then
+    start_service "api-gateway" 5000
+    wait_for_service "api-gateway" 5000
+fi
 
-start_service "payment-service" 5003
-check_service "payment-service" 5003
+# User Service (Port 5001)
+if check_port 5001; then
+    start_service "user-service" 5001
+    wait_for_service "user-service" 5001
+fi
 
-start_service "ai-service" 5004
-check_service "ai-service" 5004
+# Ledger Service (Port 5002)
+if check_port 5002; then
+    start_service "ledger-service" 5002
+    wait_for_service "ledger-service" 5002
+fi
 
-# Start API Gateway last
-echo "Starting API Gateway..."
-cd /home/ubuntu/NexaFi/backend/api-gateway
-source venv/bin/activate
-python src/main.py > ../logs/api-gateway.log 2>&1 &
-echo $! > ../logs/api-gateway.pid
+# Payment Service (Port 5003)
+if check_port 5003; then
+    start_service "payment-service" 5003
+    wait_for_service "payment-service" 5003
+fi
 
-# Check API Gateway
-sleep 3
-if curl -s "http://localhost:5000/health" > /dev/null 2>&1; then
-    echo "✅ API Gateway is healthy"
-else
-    echo "❌ API Gateway failed to start"
-    exit 1
+# AI Service (Port 5004)
+if check_port 5004; then
+    start_service "ai-service" 5004
+    wait_for_service "ai-service" 5004
+fi
+
+# Analytics Service (Port 5005)
+if check_port 5005; then
+    start_service "analytics-service" 5005
+    wait_for_service "analytics-service" 5005
+fi
+
+# Credit Service (Port 5006)
+if check_port 5006; then
+    start_service "credit-service" 5006
+    wait_for_service "credit-service" 5006
+fi
+
+# Document Service (Port 5007)
+if check_port 5007; then
+    start_service "document-service" 5007
+    wait_for_service "document-service" 5007
 fi
 
 echo ""
-echo "🎉 All NexaFi Backend Services Started Successfully!"
-echo "=================================================="
+echo "🎉 Enhanced NexaFi Backend is now running!"
 echo ""
-echo "Service URLs:"
-echo "- API Gateway:     http://localhost:5000"
-echo "- User Service:    http://localhost:5001"
-echo "- Ledger Service:  http://localhost:5002"
-echo "- Payment Service: http://localhost:5003"
-echo "- AI Service:      http://localhost:5004"
+echo "📊 Service Status:"
+echo "   🌐 API Gateway:      http://localhost:5000"
+echo "   👤 User Service:     http://localhost:5001"
+echo "   📊 Ledger Service:   http://localhost:5002"
+echo "   💳 Payment Service:  http://localhost:5003"
+echo "   🤖 AI Service:       http://localhost:5004"
+echo "   📈 Analytics Service: http://localhost:5005"
+echo "   💰 Credit Service:   http://localhost:5006"
+echo "   📄 Document Service: http://localhost:5007"
 echo ""
-echo "Health Check: curl http://localhost:5000/health"
-echo "API Documentation: http://localhost:5000/api/v1/services"
+echo "🔧 Infrastructure Services:"
+echo "   🗄️  Redis:           localhost:6379"
+echo "   🐰 RabbitMQ:         http://localhost:15672 (nexafi/nexafi123)"
+echo "   🔍 Elasticsearch:    http://localhost:9200"
+echo "   📊 Kibana:           http://localhost:5601"
 echo ""
-echo "To stop all services, run: ./stop_services.sh"
-echo "To view logs: tail -f logs/[service-name].log"
+echo "📝 Logs are available in the logs/ directory"
+echo "🛑 To stop all services, run: ./stop_services.sh"
 

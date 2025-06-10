@@ -1,69 +1,70 @@
-from flask import Blueprint, jsonify, request, current_app
-from src.models.user import User, UserProfile, UserSession, UserActivity, db
+from flask import Blueprint, request, jsonify, current_app
+from flask_cors import cross_origin
 from werkzeug.security import generate_password_hash
-import jwt
 from datetime import datetime, timedelta
+import jwt
 import uuid
-import re
+import secrets
+import json
+import qrcode
+import io
+import base64
 from functools import wraps
+
+from ..models.user import (
+    db, User, UserProfile, Role, Permission, UserRole, RolePermission,
+    UserSession, AuditLog, UserCustomField, PasswordReset, EmailVerification
+)
 
 user_bp = Blueprint('user', __name__)
 
-# JWT Configuration
-JWT_SECRET_KEY = 'nexafi-secret-key-2024'
-JWT_ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 30
-
-def validate_email(email):
-    """Validate email format"""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
-
-def validate_password(password):
-    """Validate password strength"""
-    if len(password) < 8:
-        return False, "Password must be at least 8 characters long"
-    if not re.search(r'[A-Z]', password):
-        return False, "Password must contain at least one uppercase letter"
-    if not re.search(r'[a-z]', password):
-        return False, "Password must contain at least one lowercase letter"
-    if not re.search(r'\d', password):
-        return False, "Password must contain at least one digit"
-    return True, "Password is valid"
-
-def create_access_token(user_id):
-    """Create JWT access token"""
+# Utility functions
+def generate_token(user_id, expires_hours=24):
+    """Generate JWT token"""
     payload = {
         'user_id': user_id,
-        'exp': datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        'iat': datetime.utcnow(),
-        'type': 'access'
+        'exp': datetime.utcnow() + timedelta(hours=expires_hours),
+        'iat': datetime.utcnow()
     }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
-
-def create_refresh_token(user_id):
-    """Create JWT refresh token"""
-    payload = {
-        'user_id': user_id,
-        'exp': datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-        'iat': datetime.utcnow(),
-        'type': 'refresh'
-    }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, current_app.config.get('SECRET_KEY', 'dev-secret'), algorithm='HS256')
 
 def verify_token(token):
     """Verify JWT token"""
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        return payload
+        payload = jwt.decode(token, current_app.config.get('SECRET_KEY', 'dev-secret'), algorithms=['HS256'])
+        return payload['user_id']
     except jwt.ExpiredSignatureError:
         return None
     except jwt.InvalidTokenError:
         return None
 
+def log_audit_event(user_id, action, resource_type=None, resource_id=None, 
+                   old_values=None, new_values=None, status='success', 
+                   error_message=None, severity='info'):
+    """Log audit event"""
+    try:
+        audit_log = AuditLog(
+            user_id=user_id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            request_method=request.method,
+            request_path=request.path,
+            old_values=json.dumps(old_values) if old_values else None,
+            new_values=json.dumps(new_values) if new_values else None,
+            status=status,
+            error_message=error_message,
+            severity=severity
+        )
+        db.session.add(audit_log)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f"Failed to log audit event: {str(e)}")
+
 def require_auth(f):
-    """Decorator to require authentication"""
+    """Authentication decorator"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         token = None
@@ -76,39 +77,67 @@ def require_auth(f):
                 return jsonify({'error': 'Invalid authorization header format'}), 401
         
         if not token:
-            return jsonify({'error': 'Authentication token is missing'}), 401
+            return jsonify({'error': 'Authentication token required'}), 401
         
-        payload = verify_token(token)
-        if not payload or payload.get('type') != 'access':
+        user_id = verify_token(token)
+        if not user_id:
             return jsonify({'error': 'Invalid or expired token'}), 401
         
-        # Get user from database
-        user = User.query.get(payload['user_id'])
-        if not user or user.status != 'active':
+        user = User.query.get(user_id)
+        if not user or not user.is_active:
             return jsonify({'error': 'User not found or inactive'}), 401
+        
+        if user.is_locked():
+            return jsonify({'error': 'Account is locked'}), 423
         
         request.current_user = user
         return f(*args, **kwargs)
     
     return decorated_function
 
-def log_user_activity(user_id, activity_type, description, metadata=None):
-    """Log user activity"""
-    activity = UserActivity(
-        user_id=user_id,
-        activity_type=activity_type,
-        description=description,
-        metadata=metadata,
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get('User-Agent')
-    )
-    db.session.add(activity)
-    db.session.commit()
+def require_permission(permission_name):
+    """Permission decorator"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not hasattr(request, 'current_user'):
+                return jsonify({'error': 'Authentication required'}), 401
+            
+            if not request.current_user.has_permission(permission_name):
+                log_audit_event(
+                    request.current_user.id,
+                    f'permission_denied_{permission_name}',
+                    status='failure',
+                    severity='warning'
+                )
+                return jsonify({'error': 'Insufficient permissions'}), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
-# Authentication Routes
-@user_bp.route('/auth/register', methods=['POST'])
+def require_mfa_if_enabled(f):
+    """MFA verification decorator"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not hasattr(request, 'current_user'):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user = request.current_user
+        if user.mfa_enabled:
+            mfa_token = request.headers.get('X-MFA-Token')
+            if not mfa_token or not user.verify_mfa_token(mfa_token):
+                return jsonify({'error': 'MFA verification required'}), 403
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+# Authentication endpoints
+@user_bp.route('/api/v1/auth/register', methods=['POST'])
+@cross_origin()
 def register():
-    """Register a new user"""
+    """User registration with enhanced validation"""
     try:
         data = request.get_json()
         
@@ -118,334 +147,661 @@ def register():
             if not data.get(field):
                 return jsonify({'error': f'{field} is required'}), 400
         
-        # Validate email format
-        if not validate_email(data['email']):
-            return jsonify({'error': 'Invalid email format'}), 400
+        # Check if user already exists
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({'error': 'Email already registered'}), 409
         
         # Validate password strength
-        is_valid, message = validate_password(data['password'])
-        if not is_valid:
-            return jsonify({'error': message}), 400
+        password = data['password']
+        if len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters long'}), 400
         
-        # Check if user already exists
-        existing_user = User.query.filter_by(email=data['email']).first()
-        if existing_user:
-            return jsonify({'error': 'User with this email already exists'}), 409
-        
-        # Create new user
+        # Create user
         user = User(
             email=data['email'].lower().strip(),
             first_name=data['first_name'].strip(),
             last_name=data['last_name'].strip(),
-            phone=data.get('phone', '').strip() if data.get('phone') else None,
-            role=data.get('role', 'business_owner')
+            phone=data.get('phone', '').strip(),
+            business_type=data.get('business_type'),
+            company_size=data.get('company_size'),
+            industry=data.get('industry')
         )
-        user.set_password(data['password'])
+        user.set_password(password)
         
         db.session.add(user)
-        db.session.commit()
+        db.session.flush()  # Get user ID
         
         # Create user profile
-        profile = UserProfile(user_id=user.id)
+        profile = UserProfile(
+            user_id=user.id,
+            company_name=data.get('company_name'),
+            timezone=data.get('timezone', 'UTC'),
+            language=data.get('language', 'en'),
+            currency_preference=data.get('currency_preference', 'USD')
+        )
         db.session.add(profile)
+        
+        # Assign default role
+        default_role = Role.query.filter_by(name='business_owner').first()
+        if default_role:
+            user_role = UserRole(user_id=user.id, role_id=default_role.id)
+            db.session.add(user_role)
+        
+        # Add custom fields if provided
+        custom_fields = data.get('custom_fields', {})
+        for field_name, field_value in custom_fields.items():
+            custom_field = UserCustomField(
+                user_id=user.id,
+                field_name=field_name,
+                field_value=str(field_value),
+                field_type=data.get('custom_field_types', {}).get(field_name, 'text')
+            )
+            db.session.add(custom_field)
+        
         db.session.commit()
         
-        # Log activity
-        log_user_activity(user.id, 'user_registered', 'User account created')
+        # Log registration
+        log_audit_event(user.id, 'user_registration', 'user', user.id)
+        
+        # Generate tokens
+        access_token = generate_token(user.id)
+        refresh_token = secrets.token_urlsafe(32)
+        
+        # Create session
+        session = UserSession(
+            user_id=user.id,
+            session_token=access_token,
+            refresh_token=refresh_token,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            expires_at=datetime.utcnow() + timedelta(hours=24)
+        )
+        db.session.add(session)
+        db.session.commit()
         
         return jsonify({
             'message': 'User registered successfully',
-            'user': user.to_dict()
+            'user': user.to_dict(),
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'expires_in': 86400  # 24 hours in seconds
         }), 201
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Registration failed', 'details': str(e)}), 500
+        current_app.logger.error(f"Registration error: {str(e)}")
+        return jsonify({'error': 'Registration failed'}), 500
 
-@user_bp.route('/auth/login', methods=['POST'])
+@user_bp.route('/api/v1/auth/login', methods=['POST'])
+@cross_origin()
 def login():
-    """Authenticate user and return tokens"""
+    """Enhanced login with MFA support and security features"""
     try:
         data = request.get_json()
+        email = data.get('email', '').lower().strip()
+        password = data.get('password', '')
+        mfa_token = data.get('mfa_token')
         
-        if not data.get('email') or not data.get('password'):
+        if not email or not password:
             return jsonify({'error': 'Email and password are required'}), 400
         
-        # Find user by email
-        user = User.query.filter_by(email=data['email'].lower().strip()).first()
+        user = User.query.filter_by(email=email).first()
         
-        if not user or not user.check_password(data['password']):
-            return jsonify({'error': 'Invalid email or password'}), 401
+        if not user:
+            log_audit_event(None, 'login_attempt_invalid_email', status='failure', severity='warning')
+            return jsonify({'error': 'Invalid credentials'}), 401
         
-        if user.status != 'active':
-            return jsonify({'error': 'Account is not active'}), 401
+        if user.is_locked():
+            log_audit_event(user.id, 'login_attempt_locked_account', status='failure', severity='warning')
+            return jsonify({'error': 'Account is locked. Please try again later.'}), 423
         
-        # Create tokens
-        access_token = create_access_token(user.id)
-        refresh_token = create_refresh_token(user.id)
+        if not user.check_password(password):
+            user.increment_failed_login()
+            db.session.commit()
+            log_audit_event(user.id, 'login_attempt_invalid_password', status='failure', severity='warning')
+            return jsonify({'error': 'Invalid credentials'}), 401
         
-        # Create session record
+        if not user.is_active:
+            log_audit_event(user.id, 'login_attempt_inactive_account', status='failure', severity='warning')
+            return jsonify({'error': 'Account is inactive'}), 401
+        
+        # Check MFA if enabled
+        if user.mfa_enabled:
+            if not mfa_token:
+                return jsonify({
+                    'error': 'MFA token required',
+                    'mfa_required': True
+                }), 403
+            
+            if not user.verify_mfa_token(mfa_token):
+                log_audit_event(user.id, 'login_mfa_failure', status='failure', severity='warning')
+                return jsonify({'error': 'Invalid MFA token'}), 403
+        
+        # Reset failed login attempts
+        user.failed_login_attempts = 0
+        user.last_login = datetime.utcnow()
+        
+        # Generate tokens
+        access_token = generate_token(user.id)
+        refresh_token = secrets.token_urlsafe(32)
+        
+        # Create session
         session = UserSession(
             user_id=user.id,
-            token_hash=generate_password_hash(access_token),
-            refresh_token_hash=generate_password_hash(refresh_token),
-            expires_at=datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-            refresh_expires_at=datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+            session_token=access_token,
+            refresh_token=refresh_token,
+            ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent'),
-            ip_address=request.remote_addr
+            expires_at=datetime.utcnow() + timedelta(hours=24)
         )
-        
         db.session.add(session)
         db.session.commit()
         
-        # Log activity
-        log_user_activity(user.id, 'user_login', 'User logged in successfully')
+        # Log successful login
+        log_audit_event(user.id, 'user_login', 'user', user.id)
         
         return jsonify({
             'message': 'Login successful',
+            'user': user.to_dict(),
             'access_token': access_token,
             'refresh_token': refresh_token,
-            'token_type': 'Bearer',
-            'expires_in': ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            'user': user.to_dict()
+            'expires_in': 86400,
+            'permissions': user.get_permissions()
         }), 200
         
     except Exception as e:
-        return jsonify({'error': 'Login failed', 'details': str(e)}), 500
+        current_app.logger.error(f"Login error: {str(e)}")
+        return jsonify({'error': 'Login failed'}), 500
 
-@user_bp.route('/auth/refresh', methods=['POST'])
+@user_bp.route('/api/v1/auth/logout', methods=['POST'])
+@cross_origin()
+@require_auth
+def logout():
+    """Logout and invalidate session"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            token = auth_header.split(' ')[1]
+            session = UserSession.query.filter_by(session_token=token).first()
+            if session:
+                session.is_active = False
+                db.session.commit()
+        
+        log_audit_event(request.current_user.id, 'user_logout')
+        
+        return jsonify({'message': 'Logout successful'}), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Logout error: {str(e)}")
+        return jsonify({'error': 'Logout failed'}), 500
+
+@user_bp.route('/api/v1/auth/refresh', methods=['POST'])
+@cross_origin()
 def refresh_token():
-    """Refresh access token using refresh token"""
+    """Refresh access token"""
     try:
         data = request.get_json()
         refresh_token = data.get('refresh_token')
         
         if not refresh_token:
-            return jsonify({'error': 'Refresh token is required'}), 400
+            return jsonify({'error': 'Refresh token required'}), 400
         
-        # Verify refresh token
-        payload = verify_token(refresh_token)
-        if not payload or payload.get('type') != 'refresh':
+        session = UserSession.query.filter_by(
+            refresh_token=refresh_token,
+            is_active=True
+        ).first()
+        
+        if not session or session.is_expired():
             return jsonify({'error': 'Invalid or expired refresh token'}), 401
         
-        # Get user
-        user = User.query.get(payload['user_id'])
-        if not user or user.status != 'active':
-            return jsonify({'error': 'User not found or inactive'}), 401
+        user = session.user
+        if not user.is_active:
+            return jsonify({'error': 'User account is inactive'}), 401
         
-        # Create new access token
-        new_access_token = create_access_token(user.id)
+        # Generate new tokens
+        new_access_token = generate_token(user.id)
+        new_refresh_token = secrets.token_urlsafe(32)
+        
+        # Update session
+        session.session_token = new_access_token
+        session.refresh_token = new_refresh_token
+        session.extend_session()
+        
+        db.session.commit()
         
         return jsonify({
             'access_token': new_access_token,
-            'token_type': 'Bearer',
-            'expires_in': ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            'refresh_token': new_refresh_token,
+            'expires_in': 86400
         }), 200
         
     except Exception as e:
-        return jsonify({'error': 'Token refresh failed', 'details': str(e)}), 500
+        current_app.logger.error(f"Token refresh error: {str(e)}")
+        return jsonify({'error': 'Token refresh failed'}), 500
 
-@user_bp.route('/auth/logout', methods=['POST'])
+# MFA endpoints
+@user_bp.route('/api/v1/auth/mfa/setup', methods=['POST'])
+@cross_origin()
 @require_auth
-def logout():
-    """Logout user and invalidate session"""
+def setup_mfa():
+    """Setup MFA for user"""
     try:
         user = request.current_user
         
-        # Invalidate all user sessions
-        UserSession.query.filter_by(user_id=user.id, is_active=True).update({'is_active': False})
+        if user.mfa_enabled:
+            return jsonify({'error': 'MFA is already enabled'}), 400
+        
+        # Generate MFA secret and backup codes
+        secret, backup_codes = user.setup_mfa()
+        
+        # Generate QR code
+        qr_url = user.get_mfa_qr_code_url()
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(qr_url)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+        qr_code_base64 = base64.b64encode(img_buffer.getvalue()).decode()
+        
         db.session.commit()
         
-        # Log activity
-        log_user_activity(user.id, 'user_logout', 'User logged out')
-        
-        return jsonify({'message': 'Logout successful'}), 200
-        
-    except Exception as e:
-        return jsonify({'error': 'Logout failed', 'details': str(e)}), 500
-
-# User Management Routes
-@user_bp.route('/users/profile', methods=['GET'])
-@require_auth
-def get_user_profile():
-    """Get current user profile"""
-    try:
-        user = request.current_user
-        profile = UserProfile.query.filter_by(user_id=user.id).first()
+        log_audit_event(user.id, 'mfa_setup_initiated', 'user', user.id)
         
         return jsonify({
-            'user': user.to_dict(),
-            'profile': profile.to_dict() if profile else None
+            'message': 'MFA setup initiated',
+            'secret': secret,
+            'qr_code': f"data:image/png;base64,{qr_code_base64}",
+            'backup_codes': backup_codes
         }), 200
         
     except Exception as e:
-        return jsonify({'error': 'Failed to get profile', 'details': str(e)}), 500
+        db.session.rollback()
+        current_app.logger.error(f"MFA setup error: {str(e)}")
+        return jsonify({'error': 'MFA setup failed'}), 500
 
-@user_bp.route('/users/profile', methods=['PUT'])
+@user_bp.route('/api/v1/auth/mfa/enable', methods=['POST'])
+@cross_origin()
 @require_auth
-def update_user_profile():
-    """Update current user profile"""
+def enable_mfa():
+    """Enable MFA after verification"""
+    try:
+        data = request.get_json()
+        token = data.get('token')
+        
+        if not token:
+            return jsonify({'error': 'MFA token required'}), 400
+        
+        user = request.current_user
+        
+        if user.mfa_enabled:
+            return jsonify({'error': 'MFA is already enabled'}), 400
+        
+        if not user.mfa_secret:
+            return jsonify({'error': 'MFA setup not initiated'}), 400
+        
+        if not user.verify_mfa_token(token):
+            return jsonify({'error': 'Invalid MFA token'}), 400
+        
+        user.mfa_enabled = True
+        db.session.commit()
+        
+        log_audit_event(user.id, 'mfa_enabled', 'user', user.id)
+        
+        return jsonify({'message': 'MFA enabled successfully'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"MFA enable error: {str(e)}")
+        return jsonify({'error': 'MFA enable failed'}), 500
+
+@user_bp.route('/api/v1/auth/mfa/disable', methods=['POST'])
+@cross_origin()
+@require_auth
+@require_mfa_if_enabled
+def disable_mfa():
+    """Disable MFA"""
+    try:
+        data = request.get_json()
+        password = data.get('password')
+        
+        if not password:
+            return jsonify({'error': 'Password required to disable MFA'}), 400
+        
+        user = request.current_user
+        
+        if not user.check_password(password):
+            log_audit_event(user.id, 'mfa_disable_attempt_invalid_password', status='failure', severity='warning')
+            return jsonify({'error': 'Invalid password'}), 401
+        
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        user.backup_codes = None
+        
+        db.session.commit()
+        
+        log_audit_event(user.id, 'mfa_disabled', 'user', user.id, severity='warning')
+        
+        return jsonify({'message': 'MFA disabled successfully'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"MFA disable error: {str(e)}")
+        return jsonify({'error': 'MFA disable failed'}), 500
+
+# User management endpoints
+@user_bp.route('/api/v1/users/profile', methods=['GET'])
+@cross_origin()
+@require_auth
+def get_profile():
+    """Get user profile"""
     try:
         user = request.current_user
+        profile_data = user.to_dict()
+        
+        if user.profile:
+            profile_data['profile'] = user.profile.to_dict()
+        
+        # Include custom fields
+        custom_fields = {}
+        for cf in user.custom_fields:
+            custom_fields[cf.field_name] = cf.get_typed_value()
+        profile_data['custom_fields'] = custom_fields
+        
+        # Include roles and permissions
+        profile_data['roles'] = [ur.to_dict() for ur in user.roles if ur.is_active and not ur.is_expired()]
+        profile_data['permissions'] = user.get_permissions()
+        
+        return jsonify({
+            'user': profile_data
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Get profile error: {str(e)}")
+        return jsonify({'error': 'Failed to get profile'}), 500
+
+@user_bp.route('/api/v1/users/profile', methods=['PUT'])
+@cross_origin()
+@require_auth
+def update_profile():
+    """Update user profile"""
+    try:
         data = request.get_json()
+        user = request.current_user
+        old_values = user.to_dict()
         
-        # Update user basic info
-        if 'first_name' in data:
-            user.first_name = data['first_name'].strip()
-        if 'last_name' in data:
-            user.last_name = data['last_name'].strip()
-        if 'phone' in data:
-            user.phone = data['phone'].strip() if data['phone'] else None
+        # Update user fields
+        user_fields = ['first_name', 'last_name', 'phone', 'business_type', 'company_size', 'industry']
+        for field in user_fields:
+            if field in data:
+                setattr(user, field, data[field])
         
-        user.updated_at = datetime.utcnow()
+        # Update profile
+        if not user.profile:
+            user.profile = UserProfile(user_id=user.id)
         
-        # Update or create profile
-        profile = UserProfile.query.filter_by(user_id=user.id).first()
-        if not profile:
-            profile = UserProfile(user_id=user.id)
-            db.session.add(profile)
-        
-        # Update profile fields
         profile_fields = [
-            'business_name', 'business_type', 'industry', 'tax_id',
-            'address', 'preferences', 'annual_revenue', 'employee_count',
-            'business_description', 'website'
+            'bio', 'timezone', 'language', 'currency_preference', 'date_format',
+            'company_name', 'company_address', 'company_website', 'tax_id',
+            'business_registration_number', 'fiscal_year_start', 'accounting_method',
+            'default_payment_terms', 'email_notifications', 'sms_notifications',
+            'push_notifications', 'marketing_emails', 'session_timeout',
+            'require_mfa_for_sensitive_actions'
         ]
         
         for field in profile_fields:
             if field in data:
-                setattr(profile, field, data[field])
+                setattr(user.profile, field, data[field])
         
-        profile.updated_at = datetime.utcnow()
+        # Update custom fields
+        custom_fields = data.get('custom_fields', {})
+        for field_name, field_value in custom_fields.items():
+            custom_field = UserCustomField.query.filter_by(
+                user_id=user.id,
+                field_name=field_name
+            ).first()
+            
+            if custom_field:
+                custom_field.field_value = str(field_value)
+                custom_field.updated_at = datetime.utcnow()
+            else:
+                custom_field = UserCustomField(
+                    user_id=user.id,
+                    field_name=field_name,
+                    field_value=str(field_value),
+                    field_type=data.get('custom_field_types', {}).get(field_name, 'text')
+                )
+                db.session.add(custom_field)
         
         db.session.commit()
         
-        # Log activity
-        log_user_activity(user.id, 'profile_updated', 'User profile updated')
+        # Log profile update
+        new_values = user.to_dict()
+        log_audit_event(
+            user.id, 'profile_updated', 'user', user.id,
+            old_values=old_values, new_values=new_values
+        )
         
         return jsonify({
             'message': 'Profile updated successfully',
-            'user': user.to_dict(),
-            'profile': profile.to_dict()
+            'user': user.to_dict()
         }), 200
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Failed to update profile', 'details': str(e)}), 500
+        current_app.logger.error(f"Update profile error: {str(e)}")
+        return jsonify({'error': 'Failed to update profile'}), 500
 
-@user_bp.route('/users/change-password', methods=['POST'])
+# Role and permission management
+@user_bp.route('/api/v1/users/roles', methods=['GET'])
+@cross_origin()
 @require_auth
-def change_password():
-    """Change user password"""
+@require_permission('users.read')
+def get_user_roles():
+    """Get user roles"""
     try:
-        user = request.current_user
+        user_id = request.args.get('user_id', request.current_user.id)
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        roles = [ur.to_dict() for ur in user.roles if ur.is_active and not ur.is_expired()]
+        
+        return jsonify({
+            'roles': roles,
+            'permissions': user.get_permissions()
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Get user roles error: {str(e)}")
+        return jsonify({'error': 'Failed to get user roles'}), 500
+
+@user_bp.route('/api/v1/users/roles', methods=['POST'])
+@cross_origin()
+@require_auth
+@require_permission('users.update')
+def assign_role():
+    """Assign role to user"""
+    try:
         data = request.get_json()
+        user_id = data.get('user_id')
+        role_id = data.get('role_id')
+        expires_at = data.get('expires_at')
         
-        if not data.get('current_password') or not data.get('new_password'):
-            return jsonify({'error': 'Current password and new password are required'}), 400
+        if not user_id or not role_id:
+            return jsonify({'error': 'user_id and role_id are required'}), 400
         
-        # Verify current password
-        if not user.check_password(data['current_password']):
-            return jsonify({'error': 'Current password is incorrect'}), 401
+        user = User.query.get(user_id)
+        role = Role.query.get(role_id)
         
-        # Validate new password
-        is_valid, message = validate_password(data['new_password'])
-        if not is_valid:
-            return jsonify({'error': message}), 400
+        if not user or not role:
+            return jsonify({'error': 'User or role not found'}), 404
         
-        # Update password
-        user.set_password(data['new_password'])
-        user.updated_at = datetime.utcnow()
+        # Check if role already assigned
+        existing_role = UserRole.query.filter_by(
+            user_id=user_id,
+            role_id=role_id,
+            is_active=True
+        ).first()
         
-        # Invalidate all sessions except current
-        UserSession.query.filter_by(user_id=user.id, is_active=True).update({'is_active': False})
+        if existing_role and not existing_role.is_expired():
+            return jsonify({'error': 'Role already assigned to user'}), 409
         
+        # Create new role assignment
+        user_role = UserRole(
+            user_id=user_id,
+            role_id=role_id,
+            granted_by=request.current_user.id,
+            expires_at=datetime.fromisoformat(expires_at) if expires_at else None
+        )
+        
+        db.session.add(user_role)
         db.session.commit()
         
-        # Log activity
-        log_user_activity(user.id, 'password_changed', 'User password changed')
+        log_audit_event(
+            request.current_user.id,
+            'role_assigned',
+            'user_role',
+            user_role.id,
+            new_values={'user_id': user_id, 'role_id': role_id}
+        )
         
-        return jsonify({'message': 'Password changed successfully'}), 200
+        return jsonify({
+            'message': 'Role assigned successfully',
+            'user_role': user_role.to_dict()
+        }), 201
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Failed to change password', 'details': str(e)}), 500
+        current_app.logger.error(f"Assign role error: {str(e)}")
+        return jsonify({'error': 'Failed to assign role'}), 500
 
-@user_bp.route('/users/activity', methods=['GET'])
+# Audit log endpoints
+@user_bp.route('/api/v1/users/audit-logs', methods=['GET'])
+@cross_origin()
 @require_auth
-def get_user_activity():
-    """Get user activity log"""
+@require_permission('audit_logs.read')
+def get_audit_logs():
+    """Get audit logs"""
+    try:
+        user_id = request.args.get('user_id')
+        action = request.args.get('action')
+        resource_type = request.args.get('resource_type')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        page = int(request.args.get('page', 1))
+        per_page = min(int(request.args.get('per_page', 50)), 100)
+        
+        query = AuditLog.query
+        
+        if user_id:
+            query = query.filter(AuditLog.user_id == user_id)
+        if action:
+            query = query.filter(AuditLog.action.ilike(f'%{action}%'))
+        if resource_type:
+            query = query.filter(AuditLog.resource_type == resource_type)
+        if start_date:
+            query = query.filter(AuditLog.created_at >= datetime.fromisoformat(start_date))
+        if end_date:
+            query = query.filter(AuditLog.created_at <= datetime.fromisoformat(end_date))
+        
+        query = query.order_by(AuditLog.created_at.desc())
+        
+        paginated = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        return jsonify({
+            'audit_logs': [log.to_dict() for log in paginated.items],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': paginated.total,
+                'pages': paginated.pages,
+                'has_next': paginated.has_next,
+                'has_prev': paginated.has_prev
+            }
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Get audit logs error: {str(e)}")
+        return jsonify({'error': 'Failed to get audit logs'}), 500
+
+# Session management
+@user_bp.route('/api/v1/users/sessions', methods=['GET'])
+@cross_origin()
+@require_auth
+def get_user_sessions():
+    """Get user sessions"""
     try:
         user = request.current_user
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
-        
-        activities = UserActivity.query.filter_by(user_id=user.id)\
-            .order_by(UserActivity.created_at.desc())\
-            .paginate(page=page, per_page=per_page, error_out=False)
+        sessions = UserSession.query.filter_by(
+            user_id=user.id,
+            is_active=True
+        ).order_by(UserSession.last_activity.desc()).all()
         
         return jsonify({
-            'activities': [activity.to_dict() for activity in activities.items],
-            'pagination': {
-                'page': page,
-                'per_page': per_page,
-                'total': activities.total,
-                'pages': activities.pages,
-                'has_next': activities.has_next,
-                'has_prev': activities.has_prev
-            }
+            'sessions': [session.to_dict() for session in sessions]
         }), 200
         
     except Exception as e:
-        return jsonify({'error': 'Failed to get activity', 'details': str(e)}), 500
+        current_app.logger.error(f"Get sessions error: {str(e)}")
+        return jsonify({'error': 'Failed to get sessions'}), 500
 
-# Admin Routes (for testing and management)
-@user_bp.route('/users', methods=['GET'])
-def get_users():
-    """Get all users (admin only)"""
+@user_bp.route('/api/v1/users/sessions/<session_id>', methods=['DELETE'])
+@cross_origin()
+@require_auth
+def revoke_session(session_id):
+    """Revoke user session"""
     try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
+        session = UserSession.query.filter_by(
+            id=session_id,
+            user_id=request.current_user.id
+        ).first()
         
-        users = User.query.paginate(page=page, per_page=per_page, error_out=False)
+        if not session:
+            return jsonify({'error': 'Session not found'}), 404
         
-        return jsonify({
-            'users': [user.to_dict() for user in users.items],
-            'pagination': {
-                'page': page,
-                'per_page': per_page,
-                'total': users.total,
-                'pages': users.pages,
-                'has_next': users.has_next,
-                'has_prev': users.has_prev
-            }
-        }), 200
+        session.is_active = False
+        db.session.commit()
+        
+        log_audit_event(
+            request.current_user.id,
+            'session_revoked',
+            'user_session',
+            session_id
+        )
+        
+        return jsonify({'message': 'Session revoked successfully'}), 200
         
     except Exception as e:
-        return jsonify({'error': 'Failed to get users', 'details': str(e)}), 500
-
-@user_bp.route('/users/<user_id>', methods=['GET'])
-def get_user(user_id):
-    """Get specific user by ID"""
-    try:
-        user = User.query.get_or_404(user_id)
-        profile = UserProfile.query.filter_by(user_id=user.id).first()
-        
-        return jsonify({
-            'user': user.to_dict(),
-            'profile': profile.to_dict() if profile else None
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': 'Failed to get user', 'details': str(e)}), 500
+        db.session.rollback()
+        current_app.logger.error(f"Revoke session error: {str(e)}")
+        return jsonify({'error': 'Failed to revoke session'}), 500
 
 # Health check
 @user_bp.route('/health', methods=['GET'])
+@cross_origin()
 def health_check():
     """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'user-service',
-        'timestamp': datetime.utcnow().isoformat()
-    }), 200
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'service': 'user-service',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'service': 'user-service',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 503
 
