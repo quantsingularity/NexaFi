@@ -1,5 +1,9 @@
 # 🤖 NexaFi - Enterprise-Grade AI-Driven Fintech Platform
 
+![CI/CD Pipeline](https://github.com/abrar2030/NexaFi/actions/workflows/cicd.yml/badge.svg)
+[![Test Coverage](https://img.shields.io/badge/coverage-78%25-yellow)](https://github.com/abrar2030/NexaFi/tests)
+[![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/abrar2030/NexaFi/LICENSE)
+
 NexaFi is a revolutionary AI-powered financial operating system that transforms how small and mid-sized businesses (SMBs) manage their financial operations through deep integration of advanced artificial intelligence, distributed ledger technology, and automated financial workflows.
 
 ![NexaFi Dashboard](docs/images/dashboard.bmp)
