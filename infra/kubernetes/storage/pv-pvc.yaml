@@ -1,0 +1,393 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-user
+  labels:
+    type: local
+    service: user-service
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/user-service"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-ledger
+  labels:
+    type: local
+    service: ledger-service
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/ledger-service"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-payment
+  labels:
+    type: local
+    service: payment-service
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/payment-service"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-ai-data
+  labels:
+    type: local
+    service: ai-service
+    usage: data
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/ai-service/data"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-ai-models
+  labels:
+    type: local
+    service: ai-service
+    usage: models
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/ai-service/models"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-analytics
+  labels:
+    type: local
+    service: analytics-service
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 15Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/analytics-service"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-credit-data
+  labels:
+    type: local
+    service: credit-service
+    usage: data
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/credit-service/data"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-credit-models
+  labels:
+    type: local
+    service: credit-service
+    usage: models
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/credit-service/models"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-document-storage
+  labels:
+    type: local
+    service: document-service
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/document-service"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-redis
+  labels:
+    type: local
+    service: redis
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/redis"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-rabbitmq
+  labels:
+    type: local
+    service: rabbitmq
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/rabbitmq"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexafi-pv-elasticsearch
+  labels:
+    type: local
+    service: elasticsearch
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 30Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/nexafi/elasticsearch"
+---
+# Persistent Volume Claims
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: user-service-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      service: user-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ledger-service-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  selector:
+    matchLabels:
+      service: ledger-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: payment-service-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  selector:
+    matchLabels:
+      service: payment-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-service-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      service: ai-service
+      usage: data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ai-models-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  selector:
+    matchLabels:
+      service: ai-service
+      usage: models
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: analytics-service-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 15Gi
+  selector:
+    matchLabels:
+      service: analytics-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: credit-service-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      service: credit-service
+      usage: data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: credit-models-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  selector:
+    matchLabels:
+      service: credit-service
+      usage: models
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: document-storage-pvc
+  namespace: nexafi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  selector:
+    matchLabels:
+      service: document-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: nexafi-infra
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  selector:
+    matchLabels:
+      service: redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: nexafi-infra
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      service: rabbitmq
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: elasticsearch-pvc
+  namespace: nexafi-infra
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  selector:
+    matchLabels:
+      service: elasticsearch
+

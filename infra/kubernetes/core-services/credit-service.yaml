@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: credit-service
+  namespace: nexafi
+  labels:
+    app: credit-service
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: credit-service
+  template:
+    metadata:
+      labels:
+        app: credit-service
+        tier: backend
+    spec:
+      containers:
+      - name: credit-service
+        image: nexafi/credit-service:latest
+        ports:
+        - containerPort: 5006
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: nexafi-secrets
+              key: credit-db-url
+        - name: REDIS_HOST
+          value: "redis-service.nexafi-infra.svc.cluster.local"
+        - name: RABBITMQ_HOST
+          value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5006
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5006
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: credit-data
+          mountPath: /app/data
+        - name: credit-models
+          mountPath: /app/models
+      volumes:
+      - name: credit-data
+        persistentVolumeClaim:
+          claimName: credit-service-pvc
+      - name: credit-models
+        persistentVolumeClaim:
+          claimName: credit-models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: credit-service
+  namespace: nexafi
+  labels:
+    app: credit-service
+spec:
+  selector:
+    app: credit-service
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5006
+  type: ClusterIP
+
