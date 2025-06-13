@@ -1,0 +1,410 @@
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+  
+# Environment configuration
+environment: production
+region: us-east-1
+
+# Image configuration
+image:
+  registry: nexafi
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Service configuration
+services:
+  apiGateway:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: nexafi/api-gateway
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+
+  userService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: nexafi/user-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+
+  paymentService:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: nexafi/payment-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 15
+      targetCPUUtilizationPercentage: 60
+
+  ledgerService:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: nexafi/ledger-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 12
+      targetCPUUtilizationPercentage: 65
+
+  creditService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: nexafi/credit-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+
+  analyticsService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: nexafi/analytics-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 75
+
+  aiService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: nexafi/ai-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 80
+
+  documentService:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: nexafi/document-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      targetCPUUtilizationPercentage: 70
+
+# Compliance and audit services
+compliance:
+  auditService:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: nexafi/audit-service
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    persistence:
+      enabled: true
+      storageClass: "gp3-encrypted"
+      size: 100Gi
+
+  complianceMonitor:
+    enabled: true
+    replicaCount: 2
+    image:
+      repository: nexafi/compliance-monitor
+      tag: "1.0.0"
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8080
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "changeme"
+    database: "nexafi"
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "gp3-encrypted"
+      size: 100Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+  metrics:
+    enabled: true
+  backup:
+    enabled: true
+    cronjob:
+      schedule: "0 2 * * *"
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "changeme"
+  master:
+    persistence:
+      enabled: true
+      storageClass: "gp3-encrypted"
+      size: 20Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      storageClass: "gp3-encrypted"
+      size: 20Gi
+  metrics:
+    enabled: true
+
+# Elasticsearch configuration
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      storageClass: "gp3-encrypted"
+      size: 50Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+  data:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      storageClass: "gp3-encrypted"
+      size: 100Gi
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    server:
+      persistentVolume:
+        enabled: true
+        storageClass: "gp3-encrypted"
+        size: 50Gi
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+    alertmanager:
+      enabled: true
+      persistentVolume:
+        enabled: true
+        storageClass: "gp3-encrypted"
+        size: 10Gi
+
+  grafana:
+    enabled: true
+    persistence:
+      enabled: true
+      storageClassName: "gp3-encrypted"
+      size: 10Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.nexafi.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+    - host: app.nexafi.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls:
+    - secretName: nexafi-tls
+      hosts:
+        - api.nexafi.com
+        - app.nexafi.com
+
+# Security configuration
+security:
+  networkPolicies:
+    enabled: true
+  podSecurityPolicy:
+    enabled: true
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+# Backup configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  retention: "30d"
+  storage:
+    type: "s3"
+    bucket: "nexafi-backups"
+    region: "us-east-1"
+

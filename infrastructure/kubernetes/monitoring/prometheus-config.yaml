@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: nexafi-infra
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'nexafi-production'
+        environment: 'production'
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+        - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: default;kubernetes;https
+
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+        - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+        - action: labelmap
+          regex: __meta_kubernetes_node_label_(.+)
+        - target_label: __address__
+          replacement: kubernetes.default.svc:443
+        - source_labels: [__meta_kubernetes_node_name]
+          regex: (.+)
+          target_label: __metrics_path__
+          replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      - job_name: 'nexafi-services'
+        kubernetes_sd_configs:
+        - role: endpoints
+          namespaces:
+            names:
+            - nexafi
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          target_label: __address__
+        - action: labelmap
+          regex: __meta_kubernetes_service_label_(.+)
+        - source_labels: [__meta_kubernetes_namespace]
+          action: replace
+          target_label: kubernetes_namespace
+        - source_labels: [__meta_kubernetes_service_name]
+          action: replace
+          target_label: kubernetes_name
+
+      - job_name: 'financial-metrics'
+        static_configs:
+          - targets: ['payment-service:8080', 'ledger-service:8080', 'credit-service:8080']
+        metrics_path: /metrics
+        scrape_interval: 5s
+        scrape_timeout: 5s
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: nexafi-infra
+data:
+  financial-alerts.yml: |
+    groups:
+    - name: financial.rules
+      rules:
+      - alert: HighTransactionVolume
+        expr: rate(transaction_total[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          service: payment
+        annotations:
+          summary: "High transaction volume detected"
+          description: "Transaction rate is {{ $value }} per second"
+
+      - alert: PaymentServiceDown
+        expr: up{job="nexafi-services",kubernetes_name="payment-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: payment
+        annotations:
+          summary: "Payment service is down"
+          description: "Payment service has been down for more than 1 minute"
+
+      - alert: LedgerInconsistency
+        expr: ledger_balance_mismatch_total > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: ledger
+        annotations:
+          summary: "Ledger balance inconsistency detected"
+          description: "{{ $value }} ledger inconsistencies detected"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }}"
+
+      - alert: DatabaseConnectionFailure
+        expr: database_connections_failed_total > 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failures"
+          description: "{{ $value }} database connection failures in the last minute"
+
+      - alert: ComplianceViolation
+        expr: compliance_violations_total > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: compliance
+        annotations:
+          summary: "Compliance violation detected"
+          description: "{{ $value }} compliance violations detected"
+
+      - alert: AuditLogFailure
+        expr: audit_log_failures_total > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: audit
+        annotations:
+          summary: "Audit log failure"
+          description: "{{ $value }} audit log failures detected"
+

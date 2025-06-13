@@ -1,0 +1,49 @@
+apiVersion: v2
+name: nexafi-platform
+description: A Helm chart for NexaFi Financial Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - financial
+  - fintech
+  - payments
+  - compliance
+  - kubernetes
+
+home: https://nexafi.com
+sources:
+  - https://github.com/nexafi/platform
+
+maintainers:
+  - name: NexaFi Team
+    email: devops@nexafi.com
+
+dependencies:
+  - name: postgresql
+    version: "12.1.9"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.3.7"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: elasticsearch
+    version: "19.5.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: elasticsearch.enabled
+  - name: prometheus
+    version: "15.18.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: monitoring.prometheus.enabled
+  - name: grafana
+    version: "6.50.7"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: monitoring.grafana.enabled
+
+annotations:
+  category: Financial Services
+  compliance: "PCI-DSS, SOX, GDPR"
+  security: "Zero Trust, mTLS, Encryption at Rest"
+

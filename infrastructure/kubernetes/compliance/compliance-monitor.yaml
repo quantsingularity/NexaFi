@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-monitor
+  namespace: nexafi
+  labels:
+    app: compliance-monitor
+    tier: compliance
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: compliance-monitor
+  template:
+    metadata:
+      labels:
+        app: compliance-monitor
+        tier: compliance
+    spec:
+      containers:
+      - name: compliance-monitor
+        image: nexafi/compliance-monitor:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: KAFKA_BROKERS
+          value: "kafka-service:9092"
+        - name: ELASTICSEARCH_URL
+          value: "http://elasticsearch:9200"
+        - name: ALERT_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: compliance-secrets
+              key: alert-webhook-url
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: compliance-rules
+          mountPath: /etc/compliance-rules
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: compliance-rules
+        configMap:
+          name: compliance-rules-config
+      - name: tmp
+        emptyDir: {}
+      serviceAccountName: compliance-monitor-sa
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-monitor
+  namespace: nexafi
+  labels:
+    app: compliance-monitor
+spec:
+  selector:
+    app: compliance-monitor
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: compliance-monitor-sa
+  namespace: nexafi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: compliance-rules-config
+  namespace: nexafi
+data:
+  aml-rules.yaml: |
+    rules:
+      - name: "Large Transaction Alert"
+        condition: "transaction.amount > 10000"
+        action: "alert"
+        severity: "high"
+      - name: "Suspicious Pattern Detection"
+        condition: "transaction.frequency > 100 AND transaction.timespan < 3600"
+        action: "flag"
+        severity: "medium"
+      - name: "Cross-Border Transaction"
+        condition: "transaction.source_country != transaction.destination_country"
+        action: "review"
+        severity: "low"
+  kyc-rules.yaml: |
+    rules:
+      - name: "Identity Verification Required"
+        condition: "user.verification_status == 'pending'"
+        action: "block"
+        severity: "high"
+      - name: "Document Expiry Check"
+        condition: "user.document_expiry < current_date + 30_days"
+        action: "notify"
+        severity: "medium"
+

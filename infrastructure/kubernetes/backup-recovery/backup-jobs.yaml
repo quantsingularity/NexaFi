@@ -1,0 +1,220 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: nexafi
+  labels:
+    app: database-backup
+    tier: backup
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: database-backup
+            tier: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: postgres-backup
+            image: postgres:15
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: PGHOST
+              value: "postgres-service"
+            - name: PGPORT
+              value: "5432"
+            - name: BACKUP_RETENTION_DAYS
+              value: "30"
+            command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/backup/nexafi_backup_${TIMESTAMP}.sql"
+              
+              echo "Starting database backup at $(date)"
+              pg_dumpall -h $PGHOST -p $PGPORT -U $PGUSER > $BACKUP_FILE
+              
+              if [ $? -eq 0 ]; then
+                echo "Backup completed successfully: $BACKUP_FILE"
+                gzip $BACKUP_FILE
+                
+                # Upload to cloud storage (AWS S3, GCS, etc.)
+                aws s3 cp ${BACKUP_FILE}.gz s3://nexafi-backups/database/
+                
+                # Clean up old backups
+                find /backup -name "nexafi_backup_*.sql.gz" -mtime +$BACKUP_RETENTION_DAYS -delete
+                
+                echo "Backup process completed at $(date)"
+              else
+                echo "Backup failed at $(date)"
+                exit 1
+              fi
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 999
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backup
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-storage-pvc
+          - name: tmp
+            emptyDir: {}
+          serviceAccountName: backup-service-sa
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-backup
+  namespace: nexafi-infra
+  labels:
+    app: etcd-backup
+    tier: backup
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: etcd-backup
+            tier: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: etcd-backup
+            image: quay.io/coreos/etcd:v3.5.9
+            env:
+            - name: ETCDCTL_API
+              value: "3"
+            - name: ETCD_ENDPOINTS
+              value: "https://etcd:2379"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/backup/etcd_backup_${TIMESTAMP}.db"
+              
+              echo "Starting etcd backup at $(date)"
+              etcdctl --endpoints=$ETCD_ENDPOINTS \
+                     --cacert=/etc/ssl/etcd/ca.crt \
+                     --cert=/etc/ssl/etcd/client.crt \
+                     --key=/etc/ssl/etcd/client.key \
+                     snapshot save $BACKUP_FILE
+              
+              if [ $? -eq 0 ]; then
+                echo "etcd backup completed successfully: $BACKUP_FILE"
+                gzip $BACKUP_FILE
+                
+                # Upload to cloud storage
+                aws s3 cp ${BACKUP_FILE}.gz s3://nexafi-backups/etcd/
+                
+                # Clean up old backups (keep 7 days)
+                find /backup -name "etcd_backup_*.db.gz" -mtime +7 -delete
+                
+                echo "etcd backup process completed at $(date)"
+              else
+                echo "etcd backup failed at $(date)"
+                exit 1
+              fi
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backup
+            - name: etcd-certs
+              mountPath: /etc/ssl/etcd
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-storage-pvc
+          - name: etcd-certs
+            secret:
+              secretName: etcd-certs
+          - name: tmp
+            emptyDir: {}
+          serviceAccountName: backup-service-sa
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-service-sa
+  namespace: nexafi
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: nexafi
+  name: backup-service-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-service-rolebinding
+  namespace: nexafi
+subjects:
+- kind: ServiceAccount
+  name: backup-service-sa
+  namespace: nexafi
+roleRef:
+  kind: Role
+  name: backup-service-role
+  apiGroup: rbac.authorization.k8s.io
+
