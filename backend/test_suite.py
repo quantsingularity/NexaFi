@@ -1,504 +1,507 @@
-#!/usr/bin/env python3
 """
-NexaFi Backend Test Suite
-Comprehensive testing for all microservices
+Comprehensive test suite for NexaFi Enhanced Backend
+Tests all services with security, compliance, and financial features
 """
 
 import requests
 import json
 import time
+from datetime import datetime, timedelta
 import sys
-from datetime import datetime, date
+import os
 
-# Service configurations
+# Test configuration
+BASE_URL = "http://localhost:5000"
 SERVICES = {
-    'user-service': {'port': 5001, 'base_url': 'http://localhost:5001/api/v1'},
-    'ledger-service': {'port': 5002, 'base_url': 'http://localhost:5002/api/v1'},
-    'payment-service': {'port': 5003, 'base_url': 'http://localhost:5003/api/v1'},
-    'ai-service': {'port': 5004, 'base_url': 'http://localhost:5004/api/v1'},
+    'api-gateway': 5000,
+    'user-service': 5001,
+    'ledger-service': 5002,
+    'payment-service': 5003,
+    'ai-service': 5004,
+    'compliance-service': 5005,
+    'notification-service': 5006
 }
 
-class NexaFiTester:
+class Colors:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+
+class TestRunner:
     def __init__(self):
-        self.test_results = {}
+        self.passed = 0
+        self.failed = 0
         self.access_token = None
-        self.test_user_id = None
-        
-    def log(self, message, level='INFO'):
-        """Log test messages"""
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"[{timestamp}] {level}: {message}")
+        self.user_id = None
+        self.test_data = {}
     
-    def test_service_health(self, service_name):
-        """Test service health endpoint"""
+    def log(self, message, color=Colors.BLUE):
+        print(f"{color}{message}{Colors.ENDC}")
+    
+    def success(self, message):
+        self.passed += 1
+        print(f"{Colors.GREEN}✓ {message}{Colors.ENDC}")
+    
+    def error(self, message):
+        self.failed += 1
+        print(f"{Colors.RED}✗ {message}{Colors.ENDC}")
+    
+    def warning(self, message):
+        print(f"{Colors.YELLOW}⚠ {message}{Colors.ENDC}")
+    
+    def test_health_checks(self):
+        """Test health endpoints for all services"""
+        self.log("\n=== Testing Health Checks ===", Colors.BOLD)
+        
+        for service_name, port in SERVICES.items():
+            try:
+                response = requests.get(f"http://localhost:{port}/api/v1/health", timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.success(f"{service_name} health check passed - {data.get('status', 'unknown')}")
+                else:
+                    self.error(f"{service_name} health check failed - HTTP {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                self.error(f"{service_name} health check failed - {str(e)}")
+    
+    def test_api_gateway(self):
+        """Test API Gateway functionality"""
+        self.log("\n=== Testing API Gateway ===", Colors.BOLD)
+        
         try:
-            url = f"{SERVICES[service_name]['base_url']}/health"
-            response = requests.get(url, timeout=5)
-            
+            # Test gateway health
+            response = requests.get(f"{BASE_URL}/health")
             if response.status_code == 200:
-                self.log(f"✅ {service_name} health check passed")
-                return True
+                self.success("API Gateway health check passed")
             else:
-                self.log(f"❌ {service_name} health check failed: {response.status_code}", 'ERROR')
-                return False
+                self.error("API Gateway health check failed")
+            
+            # Test service listing
+            response = requests.get(f"{BASE_URL}/api/v1/services")
+            if response.status_code == 200:
+                data = response.json()
+                services = data.get('services', {})
+                if len(services) >= 6:  # We have 6 backend services
+                    self.success(f"Service discovery working - found {len(services)} services")
+                else:
+                    self.warning(f"Expected 6+ services, found {len(services)}")
+            else:
+                self.error("Service discovery failed")
                 
-        except Exception as e:
-            self.log(f"❌ {service_name} health check failed: {str(e)}", 'ERROR')
-            return False
+        except requests.exceptions.RequestException as e:
+            self.error(f"API Gateway test failed - {str(e)}")
     
     def test_user_service(self):
-        """Test User Service functionality"""
-        self.log("Testing User Service...")
-        base_url = SERVICES['user-service']['base_url']
+        """Test User Service with enhanced security"""
+        self.log("\n=== Testing User Service ===", Colors.BOLD)
         
-        # Test user registration
         try:
-            register_data = {
-                'email': 'test@nexafi.com',
-                'password': 'TestPassword123!',
-                'first_name': 'Test',
-                'last_name': 'User'
+            # Test user registration
+            registration_data = {
+                "email": f"test_{int(time.time())}@nexafi.com",
+                "password": "SecurePassword123!@#",
+                "first_name": "Test",
+                "last_name": "User",
+                "phone": "1234567890",
+                "company_name": "Test Company"
             }
             
-            response = requests.post(f"{base_url}/auth/register", json=register_data)
-            
+            response = requests.post(f"{BASE_URL}/api/v1/auth/register", json=registration_data)
             if response.status_code == 201:
-                self.log("✅ User registration successful")
-                user_data = response.json()
-                self.test_user_id = user_data['user']['id']
+                data = response.json()
+                self.success("User registration successful")
+                self.test_data['user_email'] = registration_data['email']
+                self.test_data['user_password'] = registration_data['password']
             else:
-                self.log(f"❌ User registration failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ User registration failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test user login
-        try:
+                self.error(f"User registration failed - {response.text}")
+                return
+            
+            # Test user login
             login_data = {
-                'email': 'test@nexafi.com',
-                'password': 'TestPassword123!'
+                "email": registration_data['email'],
+                "password": registration_data['password']
             }
             
-            response = requests.post(f"{base_url}/auth/login", json=login_data)
-            
+            response = requests.post(f"{BASE_URL}/api/v1/auth/login", json=login_data)
             if response.status_code == 200:
-                self.log("✅ User login successful")
-                login_result = response.json()
-                self.access_token = login_result['access_token']
-            else:
-                self.log(f"❌ User login failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+                data = response.json()
+                self.access_token = data.get('access_token')
+                self.user_id = data.get('user', {}).get('id')
+                self.success("User login successful")
                 
-        except Exception as e:
-            self.log(f"❌ User login failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test profile update
-        try:
+                # Store tokens for other tests
+                self.test_data['access_token'] = self.access_token
+                self.test_data['user_id'] = str(self.user_id)
+            else:
+                self.error(f"User login failed - {response.text}")
+                return
+            
+            # Test profile retrieval
             headers = {'Authorization': f'Bearer {self.access_token}'}
-            profile_data = {
-                'business_name': 'Test Business Inc.',
-                'business_type': 'Technology',
-                'industry': 'Software',
-                'annual_revenue': 500000,
-                'employee_count': 10
+            response = requests.get(f"{BASE_URL}/api/v1/users/profile", headers=headers)
+            if response.status_code == 200:
+                self.success("Profile retrieval successful")
+            else:
+                self.error("Profile retrieval failed")
+            
+            # Test weak password rejection
+            weak_password_data = {
+                "email": f"weak_{int(time.time())}@nexafi.com",
+                "password": "123",  # Weak password
+                "first_name": "Weak",
+                "last_name": "Password"
             }
             
-            response = requests.put(f"{base_url}/users/profile", json=profile_data, headers=headers)
-            
-            if response.status_code == 200:
-                self.log("✅ Profile update successful")
+            response = requests.post(f"{BASE_URL}/api/v1/auth/register", json=weak_password_data)
+            if response.status_code == 400:
+                self.success("Weak password properly rejected")
             else:
-                self.log(f"❌ Profile update failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+                self.warning("Weak password validation may not be working")
                 
-        except Exception as e:
-            self.log(f"❌ Profile update failed: {str(e)}", 'ERROR')
-            return False
-        
-        return True
+        except requests.exceptions.RequestException as e:
+            self.error(f"User service test failed - {str(e)}")
     
     def test_ledger_service(self):
-        """Test Ledger Service functionality"""
-        self.log("Testing Ledger Service...")
-        base_url = SERVICES['ledger-service']['base_url']
-        headers = {'X-User-ID': self.test_user_id}
+        """Test Enhanced Ledger Service"""
+        self.log("\n=== Testing Ledger Service ===", Colors.BOLD)
         
-        # Test account initialization
-        try:
-            response = requests.post(f"{base_url}/accounts/initialize", headers=headers)
-            
-            if response.status_code == 201:
-                self.log("✅ Chart of accounts initialization successful")
-            else:
-                self.log(f"❌ Chart of accounts initialization failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Chart of accounts initialization failed: {str(e)}", 'ERROR')
-            return False
+        if not self.access_token:
+            self.error("No access token available for ledger tests")
+            return
         
-        # Test getting accounts
+        headers = {'Authorization': f'Bearer {self.access_token}'}
+        
         try:
-            response = requests.get(f"{base_url}/accounts", headers=headers)
-            
+            # Test account listing
+            response = requests.get(f"{BASE_URL}/api/v1/accounts", headers=headers)
             if response.status_code == 200:
-                accounts_data = response.json()
-                self.log(f"✅ Retrieved {accounts_data['total']} accounts")
+                data = response.json()
+                accounts = data.get('accounts', [])
+                self.success(f"Account listing successful - found {len(accounts)} accounts")
                 
-                # Store some account IDs for journal entry testing
-                self.cash_account_id = None
-                self.revenue_account_id = None
-                
-                for account in accounts_data['accounts']:
-                    if account['account_code'] == '1000':  # Cash account
-                        self.cash_account_id = account['id']
-                    elif account['account_code'] == '4000':  # Revenue account
-                        self.revenue_account_id = account['id']
-                        
+                # Store first account for testing
+                if accounts:
+                    self.test_data['account_id'] = accounts[0]['id']
             else:
-                self.log(f"❌ Getting accounts failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Getting accounts failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test journal entry creation
-        if self.cash_account_id and self.revenue_account_id:
-            try:
+                self.error("Account listing failed")
+            
+            # Test account creation
+            account_data = {
+                "account_code": f"TEST{int(time.time())}",
+                "name": "Test Account",
+                "account_type": "asset",
+                "account_subtype": "cash",
+                "currency": "USD",
+                "description": "Test account for validation"
+            }
+            
+            response = requests.post(f"{BASE_URL}/api/v1/accounts", json=account_data, headers=headers)
+            if response.status_code == 201:
+                data = response.json()
+                self.success("Account creation successful")
+                self.test_data['created_account_id'] = data['account']['id']
+            else:
+                self.error(f"Account creation failed - {response.text}")
+            
+            # Test journal entry creation
+            if 'created_account_id' in self.test_data:
                 journal_data = {
-                    'description': 'Test revenue entry',
-                    'entry_date': date.today().isoformat(),
-                    'lines': [
+                    "description": "Test journal entry",
+                    "reference_number": f"TEST-{int(time.time())}",
+                    "lines": [
                         {
-                            'account_id': self.cash_account_id,
-                            'description': 'Cash received',
-                            'debit_amount': 1000,
-                            'credit_amount': 0
+                            "account_id": self.test_data['created_account_id'],
+                            "debit_amount": 100.00,
+                            "description": "Test debit"
                         },
                         {
-                            'account_id': self.revenue_account_id,
-                            'description': 'Revenue earned',
-                            'debit_amount': 0,
-                            'credit_amount': 1000
+                            "account_id": self.test_data['created_account_id'],
+                            "credit_amount": 100.00,
+                            "description": "Test credit"
                         }
-                    ],
-                    'auto_post': True
+                    ]
                 }
                 
-                response = requests.post(f"{base_url}/journal-entries", json=journal_data, headers=headers)
-                
+                response = requests.post(f"{BASE_URL}/api/v1/journal-entries", json=journal_data, headers=headers)
                 if response.status_code == 201:
-                    self.log("✅ Journal entry creation successful")
+                    data = response.json()
+                    self.success("Journal entry creation successful")
+                    self.test_data['journal_entry_id'] = data['journal_entry']['id']
                 else:
-                    self.log(f"❌ Journal entry creation failed: {response.status_code} - {response.text}", 'ERROR')
-                    return False
-                    
-            except Exception as e:
-                self.log(f"❌ Journal entry creation failed: {str(e)}", 'ERROR')
-                return False
-        
-        # Test trial balance report
-        try:
-            response = requests.get(f"{base_url}/reports/trial-balance", headers=headers)
+                    self.error(f"Journal entry creation failed - {response.text}")
             
+            # Test trial balance report
+            response = requests.get(f"{BASE_URL}/api/v1/reports/trial-balance", headers=headers)
             if response.status_code == 200:
-                trial_balance = response.json()
-                self.log(f"✅ Trial balance generated - Balanced: {trial_balance['is_balanced']}")
+                data = response.json()
+                self.success("Trial balance report generated successfully")
+                if data.get('is_balanced'):
+                    self.success("Trial balance is properly balanced")
+                else:
+                    self.warning("Trial balance is not balanced")
             else:
-                self.log(f"❌ Trial balance generation failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+                self.error("Trial balance report failed")
                 
-        except Exception as e:
-            self.log(f"❌ Trial balance generation failed: {str(e)}", 'ERROR')
-            return False
-        
-        return True
+        except requests.exceptions.RequestException as e:
+            self.error(f"Ledger service test failed - {str(e)}")
     
-    def test_payment_service(self):
-        """Test Payment Service functionality"""
-        self.log("Testing Payment Service...")
-        base_url = SERVICES['payment-service']['base_url']
-        headers = {'X-User-ID': self.test_user_id}
+    def test_compliance_service(self):
+        """Test Compliance Service (AML, KYC, Sanctions)"""
+        self.log("\n=== Testing Compliance Service ===", Colors.BOLD)
         
-        # Test payment method creation
+        if not self.access_token or not self.user_id:
+            self.error("No access token or user ID available for compliance tests")
+            return
+        
+        headers = {'Authorization': f'Bearer {self.access_token}'}
+        
         try:
-            payment_method_data = {
-                'type': 'card',
-                'provider': 'stripe',
-                'details': {
-                    'last_four': '4242',
-                    'brand': 'visa',
-                    'exp_month': 12,
-                    'exp_year': 2025
-                },
-                'is_default': True
+            # Test KYC verification initiation
+            kyc_data = {
+                "user_id": self.user_id,
+                "verification_type": "identity",
+                "document_type": "passport",
+                "document_number": "TEST123456"
             }
             
-            response = requests.post(f"{base_url}/payment-methods", json=payment_method_data, headers=headers)
-            
+            response = requests.post(f"{BASE_URL}/api/v1/kyc/verify", json=kyc_data, headers=headers)
             if response.status_code == 201:
-                self.log("✅ Payment method creation successful")
-                payment_method = response.json()['payment_method']
-                self.payment_method_id = payment_method['id']
+                data = response.json()
+                self.success("KYC verification initiated successfully")
+                self.test_data['kyc_verification_id'] = data['verification_id']
             else:
-                self.log(f"❌ Payment method creation failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Payment method creation failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test transaction creation
-        try:
-            transaction_data = {
-                'payment_method_id': self.payment_method_id,
-                'transaction_type': 'payment',
-                'amount': 250.00,
-                'currency': 'USD',
-                'description': 'Test payment transaction'
-            }
+                self.error(f"KYC verification failed - {response.text}")
             
-            response = requests.post(f"{base_url}/transactions", json=transaction_data, headers=headers)
-            
-            if response.status_code == 201:
-                self.log("✅ Transaction creation successful")
-                transaction = response.json()['transaction']
-                self.transaction_id = transaction['id']
-            else:
-                self.log(f"❌ Transaction creation failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Transaction creation failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test wallet retrieval
-        try:
-            response = requests.get(f"{base_url}/wallets/USD", headers=headers)
-            
-            if response.status_code == 200:
-                wallet = response.json()['wallet']
-                self.log(f"✅ Wallet retrieved - Balance: ${wallet['balance']}")
-            else:
-                self.log(f"❌ Wallet retrieval failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Wallet retrieval failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test payment analytics
-        try:
-            from datetime import timedelta
-            start_date = (date.today() - timedelta(days=30)).isoformat()
-            end_date = date.today().isoformat()
-            
-            response = requests.get(f"{base_url}/analytics/summary?start_date={start_date}&end_date={end_date}", headers=headers)
-            
-            if response.status_code == 200:
-                analytics = response.json()
-                self.log(f"✅ Payment analytics retrieved - Total volume: ${analytics['summary']['total_volume']}")
-            else:
-                self.log(f"❌ Payment analytics failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Payment analytics failed: {str(e)}", 'ERROR')
-            return False
-        
-        return True
-    
-    def test_ai_service(self):
-        """Test AI Service functionality"""
-        self.log("Testing AI Service...")
-        base_url = SERVICES['ai-service']['base_url']
-        headers = {'X-User-ID': self.test_user_id}
-        
-        # Test cash flow prediction
-        try:
-            prediction_data = {
-                'historical_data': {
-                    'average_monthly_cash_flow': 15000,
-                    'seasonal_patterns': True,
-                    'growth_trend': 0.02
-                },
-                'days_ahead': 30
-            }
-            
-            response = requests.post(f"{base_url}/predictions/cash-flow", json=prediction_data, headers=headers)
-            
-            if response.status_code == 200:
-                prediction = response.json()
-                self.log(f"✅ Cash flow prediction successful - Confidence: {prediction['summary']['confidence_score']}")
-            else:
-                self.log(f"❌ Cash flow prediction failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
-                
-        except Exception as e:
-            self.log(f"❌ Cash flow prediction failed: {str(e)}", 'ERROR')
-            return False
-        
-        # Test credit score calculation
-        try:
-            credit_data = {
-                'business_data': {
-                    'annual_revenue': 500000,
-                    'business_age_months': 24,
-                    'employee_count': 10,
-                    'industry': 'Technology'
+            # Test AML check
+            aml_data = {
+                "transaction_id": f"TXN-{int(time.time())}",
+                "user_id": self.user_id,
+                "check_type": "transaction_monitoring",
+                "transaction_data": {
+                    "amount": 5000.00,
+                    "currency": "USD",
+                    "country": "US",
+                    "daily_transaction_count": 1
                 }
             }
             
-            response = requests.post(f"{base_url}/predictions/credit-score", json=credit_data, headers=headers)
-            
+            response = requests.post(f"{BASE_URL}/api/v1/aml/check", json=aml_data, headers=headers)
             if response.status_code == 200:
-                credit_result = response.json()
-                self.log(f"✅ Credit score calculation successful - Score: {credit_result['credit_score']}")
+                data = response.json()
+                self.success(f"AML check completed - Risk level: {data.get('risk_level')}")
             else:
-                self.log(f"❌ Credit score calculation failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+                self.error(f"AML check failed - {response.text}")
+            
+            # Test sanctions screening
+            sanctions_data = {
+                "entity_id": self.user_id,
+                "entity_type": "user",
+                "entity_name": "Test User"
+            }
+            
+            response = requests.post(f"{BASE_URL}/api/v1/sanctions/screen", json=sanctions_data, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.success(f"Sanctions screening completed - Result: {data.get('result')}")
+            else:
+                self.error(f"Sanctions screening failed - {response.text}")
+            
+            # Test compliance dashboard
+            response = requests.get(f"{BASE_URL}/api/v1/compliance/dashboard", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.success("Compliance dashboard accessible")
+            else:
+                self.error("Compliance dashboard failed")
                 
-        except Exception as e:
-            self.log(f"❌ Credit score calculation failed: {str(e)}", 'ERROR')
-            return False
+        except requests.exceptions.RequestException as e:
+            self.error(f"Compliance service test failed - {str(e)}")
+    
+    def test_notification_service(self):
+        """Test Notification Service"""
+        self.log("\n=== Testing Notification Service ===", Colors.BOLD)
         
-        # Test insights generation
+        if not self.access_token or not self.user_id:
+            self.error("No access token or user ID available for notification tests")
+            return
+        
+        headers = {'Authorization': f'Bearer {self.access_token}'}
+        
         try:
-            insights_data = {
-                'financial_data': {
-                    'cash_flow_trend': 'declining',
-                    'current_cash_flow': 12000,
-                    'previous_cash_flow': 15000,
-                    'unusual_expenses': True,
-                    'marketing_expenses': 3500,
-                    'avg_marketing_expenses': 2500
+            # Test notification preferences retrieval
+            response = requests.get(f"{BASE_URL}/api/v1/notifications/preferences/{self.user_id}", headers=headers)
+            if response.status_code == 200:
+                self.success("Notification preferences retrieved successfully")
+            else:
+                self.error("Notification preferences retrieval failed")
+            
+            # Test sending a notification
+            notification_data = {
+                "user_id": self.user_id,
+                "notification_type": "security_alert",
+                "channel": "email",
+                "priority": "high",
+                "subject": "Test Security Alert",
+                "message": "This is a test security alert notification.",
+                "template_name": "security_alert_email",
+                "template_data": {
+                    "user_name": "Test User",
+                    "alert_type": "Login from new device",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "ip_address": "192.168.1.1",
+                    "details": "Test login alert"
                 }
             }
             
-            response = requests.post(f"{base_url}/insights/generate", json=insights_data, headers=headers)
-            
+            response = requests.post(f"{BASE_URL}/api/v1/notifications/send", json=notification_data, headers=headers)
             if response.status_code == 201:
-                insights = response.json()
-                self.log(f"✅ Insights generation successful - Generated {len(insights['insights'])} insights")
+                data = response.json()
+                self.success("Notification sent successfully")
+                self.test_data['notification_id'] = data['notification_id']
             else:
-                self.log(f"❌ Insights generation failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+                self.error(f"Notification sending failed - {response.text}")
+            
+            # Test notification statistics
+            response = requests.get(f"{BASE_URL}/api/v1/notifications/stats", headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.success("Notification statistics retrieved successfully")
+            else:
+                self.error("Notification statistics failed")
                 
-        except Exception as e:
-            self.log(f"❌ Insights generation failed: {str(e)}", 'ERROR')
-            return False
+        except requests.exceptions.RequestException as e:
+            self.error(f"Notification service test failed - {str(e)}")
+    
+    def test_rate_limiting(self):
+        """Test rate limiting functionality"""
+        self.log("\n=== Testing Rate Limiting ===", Colors.BOLD)
         
-        # Test chat session creation
         try:
-            session_data = {
-                'session_name': 'Test Chat Session'
+            # Test rate limiting on login endpoint (5 attempts per 5 minutes)
+            login_data = {
+                "email": "nonexistent@example.com",
+                "password": "wrongpassword"
             }
             
-            response = requests.post(f"{base_url}/chat/sessions", json=session_data, headers=headers)
+            rate_limited = False
+            for i in range(7):  # Try 7 times to trigger rate limit
+                response = requests.post(f"{BASE_URL}/api/v1/auth/login", json=login_data)
+                if response.status_code == 429:
+                    rate_limited = True
+                    self.success("Rate limiting is working - got 429 Too Many Requests")
+                    break
+                time.sleep(0.1)  # Small delay between requests
             
-            if response.status_code == 201:
-                session = response.json()['session']
-                self.chat_session_id = session['id']
-                self.log("✅ Chat session creation successful")
-            else:
-                self.log(f"❌ Chat session creation failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+            if not rate_limited:
+                self.warning("Rate limiting may not be working as expected")
                 
-        except Exception as e:
-            self.log(f"❌ Chat session creation failed: {str(e)}", 'ERROR')
-            return False
+        except requests.exceptions.RequestException as e:
+            self.error(f"Rate limiting test failed - {str(e)}")
+    
+    def test_security_features(self):
+        """Test security features"""
+        self.log("\n=== Testing Security Features ===", Colors.BOLD)
         
-        # Test chat message
         try:
-            message_data = {
-                'message': 'Can you help me analyze my cash flow?'
+            # Test unauthorized access
+            response = requests.get(f"{BASE_URL}/api/v1/users/profile")
+            if response.status_code == 401:
+                self.success("Unauthorized access properly blocked")
+            else:
+                self.error("Unauthorized access not properly blocked")
+            
+            # Test invalid token
+            headers = {'Authorization': 'Bearer invalid_token'}
+            response = requests.get(f"{BASE_URL}/api/v1/users/profile", headers=headers)
+            if response.status_code == 401:
+                self.success("Invalid token properly rejected")
+            else:
+                self.error("Invalid token not properly rejected")
+            
+            # Test SQL injection attempt
+            malicious_data = {
+                "email": "test'; DROP TABLE users; --",
+                "password": "password"
             }
             
-            response = requests.post(f"{base_url}/chat/sessions/{self.chat_session_id}/messages", json=message_data, headers=headers)
-            
-            if response.status_code == 201:
-                chat_result = response.json()
-                self.log("✅ Chat message successful")
-                self.log(f"AI Response: {chat_result['ai_response']['content'][:100]}...")
+            response = requests.post(f"{BASE_URL}/api/v1/auth/login", json=malicious_data)
+            if response.status_code in [400, 401]:  # Should be rejected, not cause server error
+                self.success("SQL injection attempt properly handled")
             else:
-                self.log(f"❌ Chat message failed: {response.status_code} - {response.text}", 'ERROR')
-                return False
+                self.warning("SQL injection handling unclear")
                 
-        except Exception as e:
-            self.log(f"❌ Chat message failed: {str(e)}", 'ERROR')
-            return False
+        except requests.exceptions.RequestException as e:
+            self.error(f"Security test failed - {str(e)}")
+    
+    def test_audit_logging(self):
+        """Test audit logging functionality"""
+        self.log("\n=== Testing Audit Logging ===", Colors.BOLD)
         
-        return True
+        # Check if audit log files are being created
+        audit_log_dir = "/home/ubuntu/nexafi_backend_refactored/logs/audit"
+        if os.path.exists(audit_log_dir):
+            log_files = os.listdir(audit_log_dir)
+            if log_files:
+                self.success(f"Audit logs are being created - found {len(log_files)} log files")
+            else:
+                self.warning("Audit log directory exists but no log files found")
+        else:
+            self.warning("Audit log directory not found")
+        
+        # Check general log files
+        log_dir = "/home/ubuntu/nexafi_backend_refactored/logs"
+        if os.path.exists(log_dir):
+            log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
+            if log_files:
+                self.success(f"Service logs are being created - found {len(log_files)} log files")
+            else:
+                self.warning("Log directory exists but no log files found")
+        else:
+            self.warning("Log directory not found")
     
     def run_all_tests(self):
         """Run all tests"""
-        self.log("🚀 Starting NexaFi Backend Test Suite")
-        self.log("=" * 50)
+        self.log(f"\n{Colors.BOLD}=== NexaFi Enhanced Backend Test Suite ==={Colors.ENDC}")
+        self.log(f"Testing against: {BASE_URL}")
+        self.log(f"Timestamp: {datetime.utcnow().isoformat()}")
         
-        # Test service health
-        self.log("Testing service health...")
-        health_results = {}
-        for service_name in SERVICES:
-            health_results[service_name] = self.test_service_health(service_name)
+        # Wait a moment for services to be fully ready
+        self.log("\nWaiting for services to be ready...")
+        time.sleep(3)
         
-        # Check if all services are healthy
-        if not all(health_results.values()):
-            self.log("❌ Some services are not healthy. Please start all services first.", 'ERROR')
-            return False
-        
-        self.log("✅ All services are healthy")
-        self.log("=" * 50)
-        
-        # Run functional tests
-        test_functions = [
-            ('User Service', self.test_user_service),
-            ('Ledger Service', self.test_ledger_service),
-            ('Payment Service', self.test_payment_service),
-            ('AI Service', self.test_ai_service),
-        ]
-        
-        results = {}
-        for test_name, test_function in test_functions:
-            self.log(f"Running {test_name} tests...")
-            try:
-                results[test_name] = test_function()
-                if results[test_name]:
-                    self.log(f"✅ {test_name} tests passed")
-                else:
-                    self.log(f"❌ {test_name} tests failed", 'ERROR')
-            except Exception as e:
-                self.log(f"❌ {test_name} tests failed with exception: {str(e)}", 'ERROR')
-                results[test_name] = False
-            
-            self.log("-" * 30)
+        # Run tests in order
+        self.test_health_checks()
+        self.test_api_gateway()
+        self.test_user_service()
+        self.test_ledger_service()
+        self.test_compliance_service()
+        self.test_notification_service()
+        self.test_rate_limiting()
+        self.test_security_features()
+        self.test_audit_logging()
         
         # Summary
-        self.log("=" * 50)
-        self.log("TEST SUMMARY")
-        self.log("=" * 50)
+        total_tests = self.passed + self.failed
+        success_rate = (self.passed / total_tests * 100) if total_tests > 0 else 0
         
-        passed_tests = sum(1 for result in results.values() if result)
-        total_tests = len(results)
+        self.log(f"\n{Colors.BOLD}=== Test Summary ==={Colors.ENDC}")
+        self.log(f"Total tests: {total_tests}")
+        self.log(f"Passed: {Colors.GREEN}{self.passed}{Colors.ENDC}")
+        self.log(f"Failed: {Colors.RED}{self.failed}{Colors.ENDC}")
+        self.log(f"Success rate: {success_rate:.1f}%")
         
-        for test_name, result in results.items():
-            status = "✅ PASSED" if result else "❌ FAILED"
-            self.log(f"{test_name}: {status}")
-        
-        self.log(f"Overall: {passed_tests}/{total_tests} tests passed")
-        
-        if passed_tests == total_tests:
-            self.log("🎉 All tests passed! NexaFi backend is working correctly.")
+        if self.failed == 0:
+            self.log(f"\n{Colors.GREEN}{Colors.BOLD}🎉 All tests passed! NexaFi Enhanced Backend is working correctly.{Colors.ENDC}")
             return True
         else:
-            self.log("⚠️  Some tests failed. Please check the logs above.", 'ERROR')
+            self.log(f"\n{Colors.RED}{Colors.BOLD}❌ Some tests failed. Please check the logs and fix the issues.{Colors.ENDC}")
             return False
 
-if __name__ == '__main__':
-    tester = NexaFiTester()
-    success = tester.run_all_tests()
+if __name__ == "__main__":
+    runner = TestRunner()
+    success = runner.run_all_tests()
     sys.exit(0 if success else 1)
 

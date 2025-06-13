@@ -1,10 +1,16 @@
 #!/bin/bash
 
-# NexaFi Backend Services Stop Script
-# This script stops all running microservices
+# Enhanced stop script for NexaFi Backend Services
 
-echo "🛑 Stopping NexaFi Backend Services..."
-echo "====================================="
+set -e
+
+echo "Stopping NexaFi Backend Services..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
 # Function to stop a service
 stop_service() {
@@ -13,46 +19,65 @@ stop_service() {
     
     if [ -f "$pid_file" ]; then
         local pid=$(cat "$pid_file")
-        echo "Stopping $service_name (PID: $pid)..."
-        
         if kill -0 "$pid" 2>/dev/null; then
+            echo -e "${YELLOW}Stopping $service_name (PID: $pid)...${NC}"
             kill "$pid"
-            sleep 2
             
-            # Force kill if still running
+            # Wait for process to stop
+            local attempts=0
+            while kill -0 "$pid" 2>/dev/null && [ $attempts -lt 10 ]; do
+                sleep 1
+                attempts=$((attempts + 1))
+            done
+            
             if kill -0 "$pid" 2>/dev/null; then
-                echo "Force killing $service_name..."
-                kill -9 "$pid"
+                echo -e "${RED}Force killing $service_name...${NC}"
+                kill -9 "$pid" 2>/dev/null || true
             fi
             
-            echo "✅ $service_name stopped"
+            echo -e "${GREEN}$service_name stopped${NC}"
         else
-            echo "⚠️  $service_name was not running"
+            echo -e "${YELLOW}$service_name was not running${NC}"
         fi
-        
         rm -f "$pid_file"
     else
-        echo "⚠️  No PID file found for $service_name"
+        echo -e "${YELLOW}No PID file found for $service_name${NC}"
     fi
 }
 
-# Stop all services
-stop_service "api-gateway"
-stop_service "ai-service"
-stop_service "payment-service"
-stop_service "ledger-service"
-stop_service "user-service"
+# Array of services to stop
+declare -a services=(
+    "api-gateway"
+    "notification-service"
+    "compliance-service"
+    "ai-service"
+    "payment-service"
+    "ledger-service"
+    "user-service"
+)
 
-# Kill any remaining Python processes on our ports
-echo "Cleaning up any remaining processes..."
-for port in 5000 5001 5002 5003 5004; do
-    pid=$(lsof -ti:$port 2>/dev/null)
-    if [ ! -z "$pid" ]; then
-        echo "Killing process on port $port (PID: $pid)"
-        kill -9 $pid 2>/dev/null
-    fi
+# Stop each service
+for service_name in "${services[@]}"; do
+    stop_service "$service_name"
 done
 
-echo ""
-echo "✅ All NexaFi Backend Services Stopped"
+# Stop any remaining Python processes that might be NexaFi services
+echo "Checking for any remaining NexaFi processes..."
+pkill -f "nexafi.*main.py" 2>/dev/null || true
+
+# Stop Redis if it was started by our script
+if pgrep redis-server >/dev/null; then
+    echo -e "${YELLOW}Stopping Redis server...${NC}"
+    redis-cli shutdown 2>/dev/null || true
+fi
+
+echo -e "${GREEN}All NexaFi services stopped${NC}"
+
+# Clean up log files if requested
+if [ "$1" = "--clean-logs" ]; then
+    echo "Cleaning up log files..."
+    rm -f logs/*.log
+    rm -f logs/*.pid
+    echo -e "${GREEN}Log files cleaned${NC}"
+fi
 

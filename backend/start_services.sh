@@ -1,50 +1,71 @@
 #!/bin/bash
 
-# Enhanced NexaFi Backend Startup Script
-# This script starts all microservices with infrastructure support
+# Enhanced startup script for NexaFi Backend Services
+# Includes new services and improved error handling
 
-echo "🚀 Starting Enhanced NexaFi Backend Services..."
+set -e
 
-# Create logs directory
-mkdir -p logs
+echo "Starting NexaFi Backend Services (Enhanced Version)..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to check if a port is available
+check_port() {
+    local port=$1
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        echo -e "${RED}Port $port is already in use${NC}"
+        return 1
+    fi
+    return 0
+}
 
 # Function to start a service
 start_service() {
     local service_name=$1
     local port=$2
+    local service_dir=$3
     
-    echo "🔄 Starting $service_name on port $port..."
+    echo -e "${YELLOW}Starting $service_name on port $port...${NC}"
     
-    cd $service_name
-    
-    # Activate virtual environment
-    source venv/bin/activate
-    
-    # Install additional dependencies if requirements have changed
-    pip install -q redis pika elasticsearch flask-limiter
-    
-    # Update requirements
-    pip freeze > requirements.txt
-    
-    # Start the service in background
-    nohup python src/main.py > ../logs/$service_name.log 2>&1 &
-    
-    # Store PID
-    echo $! > ../logs/$service_name.pid
-    
-    cd ..
-    
-    echo "✅ $service_name started (PID: $(cat logs/$service_name.pid))"
-}
-
-# Function to check if port is available
-check_port() {
-    local port=$1
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
-        echo "⚠️  Port $port is already in use"
+    if ! check_port $port; then
+        echo -e "${RED}Cannot start $service_name - port $port is in use${NC}"
         return 1
     fi
-    return 0
+    
+    cd "$service_dir"
+    
+    # Install dependencies if requirements.txt exists
+    if [ -f "requirements.txt" ]; then
+        echo "Installing dependencies for $service_name..."
+        pip3 install -r requirements.txt >/dev/null 2>&1 || {
+            echo -e "${RED}Failed to install dependencies for $service_name${NC}"
+            return 1
+        }
+    fi
+    
+    # Set environment variables
+    export SERVICE_NAME="$service_name"
+    export SERVICE_PORT="$port"
+    export PYTHONPATH="${PYTHONPATH}:$(pwd)/../../shared"
+    
+    # Start the service in background
+    nohup python3 src/main.py > "../logs/${service_name}.log" 2>&1 &
+    local pid=$!
+    echo $pid > "../logs/${service_name}.pid"
+    
+    # Wait a moment and check if service started successfully
+    sleep 2
+    if kill -0 $pid 2>/dev/null; then
+        echo -e "${GREEN}$service_name started successfully (PID: $pid)${NC}"
+        return 0
+    else
+        echo -e "${RED}Failed to start $service_name${NC}"
+        return 1
+    fi
 }
 
 # Function to wait for service to be ready
@@ -54,103 +75,118 @@ wait_for_service() {
     local max_attempts=30
     local attempt=1
     
-    echo "⏳ Waiting for $service_name to be ready..."
+    echo "Waiting for $service_name to be ready..."
     
     while [ $attempt -le $max_attempts ]; do
-        if curl -s http://localhost:$port/health > /dev/null 2>&1; then
-            echo "✅ $service_name is ready"
+        if curl -s "http://localhost:$port/api/v1/health" >/dev/null 2>&1; then
+            echo -e "${GREEN}$service_name is ready${NC}"
             return 0
         fi
         
+        echo "Attempt $attempt/$max_attempts - waiting for $service_name..."
         sleep 2
         attempt=$((attempt + 1))
     done
     
-    echo "❌ $service_name failed to start within timeout"
+    echo -e "${RED}$service_name failed to become ready${NC}"
     return 1
 }
 
-# Check if infrastructure is running
-echo "🔍 Checking infrastructure services..."
+# Create logs directory
+mkdir -p logs
 
-if ! redis-cli -h localhost -p 6379 ping > /dev/null 2>&1; then
-    echo "⚠️  Redis is not running. Starting infrastructure..."
-    cd infrastructure
-    ./start-infrastructure.sh
-    cd ..
-    sleep 10
+# Install global dependencies
+echo "Installing global dependencies..."
+pip3 install -r requirements.txt >/dev/null 2>&1 || {
+    echo -e "${RED}Failed to install global dependencies${NC}"
+    exit 1
+}
+
+# Start Redis (if available) for rate limiting and caching
+if command -v redis-server >/dev/null 2>&1; then
+    if ! pgrep redis-server >/dev/null; then
+        echo -e "${YELLOW}Starting Redis server...${NC}"
+        redis-server --daemonize yes --port 6379 >/dev/null 2>&1 || {
+            echo -e "${YELLOW}Warning: Could not start Redis. Rate limiting and caching will use fallback methods.${NC}"
+        }
+    else
+        echo -e "${GREEN}Redis is already running${NC}"
+    fi
+else
+    echo -e "${YELLOW}Warning: Redis not found. Rate limiting and caching will use fallback methods.${NC}"
 fi
 
-# Start all services
-echo "🚀 Starting microservices..."
+# Array of services to start
+declare -a services=(
+    "user-service:5001"
+    "ledger-service:5002"
+    "payment-service:5003"
+    "ai-service:5004"
+    "compliance-service:5005"
+    "notification-service:5006"
+    "api-gateway:5000"  # Start gateway last
+)
 
-# API Gateway (Port 5000)
-if check_port 5000; then
-    start_service "api-gateway" 5000
-    wait_for_service "api-gateway" 5000
+# Start each service
+failed_services=()
+for service_info in "${services[@]}"; do
+    IFS=':' read -r service_name port <<< "$service_info"
+    service_dir="$service_name"
+    
+    if [ -d "$service_dir" ]; then
+        if start_service "$service_name" "$port" "$service_dir"; then
+            # Wait for service to be ready (except for API gateway)
+            if [ "$service_name" != "api-gateway" ]; then
+                if ! wait_for_service "$service_name" "$port"; then
+                    failed_services+=("$service_name")
+                fi
+            fi
+        else
+            failed_services+=("$service_name")
+        fi
+    else
+        echo -e "${YELLOW}Warning: $service_dir directory not found, skipping $service_name${NC}"
+    fi
+done
+
+# Special handling for API Gateway - wait for it to be ready
+if [ -d "api-gateway" ]; then
+    echo "Waiting for API Gateway to be ready..."
+    if wait_for_service "api-gateway" "5000"; then
+        echo -e "${GREEN}API Gateway is ready and routing requests${NC}"
+    else
+        failed_services+=("api-gateway")
+    fi
 fi
 
-# User Service (Port 5001)
-if check_port 5001; then
-    start_service "user-service" 5001
-    wait_for_service "user-service" 5001
-fi
-
-# Ledger Service (Port 5002)
-if check_port 5002; then
-    start_service "ledger-service" 5002
-    wait_for_service "ledger-service" 5002
-fi
-
-# Payment Service (Port 5003)
-if check_port 5003; then
-    start_service "payment-service" 5003
-    wait_for_service "payment-service" 5003
-fi
-
-# AI Service (Port 5004)
-if check_port 5004; then
-    start_service "ai-service" 5004
-    wait_for_service "ai-service" 5004
-fi
-
-# Analytics Service (Port 5005)
-if check_port 5005; then
-    start_service "analytics-service" 5005
-    wait_for_service "analytics-service" 5005
-fi
-
-# Credit Service (Port 5006)
-if check_port 5006; then
-    start_service "credit-service" 5006
-    wait_for_service "credit-service" 5006
-fi
-
-# Document Service (Port 5007)
-if check_port 5007; then
-    start_service "document-service" 5007
-    wait_for_service "document-service" 5007
-fi
-
+# Summary
 echo ""
-echo "🎉 Enhanced NexaFi Backend is now running!"
-echo ""
-echo "📊 Service Status:"
-echo "   🌐 API Gateway:      http://localhost:5000"
-echo "   👤 User Service:     http://localhost:5001"
-echo "   📊 Ledger Service:   http://localhost:5002"
-echo "   💳 Payment Service:  http://localhost:5003"
-echo "   🤖 AI Service:       http://localhost:5004"
-echo "   📈 Analytics Service: http://localhost:5005"
-echo "   💰 Credit Service:   http://localhost:5006"
-echo "   📄 Document Service: http://localhost:5007"
-echo ""
-echo "🔧 Infrastructure Services:"
-echo "   🗄️  Redis:           localhost:6379"
-echo "   🐰 RabbitMQ:         http://localhost:15672 (nexafi/nexafi123)"
-echo "   🔍 Elasticsearch:    http://localhost:9200"
-echo "   📊 Kibana:           http://localhost:5601"
-echo ""
-echo "📝 Logs are available in the logs/ directory"
-echo "🛑 To stop all services, run: ./stop_services.sh"
+echo "=== NexaFi Backend Startup Summary ==="
+
+if [ ${#failed_services[@]} -eq 0 ]; then
+    echo -e "${GREEN}All services started successfully!${NC}"
+    echo ""
+    echo "Service URLs:"
+    echo "  API Gateway:         http://localhost:5000"
+    echo "  User Service:        http://localhost:5001"
+    echo "  Ledger Service:      http://localhost:5002"
+    echo "  Payment Service:     http://localhost:5003"
+    echo "  AI Service:          http://localhost:5004"
+    echo "  Compliance Service:  http://localhost:5005"
+    echo "  Notification Service: http://localhost:5006"
+    echo ""
+    echo "Health Check: curl http://localhost:5000/health"
+    echo "Service List: curl http://localhost:5000/api/v1/services"
+    echo ""
+    echo "Logs are available in the logs/ directory"
+    echo "To stop all services, run: ./stop_services.sh"
+else
+    echo -e "${RED}Some services failed to start:${NC}"
+    for service in "${failed_services[@]}"; do
+        echo -e "  ${RED}- $service${NC}"
+    done
+    echo ""
+    echo "Check the logs in the logs/ directory for more details"
+    exit 1
+fi
 
