@@ -8,9 +8,8 @@ from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
 
 @pytest.fixture
 def default_circuit_breaker():
-    # Reset InfrastructureConfig to default values for consistent testing
-    with patch.object(InfrastructureConfig, \'CIRCUIT_BREAKER_FAILURE_THRESHOLD\', 3), \
-         patch.object(InfrastructureConfig, \'CIRCUIT_BREAKER_RECOVERY_TIMEOUT\', 5):
+    with (patch.object(InfrastructureConfig, 'CIRCUIT_BREAKER_FAILURE_THRESHOLD', 3),
+          patch.object(InfrastructureConfig, 'CIRCUIT_BREAKER_RECOVERY_TIMEOUT', 5)):
         yield CircuitBreaker()
 
 class TestCircuitBreaker:
