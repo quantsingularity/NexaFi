@@ -1,4 +1,4 @@
-# NexaFi Enhanced Backend - Financial Industry Standards Implementation
+# NexaFi Backend
 
 ## Overview
 
