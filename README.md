@@ -10,23 +10,92 @@ NexaFi is a revolutionary AI-powered financial operating system that transforms 
 
 > **Note**: This project is under active development with continuous integration and deployment. Features and functionalities are being enhanced through agile development cycles to improve financial operations capabilities, security posture, and user experience.
 
-* Overview
-* Core Value Proposition
-* Key Features
-* Technical Architecture
-* Technology Stack
-* System Design Principles
-* Project Structure
-* Deployment Architecture
-* Installation & Setup
-* API Documentation
-* Use Cases & Implementation Scenarios
-* Security & Compliance Framework
-* Performance Benchmarks
-* AI/ML Model Documentation
-* Roadmap & Future Development
-* Contributing Guidelines
-* License & Legal Information
+## Table of Contents
+
+- [Overview](#overview)
+- [Core Value Proposition](#core-value-proposition)
+- [Key Features](#key-features)
+  - [Advanced Financial Management & Accounting](#advanced-financial-management-accounting)
+  - [Next-Generation Payment Infrastructure](#next-generation-payment-infrastructure)
+  - [Conversational AI Advisory System](#conversational-ai-advisory-system)
+  - [Algorithmic Credit & Lending Platform](#algorithmic-credit-lending-platform)
+  - [Advanced Analytics & Business Intelligence](#advanced-analytics-business-intelligence)
+- [Technical Architecture](#technical-architecture)
+  - [Key Architectural Principles](#key-architectural-principles)
+    - [Microservices & Domain-Driven Design](#microservices-domain-driven-design)
+    - [Event-Driven Communication](#event-driven-communication)
+    - [Advanced Data Management](#advanced-data-management)
+    - [AI/ML Infrastructure](#aiml-infrastructure)
+    - [Security by Design](#security-by-design)
+    - [High Availability & Disaster Recovery](#high-availability-disaster-recovery)
+- [Technology Stack](#technology-stack)
+  - [Backend Technologies](#backend-technologies)
+  - [Frontend Technologies](#frontend-technologies)
+  - [AI/ML Technologies](#aiml-technologies)
+  - [Infrastructure & DevOps](#infrastructure-devops)
+- [System Design Principles](#system-design-principles)
+  - [Code Quality Standards](#code-quality-standards)
+  - [Architectural Governance](#architectural-governance)
+  - [Operational Excellence](#operational-excellence)
+- [Project Structure](#project-structure)
+- [Deployment Architecture](#deployment-architecture)
+  - [Environment Strategy](#environment-strategy)
+  - [Infrastructure Topology](#infrastructure-topology)
+  - [Key Infrastructure Components](#key-infrastructure-components)
+  - [Deployment Process](#deployment-process)
+- [Installation & Setup](#installation-setup)
+  - [Prerequisites](#prerequisites)
+  - [Quick Setup (Development)](#quick-setup-development)
+- [Clone the repository](#clone-the-repository)
+- [Run the setup script (installs dependencies and configures local environment)](#run-the-setup-script-installs-dependencies-and-configures-local-environment)
+- [Start the development environment with Docker Compose](#start-the-development-environment-with-docker-compose)
+- [In a separate terminal, initialize the database](#in-a-separate-terminal-initialize-the-database)
+- [Start the web frontend development server](#start-the-web-frontend-development-server)
+- [Access the development environment](#access-the-development-environment)
+- [- Web Dashboard: http://localhost:3000](#--web-dashboard-httplocalhost3000)
+- [- API Documentation: http://localhost:8080/api-docs](#--api-documentation-httplocalhost8080api-docs)
+- [- Monitoring Dashboard: http://localhost:9090](#--monitoring-dashboard-httplocalhost9090)
+  - [Production Deployment](#production-deployment)
+- [Configure access to your Kubernetes cluster](#configure-access-to-your-kubernetes-cluster)
+- [Deploy infrastructure dependencies](#deploy-infrastructure-dependencies)
+- [Deploy application components](#deploy-application-components)
+- [Verify deployment](#verify-deployment)
+- [API Documentation](#api-documentation)
+  - [REST APIs](#rest-apis)
+  - [GraphQL API](#graphql-api)
+  - [Webhooks](#webhooks)
+- [Use Cases & Implementation Scenarios](#use-cases-implementation-scenarios)
+  - [Small Business Owner](#small-business-owner)
+  - [E-commerce Business](#e-commerce-business)
+  - [Professional Services Firm](#professional-services-firm)
+- [Security & Compliance Framework](#security-compliance-framework)
+  - [Security Architecture](#security-architecture)
+  - [Compliance Controls](#compliance-controls)
+  - [Security Operations](#security-operations)
+- [Performance Benchmarks](#performance-benchmarks)
+  - [API Performance](#api-performance)
+  - [ML Model Performance](#ml-model-performance)
+  - [Scalability Metrics](#scalability-metrics)
+  - [Reliability Metrics](#reliability-metrics)
+- [AI/ML Model Documentation](#aiml-model-documentation)
+  - [Cash Flow Forecasting Model](#cash-flow-forecasting-model)
+  - [Credit Risk Assessment Model](#credit-risk-assessment-model)
+  - [Intelligent Document Processing](#intelligent-document-processing)
+  - [Anomaly Detection System](#anomaly-detection-system)
+  - [Conversational AI Assistant](#conversational-ai-assistant)
+- [Roadmap & Future Development](#roadmap-future-development)
+  - [Q3 2025](#q3-2025)
+  - [Q4 2025](#q4-2025)
+  - [2026 and Beyond](#2026-and-beyond)
+- [Contributing Guidelines](#contributing-guidelines)
+  - [Getting Started](#getting-started)
+  - [Development Workflow](#development-workflow)
+  - [Code Standards](#code-standards)
+  - [Review Process](#review-process)
+- [License & Legal Information](#license-legal-information)
+  - [Third-Party Components](#third-party-components)
+  - [Trademark Notice](#trademark-notice)
+  - [Data Privacy](#data-privacy)
 
 ## Overview
 
