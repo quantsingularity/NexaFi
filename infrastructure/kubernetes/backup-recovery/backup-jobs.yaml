@@ -1,13 +1,312 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: backup-recovery
+  labels:
+    app: backup-system
+    component: data-protection
+data:
+  backup-policy.yaml: |
+    policies:
+      - name: "financial-data-policy"
+        description: "Critical financial data backup policy"
+        retention:
+          daily: 30
+          weekly: 12
+          monthly: 84  # 7 years for compliance
+          yearly: 7
+        encryption: true
+        compression: true
+        verification: true
+        rpo_minutes: 15  # Recovery Point Objective
+        rto_minutes: 60  # Recovery Time Objective
+        
+      - name: "user-data-policy"
+        description: "User data backup policy"
+        retention:
+          daily: 7
+          weekly: 4
+          monthly: 12
+          yearly: 3
+        encryption: true
+        compression: true
+        verification: true
+        rpo_minutes: 60
+        rto_minutes: 120
+        
+      - name: "system-config-policy"
+        description: "System configuration backup policy"
+        retention:
+          daily: 14
+          weekly: 8
+          monthly: 6
+        encryption: true
+        compression: true
+        verification: true
+        rpo_minutes: 240
+        rto_minutes: 30
+
+  backup-schedule.yaml: |
+    schedules:
+      - name: "financial-db-backup"
+        policy: "financial-data-policy"
+        source: "postgresql://financial-db.database.svc.cluster.local:5432/financial"
+        destination: "s3://nexafi-backups-primary/financial-db"
+        schedule: "0 */4 * * *"  # Every 4 hours
+        type: "database"
+        
+      - name: "user-db-backup"
+        policy: "user-data-policy"
+        source: "postgresql://user-db.database.svc.cluster.local:5432/users"
+        destination: "s3://nexafi-backups-primary/user-db"
+        schedule: "0 2 * * *"  # Daily at 2 AM
+        type: "database"
+        
+      - name: "vault-backup"
+        policy: "system-config-policy"
+        source: "consul://consul.security.svc.cluster.local:8500/vault"
+        destination: "s3://nexafi-backups-primary/vault"
+        schedule: "0 1 * * *"  # Daily at 1 AM
+        type: "consul"
+        
+      - name: "kubernetes-etcd-backup"
+        policy: "system-config-policy"
+        source: "etcd"
+        destination: "s3://nexafi-backups-primary/etcd"
+        schedule: "0 0 * * *"  # Daily at midnight
+        type: "etcd"
+
+  restore-procedures.yaml: |
+    procedures:
+      - name: "financial-db-restore"
+        description: "Restore financial database from backup"
+        steps:
+          - "Verify backup integrity"
+          - "Stop financial services"
+          - "Create database snapshot"
+          - "Restore from backup"
+          - "Verify data integrity"
+          - "Start financial services"
+          - "Run smoke tests"
+        estimated_time_minutes: 45
+        
+      - name: "disaster-recovery"
+        description: "Full disaster recovery procedure"
+        steps:
+          - "Activate secondary region"
+          - "Restore etcd cluster"
+          - "Restore Vault data"
+          - "Restore databases"
+          - "Restore application data"
+          - "Update DNS records"
+          - "Verify all services"
+        estimated_time_minutes: 180
+
+  monitoring.yaml: |
+    metrics:
+      - backup_job_duration_seconds
+      - backup_job_success_total
+      - backup_job_failure_total
+      - backup_size_bytes
+      - restore_job_duration_seconds
+      - restore_job_success_total
+      - restore_job_failure_total
+      - backup_verification_success_total
+      - backup_verification_failure_total
+    
+    alerts:
+      - name: "BackupJobFailed"
+        condition: "backup_job_failure_total > 0"
+        severity: "critical"
+      - name: "BackupJobTooLong"
+        condition: "backup_job_duration_seconds > 3600"
+        severity: "warning"
+      - name: "BackupVerificationFailed"
+        condition: "backup_verification_failure_total > 0"
+        severity: "critical"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-controller
+  namespace: backup-recovery
+  labels:
+    app: backup-controller
+    component: data-protection
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backup-controller
+  template:
+    metadata:
+      labels:
+        app: backup-controller
+        component: data-protection
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: backup-recovery-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: backup-controller
+        image: nexafi/backup-controller:latest
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        env:
+        - name: PORT
+          value: "8080"
+        - name: METRICS_PORT
+          value: "9090"
+        - name: AWS_REGION
+          value: "us-west-2"
+        - name: S3_BUCKET_PRIMARY
+          value: "nexafi-backups-primary"
+        - name: S3_BUCKET_SECONDARY
+          value: "nexafi-backups-secondary"
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backup-encryption
+              key: key
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: backup-db-secret
+              key: url
+        - name: VAULT_ADDR
+          value: "https://vault.security.svc.cluster.local:8200"
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vault-token
+              key: token
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: backup-alerts
+              key: slack_webhook
+        - name: EMAIL_SMTP_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backup-config
+              key: smtp_host
+        - name: EMAIL_FROM
+          value: "backups@nexafi.com"
+        - name: BACKUP_VERIFICATION_ENABLED
+          value: "true"
+        - name: CROSS_REGION_REPLICATION
+          value: "true"
+        - name: BACKUP_RETENTION_CHECK_INTERVAL
+          value: "24h"
+        - name: LOG_LEVEL
+          value: "INFO"
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: backup-cache
+          mountPath: /app/cache
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: backup-config
+      - name: backup-cache
+        emptyDir:
+          sizeLimit: 10Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - backup-controller
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-controller
+  namespace: backup-recovery
+  labels:
+    app: backup-controller
+    component: data-protection
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: backup-controller
+---
+# Financial Database Backup CronJob
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: database-backup
-  namespace: nexafi
+  name: financial-db-backup
+  namespace: backup-recovery
   labels:
-    app: database-backup
-    tier: backup
+    app: financial-db-backup
+    component: data-protection
+    backup-type: database
 spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
+  schedule: "0 */4 * * *"  # Every 4 hours
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -16,94 +315,108 @@ spec:
       template:
         metadata:
           labels:
-            app: database-backup
-            tier: backup
+            app: financial-db-backup
+            component: data-protection
         spec:
-          restartPolicy: OnFailure
+          serviceAccountName: backup-recovery-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
           containers:
-          - name: postgres-backup
-            image: postgres:15
-            env:
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: password
-            - name: PGUSER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: username
-            - name: PGHOST
-              value: "postgres-service"
-            - name: PGPORT
-              value: "5432"
-            - name: BACKUP_RETENTION_DAYS
-              value: "30"
-            command:
-            - /bin/bash
-            - -c
-            - |
-              set -e
-              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-              BACKUP_FILE="/backup/nexafi_backup_${TIMESTAMP}.sql"
-              
-              echo "Starting database backup at $(date)"
-              pg_dumpall -h $PGHOST -p $PGPORT -U $PGUSER > $BACKUP_FILE
-              
-              if [ $? -eq 0 ]; then
-                echo "Backup completed successfully: $BACKUP_FILE"
-                gzip $BACKUP_FILE
-                
-                # Upload to cloud storage (AWS S3, GCS, etc.)
-                aws s3 cp ${BACKUP_FILE}.gz s3://nexafi-backups/database/
-                
-                # Clean up old backups
-                find /backup -name "nexafi_backup_*.sql.gz" -mtime +$BACKUP_RETENTION_DAYS -delete
-                
-                echo "Backup process completed at $(date)"
-              else
-                echo "Backup failed at $(date)"
-                exit 1
-              fi
-            resources:
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
-              limits:
-                memory: "512Mi"
-                cpu: "500m"
+          - name: pg-backup
+            image: postgres:15-alpine
+            imagePullPolicy: IfNotPresent
             securityContext:
-              runAsNonRoot: true
-              runAsUser: 999
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
                 drop:
                 - ALL
+            env:
+            - name: PGHOST
+              value: "financial-db.database.svc.cluster.local"
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: "financial"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: financial-db-backup-secret
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: financial-db-backup-secret
+                  key: password
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-secret
+                  key: access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-secret
+                  key: secret_access_key
+            - name: AWS_DEFAULT_REGION
+              value: "us-west-2"
+            - name: S3_BUCKET
+              value: "nexafi-backups-primary"
+            - name: BACKUP_NAME
+              value: "financial-db-$(date +%Y%m%d-%H%M%S)"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Starting financial database backup..."
+              
+              # Create backup
+              pg_dump --verbose --no-password --format=custom --compress=9 \
+                --file=/tmp/backup.dump
+              
+              # Encrypt backup
+              openssl enc -aes-256-cbc -salt -in /tmp/backup.dump \
+                -out /tmp/backup.dump.enc -k "$ENCRYPTION_KEY"
+              
+              # Upload to S3
+              aws s3 cp /tmp/backup.dump.enc \
+                s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
+              
+              # Verify backup
+              aws s3 ls s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
+              
+              echo "Financial database backup completed successfully"
             volumeMounts:
-            - name: backup-storage
-              mountPath: /backup
             - name: tmp
               mountPath: /tmp
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
           volumes:
-          - name: backup-storage
-            persistentVolumeClaim:
-              claimName: backup-storage-pvc
           - name: tmp
             emptyDir: {}
-          serviceAccountName: backup-service-sa
+          restartPolicy: OnFailure
 ---
+# Vault Backup CronJob
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: etcd-backup
-  namespace: nexafi-infra
+  name: vault-backup
+  namespace: backup-recovery
   labels:
-    app: etcd-backup
-    tier: backup
+    app: vault-backup
+    component: data-protection
+    backup-type: vault
 spec:
-  schedule: "0 3 * * *"  # Daily at 3 AM
+  schedule: "0 1 * * *"  # Daily at 1 AM
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -112,48 +425,74 @@ spec:
       template:
         metadata:
           labels:
-            app: etcd-backup
-            tier: backup
+            app: vault-backup
+            component: data-protection
         spec:
-          restartPolicy: OnFailure
+          serviceAccountName: backup-recovery-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
           containers:
-          - name: etcd-backup
-            image: quay.io/coreos/etcd:v3.5.9
+          - name: vault-backup
+            image: hashicorp/vault:1.15.2
+            imagePullPolicy: IfNotPresent
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
             env:
-            - name: ETCDCTL_API
-              value: "3"
-            - name: ETCD_ENDPOINTS
-              value: "https://etcd:2379"
+            - name: VAULT_ADDR
+              value: "https://vault.security.svc.cluster.local:8200"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-backup-token
+                  key: token
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-secret
+                  key: access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-secret
+                  key: secret_access_key
+            - name: AWS_DEFAULT_REGION
+              value: "us-west-2"
+            - name: S3_BUCKET
+              value: "nexafi-backups-primary"
+            - name: BACKUP_NAME
+              value: "vault-$(date +%Y%m%d-%H%M%S)"
             command:
             - /bin/sh
             - -c
             - |
               set -e
-              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-              BACKUP_FILE="/backup/etcd_backup_${TIMESTAMP}.db"
+              echo "Starting Vault backup..."
               
-              echo "Starting etcd backup at $(date)"
-              etcdctl --endpoints=$ETCD_ENDPOINTS \
-                     --cacert=/etc/ssl/etcd/ca.crt \
-                     --cert=/etc/ssl/etcd/client.crt \
-                     --key=/etc/ssl/etcd/client.key \
-                     snapshot save $BACKUP_FILE
+              # Create Vault snapshot
+              vault operator raft snapshot save /tmp/vault-snapshot.snap
               
-              if [ $? -eq 0 ]; then
-                echo "etcd backup completed successfully: $BACKUP_FILE"
-                gzip $BACKUP_FILE
-                
-                # Upload to cloud storage
-                aws s3 cp ${BACKUP_FILE}.gz s3://nexafi-backups/etcd/
-                
-                # Clean up old backups (keep 7 days)
-                find /backup -name "etcd_backup_*.db.gz" -mtime +7 -delete
-                
-                echo "etcd backup process completed at $(date)"
-              else
-                echo "etcd backup failed at $(date)"
-                exit 1
-              fi
+              # Encrypt snapshot
+              openssl enc -aes-256-cbc -salt -in /tmp/vault-snapshot.snap \
+                -out /tmp/vault-snapshot.snap.enc -k "$ENCRYPTION_KEY"
+              
+              # Upload to S3
+              aws s3 cp /tmp/vault-snapshot.snap.enc \
+                s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
+              
+              # Verify backup
+              aws s3 ls s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
+              
+              echo "Vault backup completed successfully"
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             resources:
               requests:
                 memory: "128Mi"
@@ -161,60 +500,101 @@ spec:
               limits:
                 memory: "256Mi"
                 cpu: "200m"
+          volumes:
+          - name: tmp
+            emptyDir: {}
+          restartPolicy: OnFailure
+---
+# Backup Verification Job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-verification
+  namespace: backup-recovery
+  labels:
+    app: backup-verification
+    component: data-protection
+spec:
+  schedule: "0 6 * * *"  # Daily at 6 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: backup-verification
+            component: data-protection
+        spec:
+          serviceAccountName: backup-recovery-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+          - name: backup-verifier
+            image: nexafi/backup-verifier:latest
+            imagePullPolicy: Always
             securityContext:
-              runAsNonRoot: true
-              runAsUser: 1000
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities:
                 drop:
                 - ALL
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-secret
+                  key: access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-s3-secret
+                  key: secret_access_key
+            - name: AWS_DEFAULT_REGION
+              value: "us-west-2"
+            - name: S3_BUCKET_PRIMARY
+              value: "nexafi-backups-primary"
+            - name: S3_BUCKET_SECONDARY
+              value: "nexafi-backups-secondary"
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-encryption
+                  key: key
+            - name: VERIFICATION_SAMPLE_SIZE
+              value: "10"  # Verify 10 random backups
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backup-alerts
+                  key: slack_webhook
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Starting backup verification..."
+              
+              # Run backup verification script
+              /app/verify-backups.sh
+              
+              echo "Backup verification completed"
             volumeMounts:
-            - name: backup-storage
-              mountPath: /backup
-            - name: etcd-certs
-              mountPath: /etc/ssl/etcd
-              readOnly: true
             - name: tmp
               mountPath: /tmp
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
           volumes:
-          - name: backup-storage
-            persistentVolumeClaim:
-              claimName: backup-storage-pvc
-          - name: etcd-certs
-            secret:
-              secretName: etcd-certs
           - name: tmp
             emptyDir: {}
-          serviceAccountName: backup-service-sa
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: backup-service-sa
-  namespace: nexafi
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: nexafi
-  name: backup-service-role
-rules:
-- apiGroups: [""]
-  resources: ["pods", "services", "persistentvolumeclaims"]
-  verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: backup-service-rolebinding
-  namespace: nexafi
-subjects:
-- kind: ServiceAccount
-  name: backup-service-sa
-  namespace: nexafi
-roleRef:
-  kind: Role
-  name: backup-service-role
-  apiGroup: rbac.authorization.k8s.io
+          restartPolicy: OnFailure
 

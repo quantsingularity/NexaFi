@@ -1,12 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: security
+data:
+  vault.hcl: |
+    ui = true
+    
+    listener "tcp" {
+      address = "0.0.0.0:8200"
+      tls_disable = false
+      tls_cert_file = "/vault/tls/tls.crt"
+      tls_key_file = "/vault/tls/tls.key"
+      tls_min_version = "tls12"
+      tls_cipher_suites = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+    }
+    
+    storage "consul" {
+      address = "consul:8500"
+      path = "vault/"
+      consistency_mode = "strong"
+      disable_clustering = "false"
+      max_parallel = "128"
+    }
+    
+    seal "awskms" {
+      region = "us-west-2"
+      kms_key_id = "alias/vault-unseal-key"
+      endpoint = "https://kms.us-west-2.amazonaws.com"
+    }
+    
+    api_addr = "https://vault.nexafi.internal:8200"
+    cluster_addr = "https://vault.nexafi.internal:8201"
+    
+    # Enable audit logging
+    audit {
+      file {
+        file_path = "/vault/logs/audit.log"
+        log_raw = false
+        hmac_accessor = true
+        mode = 0600
+        format = "json"
+      }
+    }
+    
+    # Performance and security tuning
+    max_lease_ttl = "768h"
+    default_lease_ttl = "168h"
+    cluster_name = "nexafi-vault"
+    cache_size = "32000"
+    disable_cache = false
+    disable_mlock = false
+    disable_printable_check = false
+    
+    # Enable Prometheus metrics
+    telemetry {
+      prometheus_retention_time = "30s"
+      disable_hostname = true
+    }
+---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: vault
-  namespace: nexafi-infra
+  namespace: security
   labels:
     app: vault
-    tier: security
+    component: security
 spec:
+  serviceName: vault
   replicas: 3
   selector:
     matchLabels:
@@ -15,53 +77,27 @@ spec:
     metadata:
       labels:
         app: vault
-        tier: security
+        component: security
     spec:
+      serviceAccountName: vault
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name: vault
-        image: vault:1.15.2
-        ports:
-        - containerPort: 8200
-        env:
-        - name: VAULT_ADDR
-          value: "http://127.0.0.1:8200"
-        - name: VAULT_API_ADDR
-          value: "http://vault:8200"
-        - name: VAULT_CLUSTER_ADDR
-          value: "https://vault:8201"
-        - name: VAULT_RAFT_NODE_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        image: hashicorp/vault:1.15.2
+        imagePullPolicy: IfNotPresent
+        command:
+        - "/bin/sh"
+        - "-ec"
         args:
-        - "vault"
-        - "server"
-        - "-config=/vault/config/vault.hcl"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /v1/sys/health?standbyok=true
-            port: 8200
-            scheme: HTTP
-          initialDelaySeconds: 60
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
-            port: 8200
-            scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - |
+          cp /vault/config/vault.hcl /tmp/vault.hcl
+          sed -E "s/HOST_IP/${HOST_IP?}/g" /tmp/vault.hcl > /tmp/vault-final.hcl
+          vault server -config=/tmp/vault-final.hcl
         securityContext:
-          runAsNonRoot: true
-          runAsUser: 100
-          runAsGroup: 1000
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
@@ -69,94 +105,178 @@ spec:
             - ALL
             add:
             - IPC_LOCK
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: VAULT_K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VAULT_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: VAULT_ADDR
+          value: "https://127.0.0.1:8200"
+        - name: VAULT_API_ADDR
+          value: "https://$(POD_IP):8200"
+        - name: SKIP_CHOWN
+          value: "true"
+        - name: SKIP_SETCAP
+          value: "true"
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: VAULT_CLUSTER_ADDR
+          value: "https://$(HOSTNAME).vault:8201"
+        - name: VAULT_LOG_LEVEL
+          value: "info"
+        - name: VAULT_LOG_FORMAT
+          value: "json"
         volumeMounts:
-        - name: vault-config
+        - name: config
           mountPath: /vault/config
+        - name: tls
+          mountPath: /vault/tls
           readOnly: true
-        - name: vault-data
+        - name: data
           mountPath: /vault/data
-        - name: vault-logs
+        - name: logs
           mountPath: /vault/logs
+        - name: tmp
+          mountPath: /tmp
+        ports:
+        - containerPort: 8200
+          name: http
+          protocol: TCP
+        - containerPort: 8201
+          name: https-internal
+          protocol: TCP
+        - containerPort: 8202
+          name: http-rep
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+          failureThreshold: 2
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        livenessProbe:
+          exec:
+            command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+          failureThreshold: 2
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
       volumes:
-      - name: vault-config
+      - name: config
         configMap:
           name: vault-config
-      - name: vault-data
-        persistentVolumeClaim:
-          claimName: vault-data-pvc
-      - name: vault-logs
+      - name: tls
+        secret:
+          secretName: vault-tls
+          defaultMode: 0400
+      - name: tmp
         emptyDir: {}
-      serviceAccountName: vault-sa
-      securityContext:
-        fsGroup: 1000
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: gp3-encrypted
+      resources:
+        requests:
+          storage: 10Gi
+  - metadata:
+      name: logs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: gp3-encrypted
+      resources:
+        requests:
+          storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: vault
-  namespace: nexafi-infra
+  namespace: security
   labels:
     app: vault
+    component: security
 spec:
-  selector:
-    app: vault
+  type: ClusterIP
   ports:
-  - name: vault-port
+  - name: http
     port: 8200
     targetPort: 8200
     protocol: TCP
-  - name: vault-cluster-port
+  - name: https-internal
     port: 8201
     targetPort: 8201
     protocol: TCP
-  type: ClusterIP
+  selector:
+    app: vault
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vault-sa
-  namespace: nexafi-infra
+  name: vault
+  namespace: security
+  labels:
+    app: vault
+    component: security
 ---
-apiVersion: v1
-kind: ConfigMap
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: vault-config
-  namespace: nexafi-infra
-data:
-  vault.hcl: |
-    ui = true
-    
-    listener "tcp" {
-      address = "0.0.0.0:8200"
-      tls_disable = 1
-    }
-    
-    storage "raft" {
-      path = "/vault/data"
-      node_id = "VAULT_RAFT_NODE_ID"
-      
-      retry_join {
-        leader_api_addr = "http://vault-0.vault:8200"
-      }
-      retry_join {
-        leader_api_addr = "http://vault-1.vault:8200"
-      }
-      retry_join {
-        leader_api_addr = "http://vault-2.vault:8200"
-      }
-    }
-    
-    api_addr = "http://vault:8200"
-    cluster_addr = "https://vault:8201"
-    
-    log_level = "INFO"
-    log_format = "json"
-    
-    seal "transit" {
-      address = "https://vault.example.com:8200"
-      disable_renewal = "false"
-      key_name = "autounseal"
-      mount_path = "transit/"
-      tls_skip_verify = "false"
-    }
+  name: vault
+  labels:
+    app: vault
+    component: security
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create", "get", "update", "delete"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault
+  labels:
+    app: vault
+    component: security
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vault
+subjects:
+- kind: ServiceAccount
+  name: vault
+  namespace: security
 

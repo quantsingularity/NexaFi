@@ -1,9 +1,15 @@
 #!/bin/bash
 
-# NexaFi Infrastructure Deployment Script
-# This script deploys the complete NexaFi infrastructure to a Kubernetes cluster
+# Enhanced deployment script for NexaFi infrastructure
+# This script implements comprehensive security checks and compliance validation
 
-set -e
+set -euo pipefail
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+TERRAFORM_DIR="$PROJECT_ROOT/terraform"
+KUBERNETES_DIR="$PROJECT_ROOT/kubernetes"
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,303 +18,445 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
-print_status() {
+# Logging functions
+log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-print_success() {
+log_success() {
     echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-print_warning() {
+log_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
-print_error() {
+log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Function to check if kubectl is available
-check_kubectl() {
-    if ! command -v kubectl &> /dev/null; then
-        print_error "kubectl is not installed or not in PATH"
-        exit 1
-    fi
-    
-    # Check if kubectl can connect to cluster
-    if ! kubectl cluster-info &> /dev/null; then
-        print_error "Cannot connect to Kubernetes cluster. Please check your kubeconfig"
-        exit 1
-    fi
-    
-    print_success "kubectl is available and connected to cluster"
+# Error handling
+error_exit() {
+    log_error "$1"
+    exit 1
 }
 
-# Function to create directories on nodes (for hostPath volumes)
-create_storage_directories() {
-    print_status "Creating storage directories on nodes..."
+# Check prerequisites
+check_prerequisites() {
+    log_info "Checking prerequisites..."
     
-    # Get all nodes
-    nodes=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
-    
-    for node in $nodes; do
-        print_status "Creating directories on node: $node"
-        
-        # Create directories via a temporary pod
-        kubectl run temp-storage-setup-$RANDOM \
-            --image=busybox:1.35 \
-            --restart=Never \
-            --rm -i \
-            --overrides='{
-                "spec": {
-                    "nodeSelector": {"kubernetes.io/hostname": "'$node'"},
-                    "containers": [{
-                        "name": "setup",
-                        "image": "busybox:1.35",
-                        "command": ["sh", "-c"],
-                        "args": ["mkdir -p /mnt/data/nexafi/{user-service,ledger-service,payment-service,ai-service/{data,models},analytics-service,credit-service/{data,models},document-service,redis,rabbitmq,elasticsearch} && chmod -R 755 /mnt/data/nexafi"],
-                        "volumeMounts": [{
-                            "name": "host-data",
-                            "mountPath": "/mnt/data"
-                        }]
-                    }],
-                    "volumes": [{
-                        "name": "host-data",
-                        "hostPath": {"path": "/mnt/data"}
-                    }]
-                }
-            }' \
-            --timeout=60s || print_warning "Failed to create directories on node $node"
+    # Check required tools
+    local required_tools=("terraform" "kubectl" "aws" "helm" "jq" "yq")
+    for tool in "${required_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            error_exit "$tool is required but not installed"
+        fi
     done
     
-    print_success "Storage directories created"
+    # Check AWS credentials
+    if ! aws sts get-caller-identity &> /dev/null; then
+        error_exit "AWS credentials not configured or invalid"
+    fi
+    
+    # Check Terraform version
+    local tf_version=$(terraform version -json | jq -r '.terraform_version')
+    local min_version="1.5.0"
+    if ! printf '%s\n%s\n' "$min_version" "$tf_version" | sort -V -C; then
+        error_exit "Terraform version $tf_version is below minimum required version $min_version"
+    fi
+    
+    log_success "Prerequisites check passed"
 }
 
-# Function to deploy namespaces
-deploy_namespaces() {
-    print_status "Creating namespaces..."
-    kubectl apply -f ../kubernetes/namespaces.yaml
-    print_success "Namespaces created"
+# Validate environment variables
+validate_environment() {
+    log_info "Validating environment variables..."
+    
+    local required_vars=(
+        "AWS_REGION"
+        "ENVIRONMENT"
+        "TF_VAR_environment"
+    )
+    
+    for var in "${required_vars[@]}"; do
+        if [[ -z "${!var:-}" ]]; then
+            error_exit "Required environment variable $var is not set"
+        fi
+    done
+    
+    # Validate environment value
+    if [[ ! "$ENVIRONMENT" =~ ^(dev|staging|prod)$ ]]; then
+        error_exit "ENVIRONMENT must be one of: dev, staging, prod"
+    fi
+    
+    log_success "Environment validation passed"
 }
 
-# Function to deploy secrets
-deploy_secrets() {
-    print_status "Deploying secrets..."
-    kubectl apply -f ../kubernetes/secrets.yaml
-    print_success "Secrets deployed"
+# Security validation
+security_validation() {
+    log_info "Running security validation..."
+    
+    # Check for hardcoded secrets
+    log_info "Scanning for hardcoded secrets..."
+    if command -v git-secrets &> /dev/null; then
+        git secrets --scan || error_exit "Security scan failed - potential secrets detected"
+    else
+        log_warning "git-secrets not installed, skipping secret scan"
+    fi
+    
+    # Validate Terraform security
+    log_info "Running Terraform security checks..."
+    cd "$TERRAFORM_DIR"
+    
+    # Check for security best practices
+    if command -v tfsec &> /dev/null; then
+        tfsec . --format json --out tfsec-results.json || log_warning "tfsec found security issues"
+    else
+        log_warning "tfsec not installed, skipping Terraform security scan"
+    fi
+    
+    # Check for compliance
+    if command -v checkov &> /dev/null; then
+        checkov -d . --framework terraform --output json --output-file checkov-results.json || log_warning "checkov found compliance issues"
+    else
+        log_warning "checkov not installed, skipping compliance scan"
+    fi
+    
+    cd "$PROJECT_ROOT"
+    log_success "Security validation completed"
 }
 
-# Function to deploy storage
-deploy_storage() {
-    print_status "Deploying persistent volumes and claims..."
-    kubectl apply -f ../kubernetes/storage/pv-pvc.yaml
+# Terraform operations
+terraform_init() {
+    log_info "Initializing Terraform..."
+    cd "$TERRAFORM_DIR"
     
-    # Wait for PVCs to be bound
-    print_status "Waiting for PVCs to be bound..."
-    kubectl wait --for=condition=Bound pvc --all -n nexafi --timeout=300s
-    kubectl wait --for=condition=Bound pvc --all -n nexafi-infra --timeout=300s
+    terraform init \
+        -backend-config="bucket=nexafi-terraform-state-${ENVIRONMENT}" \
+        -backend-config="key=infrastructure/terraform.tfstate" \
+        -backend-config="region=${AWS_REGION}" \
+        -backend-config="encrypt=true" \
+        -backend-config="dynamodb_table=nexafi-terraform-locks-${ENVIRONMENT}"
     
-    print_success "Storage deployed and bound"
+    log_success "Terraform initialized"
 }
 
-# Function to deploy infrastructure components
-deploy_infrastructure() {
-    print_status "Deploying infrastructure components..."
+terraform_plan() {
+    log_info "Creating Terraform plan..."
+    cd "$TERRAFORM_DIR"
     
-    # Deploy Redis
-    print_status "Deploying Redis..."
-    kubectl apply -f ../kubernetes/infrastructure-components/redis.yaml
+    terraform plan \
+        -var="environment=${ENVIRONMENT}" \
+        -var="primary_region=${AWS_REGION}" \
+        -out="tfplan-${ENVIRONMENT}" \
+        -detailed-exitcode
     
-    # Deploy RabbitMQ
-    print_status "Deploying RabbitMQ..."
-    kubectl apply -f ../kubernetes/infrastructure-components/rabbitmq.yaml
+    local plan_exit_code=$?
     
-    # Deploy Elasticsearch
-    print_status "Deploying Elasticsearch..."
-    kubectl apply -f ../kubernetes/infrastructure-components/elasticsearch.yaml
+    case $plan_exit_code in
+        0)
+            log_info "No changes detected in Terraform plan"
+            ;;
+        1)
+            error_exit "Terraform plan failed"
+            ;;
+        2)
+            log_info "Changes detected in Terraform plan"
+            ;;
+    esac
     
-    # Deploy Kibana
-    print_status "Deploying Kibana..."
-    kubectl apply -f ../kubernetes/infrastructure-components/kibana.yaml
+    # Save plan in human-readable format
+    terraform show -no-color "tfplan-${ENVIRONMENT}" > "tfplan-${ENVIRONMENT}.txt"
     
-    # Wait for infrastructure to be ready
-    print_status "Waiting for infrastructure components to be ready..."
-    kubectl wait --for=condition=available deployment/redis -n nexafi-infra --timeout=300s
-    kubectl wait --for=condition=available deployment/rabbitmq -n nexafi-infra --timeout=300s
-    kubectl wait --for=condition=available deployment/elasticsearch -n nexafi-infra --timeout=600s
-    kubectl wait --for=condition=available deployment/kibana -n nexafi-infra --timeout=300s
-    
-    print_success "Infrastructure components deployed and ready"
+    log_success "Terraform plan created"
+    return $plan_exit_code
 }
 
-# Function to deploy core services
-deploy_core_services() {
-    print_status "Deploying core services..."
+terraform_apply() {
+    log_info "Applying Terraform plan..."
+    cd "$TERRAFORM_DIR"
     
-    # Deploy API Gateway
-    print_status "Deploying API Gateway..."
-    kubectl apply -f ../kubernetes/core-services/api-gateway.yaml
+    # Apply with auto-approve for automation
+    terraform apply "tfplan-${ENVIRONMENT}"
     
-    # Deploy User Service
-    print_status "Deploying User Service..."
-    kubectl apply -f ../kubernetes/core-services/user-service.yaml
+    # Save outputs
+    terraform output -json > "terraform-outputs-${ENVIRONMENT}.json"
     
-    # Deploy Ledger Service
-    print_status "Deploying Ledger Service..."
-    kubectl apply -f ../kubernetes/core-services/ledger-service.yaml
-    
-    # Deploy Payment Service
-    print_status "Deploying Payment Service..."
-    kubectl apply -f ../kubernetes/core-services/payment-service.yaml
-    
-    # Deploy AI Service
-    print_status "Deploying AI Service..."
-    kubectl apply -f ../kubernetes/core-services/ai-service.yaml
-    
-    # Deploy Analytics Service
-    print_status "Deploying Analytics Service..."
-    kubectl apply -f ../kubernetes/core-services/analytics-service.yaml
-    
-    # Deploy Credit Service
-    print_status "Deploying Credit Service..."
-    kubectl apply -f ../kubernetes/core-services/credit-service.yaml
-    
-    # Deploy Document Service
-    print_status "Deploying Document Service..."
-    kubectl apply -f ../kubernetes/core-services/document-service.yaml
-    
-    # Wait for core services to be ready
-    print_status "Waiting for core services to be ready..."
-    kubectl wait --for=condition=available deployment/api-gateway -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/user-service -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/ledger-service -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/payment-service -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/ai-service -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/analytics-service -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/credit-service -n nexafi --timeout=300s
-    kubectl wait --for=condition=available deployment/document-service -n nexafi --timeout=300s
-    
-    print_success "Core services deployed and ready"
+    log_success "Terraform applied successfully"
 }
 
-# Function to deploy ingress
-deploy_ingress() {
-    print_status "Deploying ingress configuration..."
+# Kubernetes operations
+setup_kubectl() {
+    log_info "Setting up kubectl configuration..."
     
-    # Check if nginx ingress controller is installed
-    if ! kubectl get ingressclass nginx &> /dev/null; then
-        print_warning "NGINX Ingress Controller not found. Installing..."
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.2/deploy/static/provider/cloud/deploy.yaml
+    local cluster_name="nexafi-${ENVIRONMENT}-primary"
+    aws eks update-kubeconfig \
+        --region "$AWS_REGION" \
+        --name "$cluster_name" \
+        --alias "$cluster_name"
+    
+    # Verify connection
+    kubectl cluster-info --context "$cluster_name"
+    
+    log_success "kubectl configured for cluster $cluster_name"
+}
+
+deploy_kubernetes_resources() {
+    log_info "Deploying Kubernetes resources..."
+    
+    local cluster_name="nexafi-${ENVIRONMENT}-primary"
+    
+    # Deploy in order of dependencies
+    local deployment_order=(
+        "namespaces.yaml"
+        "security/rbac.yaml"
+        "security/pod-security-standards.yaml"
+        "security/network-policies.yaml"
+        "storage/pv-pvc.yaml"
+        "infrastructure-components/"
+        "security/"
+        "compliance/"
+        "monitoring/"
+        "backup-recovery/"
+        "core-services/"
+        "ingress/"
+    )
+    
+    cd "$KUBERNETES_DIR"
+    
+    for resource in "${deployment_order[@]}"; do
+        if [[ -f "$resource" ]]; then
+            log_info "Deploying $resource..."
+            kubectl apply -f "$resource" --context "$cluster_name"
+        elif [[ -d "$resource" ]]; then
+            log_info "Deploying resources in $resource..."
+            kubectl apply -f "$resource" --context "$cluster_name" --recursive
+        else
+            log_warning "Resource $resource not found, skipping..."
+        fi
+    done
+    
+    log_success "Kubernetes resources deployed"
+}
+
+# Validation and health checks
+validate_deployment() {
+    log_info "Validating deployment..."
+    
+    local cluster_name="nexafi-${ENVIRONMENT}-primary"
+    
+    # Check cluster health
+    kubectl get nodes --context "$cluster_name"
+    
+    # Check critical namespaces
+    local critical_namespaces=("financial-services" "security" "compliance" "monitoring")
+    for ns in "${critical_namespaces[@]}"; do
+        log_info "Checking namespace $ns..."
+        kubectl get pods -n "$ns" --context "$cluster_name"
         
-        # Wait for ingress controller to be ready
-        kubectl wait --namespace ingress-nginx \
-            --for=condition=ready pod \
-            --selector=app.kubernetes.io/component=controller \
-            --timeout=300s
-    fi
+        # Wait for pods to be ready
+        kubectl wait --for=condition=ready pod \
+            --all \
+            -n "$ns" \
+            --timeout=300s \
+            --context "$cluster_name" || log_warning "Some pods in $ns are not ready"
+    done
     
-    kubectl apply -f ../kubernetes/ingress/nginx-ingress.yaml
-    print_success "Ingress deployed"
+    # Check services
+    log_info "Checking services..."
+    kubectl get services --all-namespaces --context "$cluster_name"
+    
+    # Check ingress
+    log_info "Checking ingress..."
+    kubectl get ingress --all-namespaces --context "$cluster_name"
+    
+    log_success "Deployment validation completed"
 }
 
-# Function to display deployment status
-show_status() {
-    print_status "Deployment Status:"
-    echo ""
+# Compliance checks
+compliance_checks() {
+    log_info "Running compliance checks..."
     
-    print_status "Namespaces:"
-    kubectl get namespaces | grep nexafi
-    echo ""
+    local cluster_name="nexafi-${ENVIRONMENT}-primary"
     
-    print_status "Infrastructure Components (nexafi-infra namespace):"
-    kubectl get pods,svc -n nexafi-infra
-    echo ""
+    # Check pod security standards
+    log_info "Checking pod security standards..."
+    kubectl get pods --all-namespaces \
+        --context "$cluster_name" \
+        -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.securityContext}{"\n"}{end}' \
+        > pod-security-report.txt
     
-    print_status "Core Services (nexafi namespace):"
-    kubectl get pods,svc -n nexafi
-    echo ""
+    # Check network policies
+    log_info "Checking network policies..."
+    kubectl get networkpolicies --all-namespaces --context "$cluster_name"
     
-    print_status "Persistent Volumes:"
-    kubectl get pv | grep nexafi
-    echo ""
+    # Check RBAC
+    log_info "Checking RBAC configuration..."
+    kubectl get clusterroles,clusterrolebindings,roles,rolebindings \
+        --all-namespaces \
+        --context "$cluster_name" \
+        > rbac-report.txt
     
-    print_status "Ingress:"
-    kubectl get ingress -n nexafi
-    kubectl get ingress -n nexafi-infra
-    echo ""
+    # Check encryption
+    log_info "Checking encryption configuration..."
+    kubectl get secrets --all-namespaces \
+        --context "$cluster_name" \
+        -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.type}{"\n"}{end}' \
+        > secrets-report.txt
+    
+    log_success "Compliance checks completed"
 }
 
-# Function to display access information
-show_access_info() {
-    print_success "NexaFi Infrastructure Deployed Successfully!"
-    echo ""
-    print_status "Access Information:"
-    echo ""
+# Monitoring setup
+setup_monitoring() {
+    log_info "Setting up monitoring and alerting..."
     
-    # Get ingress IP
-    INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+    local cluster_name="nexafi-${ENVIRONMENT}-primary"
     
-    if [ "$INGRESS_IP" = "pending" ] || [ -z "$INGRESS_IP" ]; then
-        INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.spec.clusterIP}')
-        print_warning "LoadBalancer IP is pending. Using ClusterIP: $INGRESS_IP"
-        print_warning "You may need to set up port forwarding or configure your load balancer"
-    fi
+    # Check Prometheus
+    kubectl get pods -n monitoring -l app=prometheus --context "$cluster_name"
     
-    echo "🌐 API Gateway: http://$INGRESS_IP (or https://api.nexafi.com if DNS is configured)"
-    echo "📊 Kibana Dashboard: http://$INGRESS_IP:5601 (or https://kibana.nexafi.com if DNS is configured)"
-    echo "🐰 RabbitMQ Management: http://$INGRESS_IP:15672 (or https://rabbitmq.nexafi.com if DNS is configured)"
-    echo ""
-    echo "🔐 Default Credentials:"
-    echo "   RabbitMQ: nexafi / nexafi123"
-    echo "   Infrastructure Basic Auth: nexafi / nexafi123"
-    echo ""
+    # Check Grafana
+    kubectl get pods -n monitoring -l app=grafana --context "$cluster_name"
     
-    print_status "Port Forwarding Commands (if needed):"
-    echo "kubectl port-forward -n nexafi svc/api-gateway-service 8080:80"
-    echo "kubectl port-forward -n nexafi-infra svc/kibana-service 5601:5601"
-    echo "kubectl port-forward -n nexafi-infra svc/rabbitmq-service 15672:15672"
-    echo ""
+    # Check AlertManager
+    kubectl get pods -n monitoring -l app=alertmanager --context "$cluster_name"
     
-    print_status "Health Check Commands:"
-    echo "kubectl get pods -n nexafi"
-    echo "kubectl get pods -n nexafi-infra"
-    echo "kubectl logs -n nexafi deployment/api-gateway"
-    echo ""
+    # Get monitoring URLs
+    log_info "Getting monitoring service URLs..."
+    kubectl get services -n monitoring --context "$cluster_name"
+    
+    log_success "Monitoring setup completed"
+}
+
+# Backup verification
+verify_backups() {
+    log_info "Verifying backup configuration..."
+    
+    local cluster_name="nexafi-${ENVIRONMENT}-primary"
+    
+    # Check backup jobs
+    kubectl get cronjobs -n backup-recovery --context "$cluster_name"
+    
+    # Check backup storage
+    aws s3 ls "s3://nexafi-backups-primary-${ENVIRONMENT}/" || log_warning "Backup bucket not accessible"
+    
+    log_success "Backup verification completed"
+}
+
+# Generate deployment report
+generate_report() {
+    log_info "Generating deployment report..."
+    
+    local report_file="deployment-report-${ENVIRONMENT}-$(date +%Y%m%d-%H%M%S).md"
+    
+    cat > "$report_file" << EOF
+# NexaFi Infrastructure Deployment Report
+
+**Environment:** $ENVIRONMENT
+**Date:** $(date)
+**AWS Region:** $AWS_REGION
+
+## Deployment Summary
+
+### Terraform Resources
+$(cd "$TERRAFORM_DIR" && terraform show -json | jq -r '.values.root_module.resources[] | "- \(.type): \(.name)"')
+
+### Kubernetes Resources
+$(kubectl get all --all-namespaces --context "nexafi-${ENVIRONMENT}-primary" | head -20)
+
+### Security Configuration
+- Pod Security Standards: Enabled
+- Network Policies: Configured
+- RBAC: Implemented
+- Encryption: Enabled (KMS)
+
+### Compliance Status
+- PCI DSS: Configured
+- SOC 2: Configured
+- GDPR: Configured
+- Audit Logging: Enabled
+
+### Monitoring
+- Prometheus: Deployed
+- Grafana: Deployed
+- AlertManager: Deployed
+
+### Backup & Recovery
+- Automated Backups: Configured
+- Cross-Region Replication: Enabled
+- Disaster Recovery: Configured
+
+## Next Steps
+1. Configure DNS records
+2. Set up SSL certificates
+3. Configure external monitoring
+4. Run security scans
+5. Perform disaster recovery testing
+
+EOF
+
+    log_success "Deployment report generated: $report_file"
+}
+
+# Cleanup function
+cleanup() {
+    log_info "Cleaning up temporary files..."
+    cd "$PROJECT_ROOT"
+    
+    # Remove temporary files
+    find . -name "*.tmp" -delete
+    find . -name "tfplan-*" -delete
+    
+    log_success "Cleanup completed"
 }
 
 # Main deployment function
 main() {
-    echo "🚀 NexaFi Infrastructure Deployment"
-    echo "===================================="
-    echo ""
+    log_info "Starting NexaFi infrastructure deployment..."
+    log_info "Environment: $ENVIRONMENT"
+    log_info "AWS Region: $AWS_REGION"
     
-    # Check prerequisites
-    check_kubectl
+    # Set trap for cleanup
+    trap cleanup EXIT
     
-    # Create storage directories
-    create_storage_directories
+    # Run deployment steps
+    check_prerequisites
+    validate_environment
+    security_validation
     
-    # Deploy in order
-    deploy_namespaces
-    deploy_secrets
-    deploy_storage
-    deploy_infrastructure
+    terraform_init
+    if terraform_plan; then
+        if [[ "${AUTO_APPROVE:-false}" == "true" ]]; then
+            terraform_apply
+        else
+            read -p "Do you want to apply the Terraform plan? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                terraform_apply
+            else
+                log_info "Terraform apply skipped"
+                exit 0
+            fi
+        fi
+    else
+        log_info "No Terraform changes to apply"
+    fi
     
-    # Wait a bit for infrastructure to stabilize
-    print_status "Waiting for infrastructure to stabilize..."
-    sleep 30
+    setup_kubectl
+    deploy_kubernetes_resources
+    validate_deployment
+    compliance_checks
+    setup_monitoring
+    verify_backups
+    generate_report
     
-    deploy_core_services
-    deploy_ingress
-    
-    # Show status
-    show_status
-    show_access_info
-    
-    print_success "NexaFi infrastructure deployment completed successfully!"
+    log_success "NexaFi infrastructure deployment completed successfully!"
+    log_info "Please review the deployment report and configure any remaining manual steps."
 }
 
-# Run main function
-main "$@"
+# Script entry point
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
 

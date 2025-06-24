@@ -1,0 +1,36 @@
+apiVersion: v2
+name: nexafi-financial-services
+description: A Helm chart for NexaFi Financial Services with enhanced security and compliance
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://nexafi.com
+sources:
+  - https://github.com/nexafi/financial-services
+maintainers:
+  - name: NexaFi DevOps Team
+    email: devops@nexafi.com
+keywords:
+  - financial
+  - fintech
+  - banking
+  - payments
+  - compliance
+  - security
+annotations:
+  category: Financial Services
+  licenses: Proprietary
+  images: |
+    - name: financial-services
+      image: nexafi/financial-services:1.0.0
+  security.compliance: "PCI-DSS,SOC2,GDPR"
+dependencies:
+  - name: postgresql
+    version: "12.1.2"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.3.7"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+

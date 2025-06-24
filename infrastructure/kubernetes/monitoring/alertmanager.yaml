@@ -1,0 +1,445 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.nexafi.com:587'
+      smtp_from: 'alerts@nexafi.com'
+      smtp_auth_username: 'alerts@nexafi.com'
+      smtp_auth_password_file: '/etc/secrets/smtp-password'
+      smtp_require_tls: true
+      slack_api_url_file: '/etc/secrets/slack-webhook'
+      pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+    templates:
+    - '/etc/alertmanager/templates/*.tmpl'
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'default'
+      routes:
+      # Critical financial service alerts
+      - match:
+          severity: critical
+          service_type: financial
+        receiver: 'financial-critical'
+        group_wait: 0s
+        group_interval: 5s
+        repeat_interval: 15m
+        continue: true
+      
+      # Security alerts
+      - match:
+          service_type: security
+        receiver: 'security-team'
+        group_wait: 0s
+        group_interval: 5s
+        repeat_interval: 30m
+        continue: true
+      
+      # Compliance violations
+      - match:
+          service_type: compliance
+        receiver: 'compliance-team'
+        group_wait: 0s
+        group_interval: 0s
+        repeat_interval: 5m
+        continue: true
+      
+      # Infrastructure warnings
+      - match:
+          severity: warning
+        receiver: 'infrastructure-team'
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 2h
+      
+      # Critical infrastructure alerts
+      - match:
+          severity: critical
+        receiver: 'infrastructure-critical'
+        group_wait: 0s
+        group_interval: 1m
+        repeat_interval: 15m
+
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'cluster', 'service']
+    
+    - source_match:
+        alertname: 'FinancialServiceDown'
+      target_match_re:
+        alertname: 'High.*'
+      equal: ['instance']
+
+    receivers:
+    - name: 'default'
+      email_configs:
+      - to: 'ops@nexafi.com'
+        subject: '[NexaFi] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+    - name: 'financial-critical'
+      pagerduty_configs:
+      - routing_key_file: '/etc/secrets/pagerduty-financial-key'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        severity: 'critical'
+        details:
+          alert_count: '{{ len .Alerts }}'
+          service: '{{ .GroupLabels.service }}'
+          cluster: '{{ .GroupLabels.cluster }}'
+      slack_configs:
+      - channel: '#financial-alerts'
+        title: '🚨 CRITICAL: Financial Service Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Instance:* {{ .Labels.instance }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+      email_configs:
+      - to: 'financial-team@nexafi.com,cto@nexafi.com,ceo@nexafi.com'
+        subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} - Financial Service Alert'
+        body: |
+          CRITICAL FINANCIAL SERVICE ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.service }}
+          Instance: {{ .Labels.instance }}
+          Severity: {{ .Labels.severity }}
+          Started: {{ .StartsAt }}
+          {{ if .EndsAt }}Ended: {{ .EndsAt }}{{ end }}
+          
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+    - name: 'security-team'
+      pagerduty_configs:
+      - routing_key_file: '/etc/secrets/pagerduty-security-key'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        severity: '{{ if eq .GroupLabels.severity "critical" }}critical{{ else }}warning{{ end }}'
+      slack_configs:
+      - channel: '#security-alerts'
+        title: '🔒 Security Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Instance:* {{ .Labels.instance }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        send_resolved: true
+      email_configs:
+      - to: 'security-team@nexafi.com,ciso@nexafi.com'
+        subject: '🔒 Security Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          SECURITY ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.service }}
+          Instance: {{ .Labels.instance }}
+          Severity: {{ .Labels.severity }}
+          Started: {{ .StartsAt }}
+          {{ if .EndsAt }}Ended: {{ .EndsAt }}{{ end }}
+          
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+    - name: 'compliance-team'
+      pagerduty_configs:
+      - routing_key_file: '/etc/secrets/pagerduty-compliance-key'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        severity: 'critical'
+      slack_configs:
+      - channel: '#compliance-alerts'
+        title: '⚖️ Compliance Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Instance:* {{ .Labels.instance }}
+          *Framework:* {{ .Labels.framework }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+      email_configs:
+      - to: 'compliance-team@nexafi.com,legal@nexafi.com,cro@nexafi.com'
+        subject: '⚖️ COMPLIANCE VIOLATION: {{ .GroupLabels.alertname }}'
+        body: |
+          COMPLIANCE VIOLATION DETECTED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.service }}
+          Instance: {{ .Labels.instance }}
+          Framework: {{ .Labels.framework }}
+          Started: {{ .StartsAt }}
+          {{ if .EndsAt }}Ended: {{ .EndsAt }}{{ end }}
+          
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+    - name: 'infrastructure-team'
+      slack_configs:
+      - channel: '#infrastructure-alerts'
+        title: '🔧 Infrastructure Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Instance:* {{ .Labels.instance }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+        color: 'warning'
+        send_resolved: true
+      email_configs:
+      - to: 'infrastructure-team@nexafi.com'
+        subject: '🔧 Infrastructure Alert: {{ .GroupLabels.alertname }}'
+
+    - name: 'infrastructure-critical'
+      pagerduty_configs:
+      - routing_key_file: '/etc/secrets/pagerduty-infrastructure-key'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        severity: 'critical'
+      slack_configs:
+      - channel: '#infrastructure-alerts'
+        title: '🚨 CRITICAL Infrastructure Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Instance:* {{ .Labels.instance }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+      email_configs:
+      - to: 'infrastructure-team@nexafi.com,ops-manager@nexafi.com'
+        subject: '🚨 CRITICAL Infrastructure Alert: {{ .GroupLabels.alertname }}'
+
+  templates.tmpl: |
+    {{ define "slack.nexafi.title" }}
+    [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}
+    {{ end }}
+
+    {{ define "slack.nexafi.text" }}
+    {{ range .Alerts }}
+    {{ if .Annotations.summary }}*Summary:* {{ .Annotations.summary }}{{ end }}
+    {{ if .Annotations.description }}*Description:* {{ .Annotations.description }}{{ end }}
+    *Details:*
+      • *Service:* {{ .Labels.service | default "N/A" }}
+      • *Instance:* {{ .Labels.instance | default "N/A" }}
+      • *Severity:* {{ .Labels.severity | default "N/A" }}
+      • *Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+    {{ if .EndsAt }}  • *Ended:* {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}{{ end }}
+    {{ end }}
+    {{ end }}
+
+    {{ define "email.nexafi.subject" }}
+    [NexaFi {{ .Status | toUpper }}] {{ .GroupLabels.alertname }}
+    {{ end }}
+
+    {{ define "email.nexafi.body" }}
+    <h2>NexaFi Alert Notification</h2>
+    <p><strong>Status:</strong> {{ .Status | toUpper }}</p>
+    <p><strong>Alert Group:</strong> {{ .GroupLabels.alertname }}</p>
+    
+    {{ range .Alerts }}
+    <hr>
+    <h3>{{ .Annotations.summary }}</h3>
+    <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+    <p><strong>Service:</strong> {{ .Labels.service | default "N/A" }}</p>
+    <p><strong>Instance:</strong> {{ .Labels.instance | default "N/A" }}</p>
+    <p><strong>Severity:</strong> {{ .Labels.severity | default "N/A" }}</p>
+    <p><strong>Started:</strong> {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}</p>
+    {{ if .EndsAt }}<p><strong>Ended:</strong> {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}</p>{{ end }}
+    
+    <h4>Labels:</h4>
+    <ul>
+    {{ range .Labels.SortedPairs }}
+      <li><strong>{{ .Name }}:</strong> {{ .Value }}</li>
+    {{ end }}
+    </ul>
+    {{ end }}
+    {{ end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+        component: monitoring
+    spec:
+      serviceAccountName: monitoring-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.25.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        args:
+        - '--config.file=/etc/alertmanager/alertmanager.yml'
+        - '--storage.path=/alertmanager'
+        - '--data.retention=120h'
+        - '--web.listen-address=:9093'
+        - '--web.external-url=https://alertmanager.nexafi.com'
+        - '--cluster.listen-address=0.0.0.0:9094'
+        - '--cluster.peer=alertmanager-0.alertmanager.monitoring.svc.cluster.local:9094'
+        - '--cluster.peer=alertmanager-1.alertmanager.monitoring.svc.cluster.local:9094'
+        - '--log.level=info'
+        - '--log.format=json'
+        ports:
+        - containerPort: 9093
+          name: web
+          protocol: TCP
+        - containerPort: 9094
+          name: cluster
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9093
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9093
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 4
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alertmanager
+          readOnly: true
+        - name: secrets
+          mountPath: /etc/secrets
+          readOnly: true
+        - name: storage
+          mountPath: /alertmanager
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: alertmanager-config
+      - name: secrets
+        secret:
+          secretName: alertmanager-secrets
+          defaultMode: 0400
+      - name: tmp
+        emptyDir: {}
+      - name: storage
+        persistentVolumeClaim:
+          claimName: alertmanager-storage
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - alertmanager
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9093
+    targetPort: 9093
+    protocol: TCP
+  - name: cluster
+    port: 9094
+    targetPort: 9094
+    protocol: TCP
+  selector:
+    app: alertmanager
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-storage
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: gp3-encrypted
+  resources:
+    requests:
+      storage: 10Gi
+

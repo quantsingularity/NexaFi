@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: compliance-monitor
-  namespace: nexafi
+  namespace: compliance
   labels:
     app: compliance-monitor
-    tier: compliance
+    component: compliance
+    tier: monitoring
 spec:
   replicas: 2
   selector:
@@ -15,23 +16,125 @@ spec:
     metadata:
       labels:
         app: compliance-monitor
-        tier: compliance
+        component: compliance
+        tier: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
     spec:
+      serviceAccountName: compliance-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name: compliance-monitor
         image: nexafi/compliance-monitor:latest
-        ports:
-        - containerPort: 8080
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
         env:
-        - name: KAFKA_BROKERS
-          value: "kafka-service:9092"
+        - name: PORT
+          value: "8080"
+        - name: METRICS_PORT
+          value: "9090"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: compliance-db-secret
+              key: url
         - name: ELASTICSEARCH_URL
-          value: "http://elasticsearch:9200"
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-secret
+              key: url
+        - name: VAULT_ADDR
+          value: "https://vault.security.svc.cluster.local:8200"
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vault-token
+              key: token
+        - name: COMPLIANCE_FRAMEWORKS
+          value: "PCI-DSS,SOC2,GDPR,SOX,GLBA,FFIEC"
+        - name: AUDIT_RETENTION_DAYS
+          value: "2555"  # 7 years
+        - name: REAL_TIME_MONITORING
+          value: "true"
         - name: ALERT_WEBHOOK_URL
           valueFrom:
             secretKeyRef:
-              name: compliance-secrets
-              key: alert-webhook-url
+              name: compliance-alerts
+              key: webhook_url
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: compliance-alerts
+              key: slack_webhook
+        - name: EMAIL_SMTP_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: compliance-config
+              key: smtp_host
+        - name: EMAIL_SMTP_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: compliance-config
+              key: smtp_port
+        - name: EMAIL_FROM
+          valueFrom:
+            configMapKeyRef:
+              name: compliance-config
+              key: email_from
+        - name: EMAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: email-secret
+              key: username
+        - name: EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: email-secret
+              key: password
+        - name: SCAN_INTERVAL_MINUTES
+          value: "15"
+        - name: CRITICAL_ALERT_THRESHOLD
+          value: "1"
+        - name: HIGH_ALERT_THRESHOLD
+          value: "5"
+        - name: MEDIUM_ALERT_THRESHOLD
+          value: "10"
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
         resources:
           requests:
             memory: "512Mi"
@@ -39,90 +142,243 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1000
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
         volumeMounts:
-        - name: compliance-rules
-          mountPath: /etc/compliance-rules
-          readOnly: true
         - name: tmp
           mountPath: /tmp
+        - name: cache
+          mountPath: /app/cache
+        - name: logs
+          mountPath: /app/logs
+        - name: compliance-rules
+          mountPath: /app/rules
+          readOnly: true
+        - name: tls-certs
+          mountPath: /app/certs
+          readOnly: true
       volumes:
-      - name: compliance-rules
-        configMap:
-          name: compliance-rules-config
       - name: tmp
         emptyDir: {}
-      serviceAccountName: compliance-monitor-sa
+      - name: cache
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      - name: compliance-rules
+        configMap:
+          name: compliance-rules
+      - name: tls-certs
+        secret:
+          secretName: compliance-monitor-tls
+          defaultMode: 0400
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - compliance-monitor
+              topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: compliance-monitor
-  namespace: nexafi
+  namespace: compliance
   labels:
     app: compliance-monitor
+    component: compliance
 spec:
-  selector:
-    app: compliance-monitor
+  type: ClusterIP
   ports:
-  - port: 80
+  - name: http
+    port: 8080
     targetPort: 8080
     protocol: TCP
-  type: ClusterIP
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: compliance-monitor-sa
-  namespace: nexafi
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  selector:
+    app: compliance-monitor
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: compliance-rules-config
-  namespace: nexafi
+  name: compliance-config
+  namespace: compliance
+  labels:
+    app: compliance-monitor
+    component: compliance
 data:
-  aml-rules.yaml: |
+  smtp_host: "smtp.nexafi.com"
+  smtp_port: "587"
+  email_from: "compliance@nexafi.com"
+  log_level: "INFO"
+  enable_real_time_alerts: "true"
+  enable_scheduled_reports: "true"
+  report_schedule: "0 6 * * *"  # Daily at 6 AM
+  dashboard_refresh_interval: "30"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: compliance-rules
+  namespace: compliance
+  labels:
+    app: compliance-monitor
+    component: compliance
+data:
+  pci-dss-rules.yaml: |
+    framework: "PCI-DSS"
+    version: "4.0"
     rules:
-      - name: "Large Transaction Alert"
-        condition: "transaction.amount > 10000"
-        action: "alert"
-        severity: "high"
-      - name: "Suspicious Pattern Detection"
-        condition: "transaction.frequency > 100 AND transaction.timespan < 3600"
-        action: "flag"
-        severity: "medium"
-      - name: "Cross-Border Transaction"
-        condition: "transaction.source_country != transaction.destination_country"
-        action: "review"
-        severity: "low"
-  kyc-rules.yaml: |
+      - id: "PCI-1.1.1"
+        title: "Firewall Configuration Standards"
+        description: "Establish firewall configuration standards"
+        severity: "HIGH"
+        check_type: "network_policy"
+        remediation: "Ensure network policies are properly configured"
+      - id: "PCI-2.1"
+        title: "Default Passwords"
+        description: "Change vendor-supplied defaults"
+        severity: "CRITICAL"
+        check_type: "secret_scan"
+        remediation: "Change all default passwords and security parameters"
+      - id: "PCI-3.4"
+        title: "Data Encryption"
+        description: "Render PAN unreadable anywhere it is stored"
+        severity: "CRITICAL"
+        check_type: "encryption_check"
+        remediation: "Ensure all sensitive data is encrypted at rest and in transit"
+      - id: "PCI-8.2.3"
+        title: "Strong Authentication"
+        description: "Multi-factor authentication for all access"
+        severity: "HIGH"
+        check_type: "auth_policy"
+        remediation: "Implement multi-factor authentication for all user accounts"
+  soc2-rules.yaml: |
+    framework: "SOC2"
+    type: "Type II"
     rules:
-      - name: "Identity Verification Required"
-        condition: "user.verification_status == 'pending'"
-        action: "block"
-        severity: "high"
-      - name: "Document Expiry Check"
-        condition: "user.document_expiry < current_date + 30_days"
-        action: "notify"
-        severity: "medium"
+      - id: "CC6.1"
+        title: "Logical Access Controls"
+        description: "Logical access security measures"
+        severity: "HIGH"
+        check_type: "rbac_check"
+        remediation: "Implement proper role-based access controls"
+      - id: "CC6.2"
+        title: "Authentication"
+        description: "Authentication mechanisms"
+        severity: "HIGH"
+        check_type: "auth_check"
+        remediation: "Ensure strong authentication mechanisms are in place"
+      - id: "CC6.7"
+        title: "Data Transmission"
+        description: "Secure data transmission"
+        severity: "MEDIUM"
+        check_type: "tls_check"
+        remediation: "Ensure all data transmission is encrypted"
+  gdpr-rules.yaml: |
+    framework: "GDPR"
+    rules:
+      - id: "GDPR-32"
+        title: "Security of Processing"
+        description: "Appropriate technical and organizational measures"
+        severity: "HIGH"
+        check_type: "security_controls"
+        remediation: "Implement appropriate security measures for data processing"
+      - id: "GDPR-33"
+        title: "Breach Notification"
+        description: "Personal data breach notification"
+        severity: "CRITICAL"
+        check_type: "incident_response"
+        remediation: "Ensure breach notification procedures are in place"
+      - id: "GDPR-35"
+        title: "Data Protection Impact Assessment"
+        description: "DPIA for high-risk processing"
+        severity: "MEDIUM"
+        check_type: "privacy_assessment"
+        remediation: "Conduct DPIA for high-risk data processing activities"
+---
+# CronJob for scheduled compliance scans
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: compliance-scan
+  namespace: compliance
+  labels:
+    app: compliance-scan
+    component: compliance
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: compliance-scan
+            component: compliance
+        spec:
+          serviceAccountName: compliance-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+          - name: compliance-scanner
+            image: nexafi/compliance-scanner:latest
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            env:
+            - name: SCAN_TYPE
+              value: "full"
+            - name: OUTPUT_FORMAT
+              value: "json"
+            - name: ELASTICSEARCH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-secret
+                  key: url
+            - name: VAULT_ADDR
+              value: "https://vault.security.svc.cluster.local:8200"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-token
+                  key: token
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: scan-results
+              mountPath: /app/results
+            - name: compliance-rules
+              mountPath: /app/rules
+              readOnly: true
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "250m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+          volumes:
+          - name: tmp
+            emptyDir: {}
+          - name: scan-results
+            emptyDir: {}
+          - name: compliance-rules
+            configMap:
+              name: compliance-rules
+          restartPolicy: OnFailure
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
 

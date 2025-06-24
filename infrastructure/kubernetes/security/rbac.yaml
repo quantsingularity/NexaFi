@@ -1,0 +1,346 @@
+---
+# Financial Services RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: financial-services-sa
+  namespace: financial-services
+  labels:
+    app: financial-services
+    component: security
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: financial-services
+  name: financial-services-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list"]
+  resourceNames: ["financial-db-secret", "api-keys", "tls-certs"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: financial-services-binding
+  namespace: financial-services
+subjects:
+- kind: ServiceAccount
+  name: financial-services-sa
+  namespace: financial-services
+roleRef:
+  kind: Role
+  name: financial-services-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Security Services RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: security-services-sa
+  namespace: security
+  labels:
+    app: security-services
+    component: security
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: security
+  name: security-services-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "list", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: security-services-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["policy"]
+  resources: ["podsecuritypolicies"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: security-services-binding
+  namespace: security
+subjects:
+- kind: ServiceAccount
+  name: security-services-sa
+  namespace: security
+roleRef:
+  kind: Role
+  name: security-services-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: security-services-cluster-binding
+subjects:
+- kind: ServiceAccount
+  name: security-services-sa
+  namespace: security
+roleRef:
+  kind: ClusterRole
+  name: security-services-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# API Gateway RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-gateway-sa
+  namespace: api-gateway
+  labels:
+    app: api-gateway
+    component: gateway
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: api-gateway
+  name: api-gateway-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list"]
+  resourceNames: ["api-gateway-tls", "jwt-secret"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: api-gateway-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-gateway-binding
+  namespace: api-gateway
+subjects:
+- kind: ServiceAccount
+  name: api-gateway-sa
+  namespace: api-gateway
+roleRef:
+  kind: Role
+  name: api-gateway-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: api-gateway-cluster-binding
+subjects:
+- kind: ServiceAccount
+  name: api-gateway-sa
+  namespace: api-gateway
+roleRef:
+  kind: ClusterRole
+  name: api-gateway-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Monitoring RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: monitoring-sa
+  namespace: monitoring
+  labels:
+    app: monitoring
+    component: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: monitoring-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods", "ingresses", "configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions", "networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: monitoring-cluster-binding
+subjects:
+- kind: ServiceAccount
+  name: monitoring-sa
+  namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: monitoring-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Compliance RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: compliance-sa
+  namespace: compliance
+  labels:
+    app: compliance
+    component: audit
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: compliance-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["policy"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["security.openshift.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: compliance-cluster-binding
+subjects:
+- kind: ServiceAccount
+  name: compliance-sa
+  namespace: compliance
+roleRef:
+  kind: ClusterRole
+  name: compliance-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Backup and Recovery RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-recovery-sa
+  namespace: backup-recovery
+  labels:
+    app: backup-recovery
+    component: data-protection
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: backup-recovery
+  name: backup-recovery-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints", "configmaps", "persistentvolumes", "persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backup-recovery-cluster-role
+rules:
+- apiGroups: [""]
+  resources: ["persistentvolumes", "persistentvolumeclaims", "nodes"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses", "volumeattachments"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["snapshot.storage.k8s.io"]
+  resources: ["volumesnapshots", "volumesnapshotcontents", "volumesnapshotclasses"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-recovery-binding
+  namespace: backup-recovery
+subjects:
+- kind: ServiceAccount
+  name: backup-recovery-sa
+  namespace: backup-recovery
+roleRef:
+  kind: Role
+  name: backup-recovery-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backup-recovery-cluster-binding
+subjects:
+- kind: ServiceAccount
+  name: backup-recovery-sa
+  namespace: backup-recovery
+roleRef:
+  kind: ClusterRole
+  name: backup-recovery-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+

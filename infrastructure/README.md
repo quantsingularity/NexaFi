@@ -1,93 +1,273 @@
-# NexaFi Infrastructure as Code (IaC)
+# NexaFi Infrastructure - Enhanced Financial-Grade Implementation
 
 ## Overview
-This directory contains the Infrastructure as Code (IaC) for the NexaFi project. The goal is to define and manage the entire infrastructure required for deploying and operating the NexaFi backend and frontend services using Kubernetes on AWS. The design prioritizes high availability, disaster recovery, and adherence to financial industry compliance standards.
 
-## Architecture
-The infrastructure is designed for robust resilience and disaster recovery, leveraging a multi-region AWS setup with Amazon Elastic Kubernetes Service (EKS) for container orchestration. Key architectural components and their alignment with financial industry standards include:
+This directory contains a comprehensive, production-ready infrastructure implementation for NexaFi, designed to meet the highest financial industry standards including PCI DSS, SOC 2, GDPR, SOX, and other regulatory requirements.
 
-- **Multi-Region AWS Deployment**: Configured across primary and secondary AWS regions to ensure business continuity and disaster recovery capabilities, critical for financial services.
+## 🏗️ Architecture
 
-- **Virtual Private Clouds (VPCs)**: Dedicated VPCs are established in both primary and secondary regions, segmented into public, private, and database subnets. **VPC Flow Logs are enabled and configured for comprehensive network traffic monitoring and auditing**, providing essential data for security and compliance requirements.
+The infrastructure is built on modern cloud-native principles with a focus on:
 
-- **VPC Peering**: A secure peering connection is established between the primary and secondary VPCs, facilitating compliant and efficient cross-region communication for data replication and failover scenarios.
+- **Security First**: Multi-layered security controls and compliance frameworks
+- **High Availability**: Redundant systems across multiple availability zones
+- **Scalability**: Auto-scaling capabilities for varying workloads
+- **Compliance**: Built-in compliance monitoring and reporting
+- **Disaster Recovery**: Automated backup and cross-region failover
+- **Observability**: Comprehensive monitoring, logging, and alerting
 
-- **Amazon EKS Clusters**: Kubernetes clusters are deployed in both primary and secondary regions, designed for workload isolation and regulatory compliance.
-  - **Primary EKS Cluster**: Includes dedicated managed node groups for `financial_services` workloads, with specific taints to ensure sensitive financial applications run on isolated and appropriately configured nodes. A separate `compliance_monitoring` node group is also provisioned for audit and monitoring tools, further enhancing regulatory adherence.
-  - **Secondary EKS Cluster**: Features a minimal `dr_standby` node group, strategically designed for rapid scaling during disaster recovery events, ensuring minimal downtime and data loss.
+## 📁 Directory Structure
 
-- **AWS Fargate Profiles**: Utilized for running serverless workloads, such as **audit logs**, within the EKS clusters. This provides an immutable and scalable environment for critical compliance-related data.
-
-- **Encryption**: **AWS Key Management Service (KMS) is extensively used for encrypting EKS clusters and Elastic Block Store (EBS) volumes**, ensuring all data at rest is protected in accordance with stringent financial data security regulations.
-
-- **Security Groups**: Custom security groups are meticulously configured for EKS nodes, implementing **strict ingress and egress rules based on the principle of least privilege** to control network traffic and prevent unauthorized access, a cornerstone of financial security.
-
-## Directory Structure
 ```
-infra/
-├── kubernetes/
-│   ├── core-services/        # Kubernetes manifests for backend microservices
-│   │   ├── api-gateway.yaml
-│   │   ├── user-service.yaml
-│   │   ├── ledger-service.yaml
-│   │   ├── payment-service.yaml
-│   │   ├── ai-service.yaml
-│   │   ├── analytics-service.yaml
-│   │   ├── credit-service.yaml
-│   │   └── document-service.yaml
-│   ├── infrastructure-components/ # Kubernetes manifests for supporting infrastructure
-│   │   ├── redis.yaml
-│   │   ├── rabbitmq.yaml
-│   │   ├── elasticsearch.yaml
-│   │   └── kibana.yaml
-│   ├── ingress/              # Ingress controller and rules
-│   │   └── nginx-ingress.yaml
-│   ├── storage/              # Persistent volume claims
-│   │   └── pv-pvc.yaml
-│   └── namespaces.yaml       # Kubernetes namespaces
-├── terraform/                # Terraform configurations for AWS infrastructure
-│   ├── main.tf               # Main Terraform configuration, defines providers, variables, and S3 backend
-│   ├── vpc.tf                # VPC and networking configurations for primary and secondary regions, including VPC peering
-│   ├── eks.tf                # EKS cluster configurations for primary and secondary regions, including node groups and Fargate profiles
-│   └── security.tf           # Security related configurations (e.g., KMS keys, IAM roles)
-├── helm-charts/              # Helm charts for application deployment (future)
-├── scripts/                  # Deployment and management scripts
-│   ├── deploy-all.sh
-│   ├── delete-all.sh
-│   ├── setup-kube.sh
-│   └── update-kubeconfig.sh
-└── README.md                 # This file
+infrastructure/
+├── design_document.md          # Comprehensive architecture documentation
+├── terraform/                  # Infrastructure as Code
+│   ├── main.tf                # Main Terraform configuration
+│   ├── vpc.tf                 # VPC and networking configuration
+│   ├── eks.tf                 # EKS cluster configuration
+│   └── security.tf            # Security and compliance resources
+├── kubernetes/                 # Kubernetes manifests
+│   ├── security/              # Security policies and RBAC
+│   ├── compliance/            # Compliance monitoring services
+│   ├── monitoring/            # Prometheus, Grafana, AlertManager
+│   ├── backup-recovery/       # Backup and disaster recovery
+│   └── infrastructure-components/ # Redis, RabbitMQ, etc.
+├── docker/                    # Container configurations
+│   └── financial-services/   # Optimized Dockerfile for financial services
+├── helm/                      # Helm charts for application deployment
+│   └── nexafi-financial-services/ # Financial services Helm chart
+└── scripts/                   # Deployment and testing scripts
+    ├── deploy-all.sh          # Comprehensive deployment script
+    ├── test-infrastructure.sh # Infrastructure testing framework
+    ├── validate-compliance.sh # Compliance validation script
+    └── security-test.sh       # Security testing and assessment
 ```
 
-## Technologies Used
-- **Terraform**: Infrastructure as Code for provisioning and managing AWS resources, ensuring version-controlled and auditable infrastructure deployments.
-- **AWS EKS**: Managed Kubernetes service for container orchestration, providing a secure and scalable platform for financial applications.
-- **AWS VPC**: Networking for isolated and secure cloud resources, with granular control over network access.
-- **AWS KMS**: Key Management Service for cryptographic operations, crucial for data encryption and regulatory compliance.
-- **Kubernetes**: Container orchestration, enabling efficient deployment and management of microservices.
-- **Docker**: Containerization, ensuring consistent application environments.
-- **Helm (future)**: Package management for Kubernetes applications, for streamlined deployments.
-- **kubectl**: Kubernetes command-line tool for cluster interaction.
+## 🚀 Quick Start
 
-## Deployment Workflow
-1. **Setup AWS Credentials**: Ensure your AWS CLI is configured with appropriate credentials and permissions, adhering to least privilege principles.
-2. **Initialize Terraform**: Navigate to the `terraform/` directory and run `terraform init` to set up the S3 backend (for state management and collaboration) and download necessary providers.
-3. **Plan Terraform Deployment**: Run `terraform plan` to review the infrastructure changes. This step is critical for auditing and ensuring proposed changes align with compliance requirements.
-4. **Apply Terraform Deployment**: Execute `terraform apply` to provision the AWS infrastructure (VPCs, EKS clusters, etc.). This process is automated and auditable.
-5. **Configure kubectl**: Update your `kubeconfig` to connect to the newly created EKS clusters (refer to `scripts/update-kubeconfig.sh`). Access controls are managed via IAM roles integrated with EKS.
-6. **Deploy Infrastructure Components**: Apply Kubernetes manifests for supporting services like Redis, RabbitMQ, Elasticsearch, and Kibana (refer to `kubernetes/infrastructure-components/`). These components are configured with security best practices in mind.
-7. **Deploy Core Services**: Apply Kubernetes manifests for all NexaFi microservices (refer to `kubernetes/core-services/`). Application deployments follow secure coding and deployment guidelines.
-8. **Configure Ingress**: Set up ingress rules for external access to services (refer to `kubernetes/ingress/`). Ingress configurations are designed to enforce secure communication (e.g., HTTPS).
+### Prerequisites
 
-## Getting Started
-Refer to the `scripts/` directory for automated deployment and management scripts. These scripts are designed to facilitate consistent and repeatable deployments.
+- AWS CLI configured with appropriate permissions
+- Terraform >= 1.5.0
+- kubectl
+- Helm 3.x
+- Docker
 
-## Future Enhancements
-- **Helm Charts**: For easier deployment and management of complex applications, enabling standardized and versioned application releases.
-- **Service Mesh**: Implement Istio or Linkerd for advanced traffic management, security, and observability, crucial for microservices architectures in financial environments.
-- **Automated Scaling**: Horizontal Pod Autoscalers (HPA) and Cluster Autoscaler for dynamic resource allocation, ensuring performance and cost efficiency while maintaining stability.
-- **Monitoring & Alerting**: Prometheus and Grafana integration for comprehensive infrastructure and application monitoring, with real-time alerts for critical events to ensure operational resilience and compliance.
-- **Secret Management**: Integration with dedicated secret management solutions like AWS Secrets Manager or HashiCorp Vault for sensitive data, enhancing security beyond Kubernetes native secrets.
-- **CI/CD Pipelines**: Integrate with Jenkins, GitLab CI, or GitHub Actions for automated, secure, and auditable deployments, enforcing a robust change management process.
+### Environment Setup
 
+```bash
+# Set required environment variables
+export ENVIRONMENT=prod
+export AWS_REGION=us-west-2
+export TF_VAR_environment=prod
+
+# Optional: Set secondary region for disaster recovery
+export SECONDARY_REGION=us-east-1
+```
+
+### Deployment
+
+1. **Deploy Infrastructure**
+   ```bash
+   cd scripts
+   ./deploy-all.sh
+   ```
+
+2. **Validate Deployment**
+   ```bash
+   ./test-infrastructure.sh
+   ```
+
+3. **Validate Compliance**
+   ```bash
+   ./validate-compliance.sh
+   ```
+
+4. **Run Security Assessment**
+   ```bash
+   ./security-test.sh
+   ```
+
+## 🔒 Security Features
+
+### Multi-layered Security Architecture
+
+- **Network Security**: VPC with private subnets, network policies, WAF
+- **Container Security**: Non-root containers, read-only filesystems, dropped capabilities
+- **Access Control**: RBAC, Pod Security Standards, service accounts
+- **Data Protection**: Encryption at rest and in transit, Vault integration
+- **Monitoring**: Comprehensive audit logging and security monitoring
+
+### Compliance Frameworks
+
+- **PCI DSS**: Payment card industry data security standard compliance
+- **SOC 2**: Service organization control 2 compliance
+- **GDPR**: General data protection regulation compliance
+- **SOX**: Sarbanes-Oxley Act compliance
+- **GLBA**: Gramm-Leach-Bliley Act compliance
+- **FFIEC**: Federal Financial Institutions Examination Council guidelines
+
+## 🏦 Financial Industry Features
+
+### Dedicated Financial Services Infrastructure
+
+- **Isolated Node Groups**: Dedicated nodes for financial workloads with taints and tolerations
+- **Enhanced Monitoring**: Financial-specific metrics and alerting
+- **Audit Trail**: Comprehensive audit logging for all financial transactions
+- **Data Retention**: 7-year data retention for regulatory compliance
+- **Backup & Recovery**: Automated backups with cross-region replication
+
+### Compliance Monitoring
+
+- **Real-time Compliance Monitoring**: Continuous compliance validation
+- **Automated Reporting**: Compliance reports generated automatically
+- **Audit Service**: Dedicated audit service for financial transactions
+- **Data Loss Prevention**: DLP controls for sensitive financial data
+
+## 📊 Monitoring & Observability
+
+### Monitoring Stack
+
+- **Prometheus**: Metrics collection and storage
+- **Grafana**: Visualization and dashboards
+- **AlertManager**: Intelligent alerting and notification
+- **Jaeger**: Distributed tracing for microservices
+- **ELK Stack**: Centralized logging and log analysis
+
+### Key Metrics
+
+- **Financial Metrics**: Transaction volumes, processing times, error rates
+- **Security Metrics**: Failed login attempts, privilege escalations, policy violations
+- **Compliance Metrics**: Audit trail completeness, data retention compliance
+- **Infrastructure Metrics**: Resource utilization, availability, performance
+
+## 🔄 Backup & Disaster Recovery
+
+### Automated Backup Strategy
+
+- **Financial Database**: Every 4 hours with 7-year retention
+- **User Database**: Daily backups with 3-year retention
+- **Vault Data**: Daily encrypted snapshots
+- **Kubernetes etcd**: Daily cluster state backups
+
+### Disaster Recovery
+
+- **RTO Target**: 60 minutes (Recovery Time Objective)
+- **RPO Target**: 15 minutes (Recovery Point Objective)
+- **Cross-Region Replication**: Automated failover to secondary region
+- **DR Testing**: Weekly automated disaster recovery testing
+
+## 🧪 Testing Framework
+
+### Comprehensive Testing Suite
+
+- **Infrastructure Tests**: Connectivity, resource availability, configuration validation
+- **Security Tests**: Vulnerability scanning, penetration testing, configuration assessment
+- **Compliance Tests**: Regulatory compliance validation, audit trail verification
+- **Performance Tests**: Load testing, stress testing, capacity planning
+
+### Automated Testing
+
+- **CI/CD Integration**: Automated testing in deployment pipeline
+- **Continuous Monitoring**: Real-time testing and validation
+- **Regression Testing**: Automated regression testing for changes
+- **Security Scanning**: Continuous vulnerability and compliance scanning
+
+## 📋 Configuration Management
+
+### Infrastructure as Code
+
+- **Terraform**: Complete infrastructure provisioning
+- **Kubernetes Manifests**: Application and service deployment
+- **Helm Charts**: Templated application deployment
+- **GitOps**: Version-controlled infrastructure management
+
+### Environment Management
+
+- **Multi-Environment Support**: Development, staging, production
+- **Configuration Separation**: Environment-specific configurations
+- **Secret Management**: HashiCorp Vault integration
+- **Feature Flags**: Runtime configuration management
+
+## 🔧 Maintenance & Operations
+
+### Regular Maintenance Tasks
+
+1. **Security Updates**: Monthly security patch deployment
+2. **Compliance Reviews**: Quarterly compliance assessments
+3. **Disaster Recovery Testing**: Monthly DR drills
+4. **Performance Optimization**: Quarterly performance reviews
+5. **Cost Optimization**: Monthly cost analysis and optimization
+
+### Operational Procedures
+
+- **Incident Response**: 24/7 incident response procedures
+- **Change Management**: Controlled change deployment process
+- **Capacity Planning**: Proactive capacity management
+- **Performance Monitoring**: Continuous performance optimization
+
+## 📚 Documentation
+
+### Available Documentation
+
+- **Architecture Design**: Comprehensive system architecture documentation
+- **Security Policies**: Detailed security policies and procedures
+- **Compliance Guides**: Regulatory compliance implementation guides
+- **Operational Runbooks**: Step-by-step operational procedures
+- **API Documentation**: Complete API reference documentation
+
+### Training Materials
+
+- **Security Training**: Security awareness and best practices
+- **Compliance Training**: Regulatory compliance requirements
+- **Operational Training**: System operation and maintenance
+- **Development Guidelines**: Secure development practices
+
+## 🆘 Support & Troubleshooting
+
+### Common Issues
+
+1. **Deployment Failures**: Check prerequisites and permissions
+2. **Connectivity Issues**: Verify network configuration and security groups
+3. **Performance Issues**: Review resource limits and scaling configuration
+4. **Compliance Failures**: Run compliance validation scripts
+
+### Getting Help
+
+- **Documentation**: Comprehensive documentation in this repository
+- **Logs**: Check application and infrastructure logs
+- **Monitoring**: Use Grafana dashboards for system insights
+- **Support**: Contact DevOps team for assistance
+
+## 🔄 Updates & Maintenance
+
+### Version Management
+
+- **Semantic Versioning**: Infrastructure versions follow semantic versioning
+- **Change Log**: Detailed change log for all updates
+- **Migration Guides**: Step-by-step migration procedures
+- **Rollback Procedures**: Safe rollback procedures for failed deployments
+
+### Continuous Improvement
+
+- **Regular Reviews**: Monthly architecture and security reviews
+- **Technology Updates**: Quarterly technology stack updates
+- **Best Practices**: Continuous adoption of industry best practices
+- **Community Contributions**: Open to community feedback and contributions
+
+## 📞 Contact Information
+
+- **DevOps Team**: devops@nexafi.com
+- **Security Team**: security@nexafi.com
+- **Compliance Team**: compliance@nexafi.com
+- **Emergency Contact**: emergency@nexafi.com
+
+## 📄 License
+
+This infrastructure code is proprietary to NexaFi and is subject to the terms and conditions outlined in the NexaFi Software License Agreement.
+
+---
+
+**Last Updated**: $(date)
+**Version**: 1.0.0
+**Maintained By**: NexaFi DevOps Team
 
