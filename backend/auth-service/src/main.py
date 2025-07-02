@@ -1,8 +1,3 @@
-"""
-Enhanced Authentication Service
-Implements FAPI 2.0, OAuth 2.1, and advanced security features
-"""
-
 from flask import Flask, request, jsonify, g, redirect, url_for
 from flask_cors import CORS
 import sys
