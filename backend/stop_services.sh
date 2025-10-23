@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Enhanced stop script for NexaFi Backend Services
-
 set -e
 
 echo "Stopping NexaFi Backend Services..."

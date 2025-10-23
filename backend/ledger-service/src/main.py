@@ -1,8 +1,3 @@
-"""
-Enhanced Ledger Service with advanced financial features
-Implements multi-currency support, automated reconciliation, and complex financial instruments
-"""
-
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import sys

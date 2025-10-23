@@ -1,8 +1,3 @@
-"""
-Comprehensive test suite for NexaFi Enhanced Backend
-Tests all services with security, compliance, and financial features
-"""
-
 import requests
 import json
 import time
@@ -95,7 +90,6 @@ class TestRunner:
             self.error(f"API Gateway test failed - {str(e)}")
     
     def test_user_service(self):
-        """Test User Service with enhanced security"""
         self.log("\n=== Testing User Service ===", Colors.BOLD)
         
         try:
@@ -165,7 +159,6 @@ class TestRunner:
             self.error(f"User service test failed - {str(e)}")
     
     def test_ledger_service(self):
-        """Test Enhanced Ledger Service"""
         self.log("\n=== Testing Ledger Service ===", Colors.BOLD)
         
         if not self.access_token:

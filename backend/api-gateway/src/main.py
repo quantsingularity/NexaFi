@@ -1,7 +1,3 @@
-"""
-Enhanced API Gateway with security, rate limiting, and audit logging
-"""
-
 from flask import Flask, request, jsonify, redirect, g
 from flask_cors import CORS
 import requests

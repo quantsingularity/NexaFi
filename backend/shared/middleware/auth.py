@@ -1,8 +1,3 @@
-"""
-Enhanced authentication and authorization middleware for NexaFi
-Implements JWT-based authentication with role-based access control
-"""
-
 import jwt
 import bcrypt
 from flask import request, jsonify, g, current_app

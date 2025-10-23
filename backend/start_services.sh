@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Enhanced startup script for NexaFi Backend Services
 # Includes new services and improved error handling
 
 set -e
