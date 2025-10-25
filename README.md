@@ -1139,61 +1139,6 @@ NexaFi leverages sophisticated AI/ML models to deliver intelligent financial ins
   * Human review for high-risk advice
   * Continuous monitoring for hallucinations or inaccuracies
 
-## Roadmap & Future Development
-
-NexaFi maintains an ambitious development roadmap to continuously enhance platform capabilities:
-
-### Q3 2025
-
-* **Enhanced AI Advisory**:
-  * Industry-specific financial benchmarking
-  * Scenario planning with multiple variables
-  * Natural language generation for financial narratives
-
-* **Advanced Payment Capabilities**:
-  * Real-time payment integration (FedNow, RTP)
-  * Cross-border payment optimization
-  * Cryptocurrency payment acceptance
-
-* **Platform Expansion**:
-  * Additional language support (Spanish, French, German)
-  * Industry-specific modules (healthcare, construction, retail)
-  * Enhanced mobile capabilities with offline mode
-
-### Q4 2025
-
-* **Intelligent Tax Management**:
-  * Automated tax filing preparation
-  * Year-round tax optimization suggestions
-  * Multi-jurisdiction tax compliance
-
-* **Enhanced Integration Ecosystem**:
-  * Expanded API capabilities for third-party developers
-  * No-code integration builder
-  * Marketplace for financial service providers
-
-* **Advanced Analytics**:
-  * Predictive customer behavior modeling
-  * Supply chain financial optimization
-  * Custom report builder with natural language queries
-
-### 2026 and Beyond
-
-* **Blockchain Integration**:
-  * Decentralized identity verification
-  * Smart contract-based financial agreements
-  * Tokenized asset management
-
-* **Autonomous Finance**:
-  * Self-optimizing cash management
-  * Automated financial operations
-  * Predictive resource allocation
-
-* **Global Expansion**:
-  * Multi-currency optimization
-  * International compliance framework
-  * Localized financial intelligence
-
 ## Contributing Guidelines
 
 We welcome contributions from the community to help improve NexaFi:
