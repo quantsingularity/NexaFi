@@ -1,6 +1,6 @@
 # 🤖 NexaFi - Enterprise-Grade AI-Driven Fintech Platform
 
-![CI/CD Pipeline](https://github.com/abrar2030/NexaFi/actions/workflows/cicd.yml/badge.svg)
+![CI/CD Status](https://img.shields.io/github/actions/workflow/status/abrar2030/NexaFi/cicd.yml?branch=main&label=CI/CD&logo=github)
 [![Test Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/abrar2030/NexaFi/tests)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/abrar2030/NexaFi/LICENSE)
 
