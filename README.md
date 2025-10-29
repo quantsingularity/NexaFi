@@ -469,20 +469,6 @@ NexaFi leverages sophisticated AI/ML models to deliver intelligent financial ins
 
 ---
 
-## Contributing Guidelines
-
-We welcome contributions! Please refer to the full [Contributing Guidelines](docs/contributing.md) for detailed information on:
-*   **Getting Started**: Setting up your development environment.
-*   **Development Workflow**: Branching strategy and pull request process.
-*   **Code Standards**: Language-specific style guides and best practices.
-*   **Review Process**: Mandatory peer reviews and automated checks.
-
----
-
-## License & Legal Information
+## License
 
 NexaFi is released under the **MIT License**.
-
-*   **Third-Party Components**: A list of all third-party libraries and their respective licenses is available in the `THIRD_PARTY_LICENSES.md` file.
-*   **Trademark Notice**: "NexaFi" is a registered trademark.
-*   **Data Privacy**: The platform adheres to strict data privacy policies, detailed in the [Data Privacy Policy](docs/privacy.md).
