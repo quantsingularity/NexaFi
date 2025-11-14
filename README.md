@@ -322,10 +322,6 @@ Follow these steps for local development using a simplified Docker-based environ
 *   **API Documentation**: `http://localhost:8080/api-docs`
 *   **Monitoring Dashboard**: `http://localhost:9090`
 
-### Production Deployment
-
-For deployment to a Kubernetes cluster, refer to the detailed instructions in the [Deployment Guide](docs/operations/deployment.md). The process involves configuring `kubectl` access, running `terraform apply` for infrastructure provisioning, and executing the deployment script: `./scripts/deploy_to_production.sh`.
-
 ---
 
 ## API Documentation
