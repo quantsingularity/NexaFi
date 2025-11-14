@@ -18,7 +18,6 @@ NexaFi is a revolutionary AI-powered financial operating system that transforms 
 *   [Technical Architecture](#technical-architecture)
 *   [Technology Stack](#technology-stack)
 *   [System Design Principles](#system-design-principles)
-*   [Project Structure](#project-structure)
 *   [Deployment Architecture](#deployment-architecture)
 *   [Installation & Setup](#installation--setup)
 *   [API Documentation](#api-documentation)
@@ -62,42 +61,47 @@ NexaFi's core functionality is organized into five intelligent domains, each lev
 
 ### Advanced Financial Management & Accounting
 
-This domain automates and optimizes core financial processes:
-*   **Neural-Network Powered Bookkeeping**: Utilizes deep learning models to parse invoices, receipts, and bank feeds with **99.7% accuracy**, automatically reconciling accounts and generating real-time financial statements.
-*   **Predictive Cash-Flow Engine**: Employs ensemble machine learning models to forecast future cash flow with **92% accuracy** up to 90 days out, alerting businesses to funding gaps or surpluses with specific recommended actions.
-*   **Intelligent Transaction Categorization**: Implements transfer learning techniques to automatically classify transactions with continuous improvement from minimal corrections.
-*   **Automated Financial Reporting**: Generates comprehensive financial reports (balance sheets, income statements, cash flow statements) with customizable templates and regulatory compliance checks.
+| Feature | Description |
+| :--- | :--- |
+| **Neural-Network Powered Bookkeeping** | Utilizes deep learning models to parse invoices, receipts, and bank feeds with **99.7% accuracy**, automatically reconciling accounts and generating real-time financial statements. |
+| **Predictive Cash-Flow Engine** | Employs ensemble machine learning models to forecast future cash flow with **92% accuracy** up to 90 days out, alerting businesses to funding gaps or surpluses with specific recommended actions. |
+| **Intelligent Transaction Categorization** | Implements transfer learning techniques to automatically classify transactions with continuous improvement from minimal corrections. |
+| **Automated Financial Reporting** | Generates comprehensive financial reports (balance sheets, income statements, cash flow statements) with customizable templates and regulatory compliance checks. |
 
 ### Next-Generation Payment Infrastructure
 
-A seamless, multi-currency payment system built for modern business:
-*   **Embedded Payment Processing**: Seamlessly accept multiple payment methods (cards, ACH, real-time payments, cryptocurrencies) directly within NexaFi without third-party redirects.
-*   **Multi-Currency Management**: Sophisticated FX engine for managing wallets in 135+ currencies with AI-optimized exchange timing for competitive rates.
-*   **Dynamic Yield Optimization**: Algorithmic treasury management that automatically allocates idle funds across various instruments to maximize returns while maintaining necessary liquidity.
-*   **Subscription Revenue Management**: Advanced recurring billing system with cohort analysis, churn prediction, and revenue optimization suggestions.
+| Feature | Description |
+| :--- | :--- |
+| **Embedded Payment Processing** | Seamlessly accept multiple payment methods (cards, ACH, real-time payments, cryptocurrencies) directly within NexaFi without third-party redirects. |
+| **Multi-Currency Management** | Sophisticated FX engine for managing wallets in 135+ currencies with AI-optimized exchange timing for competitive rates. |
+| **Dynamic Yield Optimization** | Algorithmic treasury management that automatically allocates idle funds across various instruments to maximize returns while maintaining necessary liquidity. |
+| **Subscription Revenue Management** | Advanced recurring billing system with cohort analysis, churn prediction, and revenue optimization suggestions. |
 
 ### Conversational AI Advisory System
 
-A context-aware financial assistant powered by a fine-tuned Large Language Model (LLM):
-*   **Context-Aware Financial Assistant**: Transformer-based LLM fine-tuned on financial regulations and best practices, providing personalized advice on tax, compliance, investment, and cash-management.
-*   **Proactive Intelligence**: Identifies patterns and anomalies to deliver actionable recommendations before issues arise.
-*   **Document Understanding System**: Advanced OCR and NLP capabilities to extract, interpret, and summarize financial information from contracts, statements, and regulatory documents.
-*   **Tax Strategy Optimization**: Continuously monitors transactions and business activities to identify potential deductions and tax-saving opportunities with compliance verification.
+| Feature | Description |
+| :--- | :--- |
+| **Context-Aware Financial Assistant** | Transformer-based LLM fine-tuned on financial regulations and best practices, providing personalized advice on tax, compliance, investment, and cash-management. |
+| **Proactive Intelligence** | Identifies patterns and anomalies to deliver actionable recommendations before issues arise. |
+| **Document Understanding System** | Advanced OCR and NLP capabilities to extract, interpret, and summarize financial information from contracts, statements, and regulatory documents. |
+| **Tax Strategy Optimization** | Continuously monitors transactions and business activities to identify potential deductions and tax-saving opportunities with compliance verification. |
 
 ### Algorithmic Credit & Lending Platform
 
-A proprietary platform for fast, data-driven credit decisions:
-*   **Alternative Data Underwriting**: Proprietary credit scoring algorithm utilizing **1,000+ data points** beyond traditional credit metrics to match businesses with optimal financing in under 3 seconds.
-*   **Dynamic Credit Line Management**: Self-adjusting credit facilities that automatically scale based on real-time business performance indicators and market conditions.
-*   **Integrated Repayment Optimization**: Smart loan servicing that integrates with cash flow management to recommend optimal repayment timing and amounts.
+| Feature | Description |
+| :--- | :--- |
+| **Alternative Data Underwriting** | Proprietary credit scoring algorithm utilizing **1,000+ data points** beyond traditional credit metrics to match businesses with optimal financing in under 3 seconds. |
+| **Dynamic Credit Line Management** | Self-adjusting credit facilities that automatically scale based on real-time business performance indicators and market conditions. |
+| **Integrated Repayment Optimization** | Smart loan servicing that integrates with cash flow management to recommend optimal repayment timing and amounts. |
 
 ### Advanced Analytics & Business Intelligence
 
-Delivering prescriptive insights beyond mere reporting:
-*   **Multi-dimensional Benchmarking**: Anonymous performance comparison against industry peers across **50+ KPIs** with statistical significance testing.
-*   **Real-time Anomaly Detection**: Utilizes unsupervised learning to identify unusual transactions or patterns with **99.2% precision** and minimal false positives.
-*   **Interactive Trend Visualization**: Dynamic, drill-down capable dashboards presenting financial trends with predictive modeling and scenario analysis.
-*   **Prescriptive Optimization Engine**: AI-generated, statistically validated recommendations for pricing, inventory management, staffing, and other operational decisions with projected ROI calculations.
+| Feature | Description |
+| :--- | :--- |
+| **Multi-dimensional Benchmarking** | Anonymous performance comparison against industry peers across **50+ KPIs** with statistical significance testing. |
+| **Real-time Anomaly Detection** | Utilizes unsupervised learning to identify unusual transactions or patterns with **99.2% precision** and minimal false positives. |
+| **Interactive Trend Visualization** | Dynamic, drill-down capable dashboards presenting financial trends with predictive modeling and scenario analysis. |
+| **Prescriptive Optimization Engine** | AI-generated, statistically validated recommendations for pricing, inventory management, staffing, and other operational decisions with projected ROI calculations. |
 
 ---
 
@@ -106,8 +110,6 @@ Delivering prescriptive insights beyond mere reporting:
 NexaFi implements a sophisticated cloud-native microservices architecture designed for enterprise-grade reliability, security, and scalability. The platform utilizes **Domain-Driven Design (DDD)** principles to separate core business domains into independent services connected through an asynchronous, event-driven messaging system.
 
 ### Key Architectural Principles
-
-The architecture is governed by the following core principles:
 
 | Principle | Description | Implementation Details |
 | :--- | :--- | :--- |
@@ -122,50 +124,15 @@ The architecture is governed by the following core principles:
 
 The codebase is logically organized into several key components:
 
-```
-[Structure from lines 157-198 of original README]
-NexaFi/
-├── Core Domain Services
-│   ├── Identity & Access Management Service
-│   ├── Ledger Service
-│   ├── Payment Processing Service
-│   ├── Treasury Management Service
-│   ├── Credit Decisioning Service
-│   ├── Analytics Service
-│   └── Advisory Service
-├── Supporting Services
-│   ├── Document Processing Service
-│   ├── Notification Service
-│   ├── Audit Service
-│   ├── Integration Service
-│   └── Workflow Orchestration Service
-├── AI/ML Infrastructure
-│   ├── Feature Store
-│   ├── Model Registry
-│   ├── Training Pipeline
-│   ├── Inference Service
-│   └── Monitoring Service
-├── Frontend Applications
-│   ├── Web Dashboard (React)
-│   ├── Mobile Application (Flutter)
-│   └── Embedded Widgets
-├── API Layer
-│   ├── API Gateway
-│   ├── GraphQL Federation
-│   └── Webhook Manager
-├── Data Infrastructure
-│   ├── Transactional Data Store
-│   ├── Analytical Data Store
-│   ├── Event Store
-│   ├── Cache Layer
-│   └── Data Lake
-└── Platform Infrastructure
-    ├── Service Mesh
-    ├── Secret Management
-    ├── Observability Stack
-    ├── Identity Provider
-    └── Security Services
-```
+| Component | Sub-Components | Description |
+| :--- | :--- | :--- |
+| **Core Domain Services** | Identity, Ledger, Payments, Treasury, Credit, Analytics, Advisory | Independent microservices for core business logic. |
+| **Supporting Services** | Document Processing, Notification, Audit, Integration, Workflow Orchestration | Services providing cross-cutting concerns and utility functions. |
+| **AI/ML Infrastructure** | Feature Store, Model Registry, Training Pipeline, Inference Engine | MLOps components for managing the AI lifecycle. |
+| **Frontend Applications** | Web Dashboard (React), Mobile Application (Flutter), Embedded Widgets | User-facing applications and integration components. |
+| **API Layer** | API Gateway, GraphQL Federation, Webhook Manager | Unified access layer for internal and external consumers. |
+| **Data Infrastructure** | Transactional Store, Analytical Store, Event Store, Cache Layer, Data Lake | Polyglot persistence and data management layers. |
+| **Platform Infrastructure** | Service Mesh, Secret Management, Observability Stack, Identity Provider, Security Services | Shared infrastructure for security, communication, and monitoring. |
 
 ---
 
@@ -215,50 +182,27 @@ NexaFi adheres to industry-leading software engineering principles to ensure mai
 
 ### Code Quality Standards
 
-The development process enforces rigorous standards:
-*   **Clean Code Practices**: Adherence to **SOLID**, **DRY**, and **KISS** principles, coupled with comprehensive documentation.
-*   **Testing Strategy**: Implementation of **Test-Driven Development (TDD)** for critical components, aiming for a minimum of **85% code coverage**. This includes Unit, Integration, End-to-End, Performance, and Chaos testing.
-*   **Code Review Process**: Mandatory peer reviews, automated static analysis, linting, and security-focused reviews.
+| Standard | Description |
+| :--- | :--- |
+| **Clean Code Practices** | Adherence to **SOLID**, **DRY**, and **KISS** principles, coupled with comprehensive documentation. |
+| **Testing Strategy** | Implementation of **Test-Driven Development (TDD)** for critical components, aiming for a minimum of **85% code coverage**. Includes Unit, Integration, End-to-End, Performance, and Chaos testing. |
+| **Code Review Process** | Mandatory peer reviews, automated static analysis, linting, and security-focused reviews. |
 
 ### Architectural Governance
 
-Consistency and robustness are maintained through strict governance:
-*   **API Design**: RESTful principles with versioned APIs, comprehensive OpenAPI/Swagger documentation, and rate limiting.
-*   **Data Management**: Clear data ownership by domain services, consistent modeling, and **Privacy by Design** with data minimization.
-*   **Error Handling**: Standardized error responses, detailed logging, and graceful degradation using circuit breakers.
+| Governance Area | Description |
+| :--- | :--- |
+| **API Design** | RESTful principles with versioned APIs, comprehensive OpenAPI/Swagger documentation, and rate limiting. |
+| **Data Management** | Clear data ownership by domain services, consistent modeling, and **Privacy by Design** with data minimization. |
+| **Error Handling** | Standardized error responses, detailed logging, and graceful degradation using circuit breakers. |
 
 ### Operational Excellence
 
-Focusing on reliable and efficient operations:
-*   **Deployment Strategy**: Utilizes **Immutable Infrastructure**, **Blue-Green**, and **Canary** deployments for zero-downtime updates and risk mitigation, with automated rollback capabilities.
-*   **Monitoring & Alerting**: Based on **Golden Signals** (latency, traffic, errors, saturation) and **SLO/SLI-based alerting** for proactive issue identification.
-*   **Incident Management**: Defined severity levels, automated detection, and a blameless post-mortem process for continuous improvement.
-
----
-
-## Project Structure
-
-The NexaFi codebase follows a well-organized structure to facilitate development, testing, and deployment:
-
-```
-[Structure from lines 446-532 of original README]
-/nexafi/
-├── backend/                  # Microservices, common libraries, and protocol definitions
-│    ├── services/            # Individual domain microservices (user, accounting, payments, etc.)
-│    └── common/              # Shared libraries (auth, logging, messaging)
-├── frontend/                 # User interfaces and shared components
-│    ├── web/                 # React-based web dashboard
-│    └── mobile/              # Flutter mobile application
-├── ml/                       # Machine learning models, pipelines, and feature engineering
-│    ├── models/              # Model definitions (cash flow, credit scoring, fraud)
-│    └── pipelines/           # Training and inference pipelines
-├── infra/                    # Infrastructure as code (Terraform, Kubernetes)
-│    ├── terraform/           # Terraform configurations for cloud resources
-│    └── kubernetes/          # Kubernetes manifests and configurations
-├── ci-cd/                    # CI/CD pipeline definitions and scripts
-├── docs/                     # Comprehensive documentation (architecture, API, ML, user)
-└── tests/                    # Integration, e2e, performance, and security tests
-```
+| Focus Area | Description |
+| :--- | :--- |
+| **Deployment Strategy** | Utilizes **Immutable Infrastructure**, **Blue-Green**, and **Canary** deployments for zero-downtime updates and risk mitigation, with automated rollback capabilities. |
+| **Monitoring & Alerting** | Based on **Golden Signals** (latency, traffic, errors, saturation) and **SLO/SLI-based alerting** for proactive issue identification. |
+| **Incident Management** | Defined severity levels, automated detection, and a blameless post-mortem process for continuous improvement. |
 
 ---
 
@@ -268,15 +212,12 @@ NexaFi employs a sophisticated multi-environment deployment architecture designe
 
 ### Environment Strategy
 
-The platform utilizes four distinct environments:
-1.  **Development**: Individual developer environments with local or cloud-based resources.
-2.  **Integration**: Shared environment for feature integration and testing.
-3.  **Staging**: Production-like environment for pre-release validation.
-4.  **Production**: Highly available, multi-region deployment for customer-facing services.
-
-### Infrastructure Topology
-
-The production environment implements a multi-region, active-active architecture ensuring high availability and disaster recovery across multiple cloud regions. Key components include Global DNS for traffic routing, Load Balancers, API Gateway/CDN, and multi-cluster Kubernetes orchestration, all connected to globally replicated, multi-AZ database clusters.
+| Environment | Purpose |
+| :--- | :--- |
+| **Development** | Individual developer environments with local or cloud-based resources. |
+| **Integration** | Shared environment for feature integration and testing. |
+| **Staging** | Production-like environment for pre-release validation. |
+| **Production** | Highly available, multi-region deployment for customer-facing services. |
 
 ### Key Infrastructure Components
 
@@ -289,11 +230,12 @@ The production environment implements a multi-region, active-active architecture
 
 ### Deployment Process
 
-A sophisticated CI/CD pipeline ensures reliable and consistent deployments:
-1.  **Continuous Integration**: Automated builds, comprehensive testing, static code analysis, and container image scanning.
-2.  **Continuous Delivery**: Automated deployment to lower environments, with manual approval gates for Staging and Production.
-3.  **Deployment Strategies**: Utilizes Blue-Green and Canary releases for zero-downtime updates and risk mitigation.
-4.  **Post-Deployment Validation**: Includes synthetic transaction monitoring, performance testing, and security validation.
+| Step | Description |
+| :--- | :--- |
+| **Continuous Integration** | Automated builds, comprehensive testing, static code analysis, and container image scanning. |
+| **Continuous Delivery** | Automated deployment to lower environments, with manual approval gates for Staging and Production. |
+| **Deployment Strategies** | Utilizes Blue-Green and Canary releases for zero-downtime updates and risk mitigation. |
+| **Post-Deployment Validation** | Includes synthetic transaction monitoring, performance testing, and security validation. |
 
 ---
 
@@ -301,9 +243,10 @@ A sophisticated CI/CD pipeline ensures reliable and consistent deployments:
 
 ### Prerequisites
 
-To run the full development environment locally, ensure you have the following installed:
-*   **Software**: Node.js 18+, Python 3.11+, Docker Desktop 4.0+ (with Docker Compose), Kubernetes CLI (`kubectl`), Helm, and Git 2.30+.
-*   **Resources**: Minimum 16GB RAM, 50GB available disk space, and 4+ CPU cores recommended.
+| Prerequisite | Version/Requirement |
+| :--- | :--- |
+| **Software** | Node.js 18+, Python 3.11+, Docker Desktop 4.0+ (with Docker Compose), Kubernetes CLI (`kubectl`), Helm, and Git 2.30+. |
+| **Resources** | Minimum 16GB RAM, 50GB available disk space, and 4+ CPU cores recommended. |
 
 ### Quick Setup (Development)
 
@@ -318,9 +261,12 @@ Follow these steps for local development using a simplified Docker-based environ
 | **5. Start Frontend** | `cd frontend/web && npm run dev` | Starts the web dashboard development server. |
 
 **Access the Development Environment:**
-*   **Web Dashboard**: `http://localhost:3000`
-*   **API Documentation**: `http://localhost:8080/api-docs`
-*   **Monitoring Dashboard**: `http://localhost:9090`
+
+| Component | Endpoint |
+| :--- | :--- |
+| **Web Dashboard** | `http://localhost:3000` |
+| **API Documentation** | `http://localhost:8080/api-docs` |
+| **Monitoring Dashboard** | `http://localhost:9090` |
 
 ---
 
@@ -330,7 +276,10 @@ NexaFi provides comprehensive API documentation for all services, supporting bot
 
 ### REST APIs
 
-All REST APIs are documented using **OpenAPI 3.1** specifications, available at `http://localhost:8080/api-docs` (Development) and `https://api.nexafi.com/api-docs` (Production).
+| Feature | Description |
+| :--- | :--- |
+| **Specification** | All REST APIs are documented using **OpenAPI 3.1** specifications. |
+| **Documentation URL** | Available at `http://localhost:8080/api-docs` (Development) and `https://api.nexafi.com/api-docs` (Production). |
 
 **Example: Retrieving Account Information**
 ```bash
@@ -342,11 +291,18 @@ The response provides a detailed JSON object including account balance, status, 
 
 ### GraphQL API
 
-The GraphQL API provides a flexible interface for complex data queries at `https://api.nexafi.com/graphql`. This allows clients to request only the data they need in a single request, improving efficiency.
+| Feature | Description |
+| :--- | :--- |
+| **Endpoint** | `https://api.nexafi.com/graphql` |
+| **Benefit** | Provides a flexible interface for complex data queries, allowing clients to request only the data they need in a single request, improving efficiency. |
 
 ### Webhooks
 
-NexaFi provides webhooks for real-time event notifications (e.g., `transaction.created`, `account.updated`). Security is ensured via **HMAC signature verification** for payload validation, and a robust retry policy is implemented for delivery reliability.
+| Feature | Description |
+| :--- | :--- |
+| **Purpose** | Provides webhooks for real-time event notifications (e.g., `transaction.created`, `account.updated`). |
+| **Security** | Security is ensured via **HMAC signature verification** for payload validation. |
+| **Reliability** | A robust retry policy is implemented for delivery reliability. |
 
 ---
 
@@ -364,7 +320,7 @@ NexaFi is designed to address diverse financial management needs across various 
 
 | Challenge | NexaFi Solution | Key Outcomes |
 | :--- | :--- | :--- |
-| Unified financial visibility & working capital | Multi-Channel Integration (Shopify, Amazon, eBay), Inventory Financing based on real-time sales data, Customer Payment Optimization. | Consolidated view of finances across 5 sales channels, 22% increase in inventory turnover, 4.5% reduction in payment processing costs. |
+| Managing multi-channel revenue & FX | Multi-Currency Management, Subscription Revenue Management, Integrated Payment Processing. | 15% reduction in FX costs, 10% increase in subscription retention due to optimized billing. |
 
 ### Professional Services Firm (e.g., Law Firm)
 
@@ -380,26 +336,30 @@ NexaFi implements a comprehensive security and compliance framework designed to 
 
 ### Security Architecture
 
-The platform employs a **Defense in Depth Strategy** with a **Zero-Trust** network model and the **Principle of Least Privilege**.
-*   **Data Protection**: End-to-end encryption (TLS 1.3) and encryption at rest (AES-256), field-level encryption for PII, and tokenization for payment information.
-*   **Access Control**: Multi-factor authentication (MFA), Role-Based Access Control (RBAC), and Just-In-Time access provisioning.
-*   **Application Security**: Secure Development Lifecycle (SDLC), Static/Dynamic Application Security Testing (SAST/DAST), and regular third-party penetration testing.
-*   **Infrastructure Security**: Immutable infrastructure, automated vulnerability scanning, and network segmentation.
+| Principle | Description |
+| :--- | :--- |
+| **Core Model** | **Defense in Depth Strategy** with a **Zero-Trust** network model and the **Principle of Least Privilege**. |
+| **Data Protection** | End-to-end encryption (TLS 1.3) and encryption at rest (AES-256), field-level encryption for PII, and tokenization for payment information. |
+| **Access Control** | Multi-factor authentication (MFA), Role-Based Access Control (RBAC), and Just-In-Time access provisioning. |
+| **Application Security** | Secure Development Lifecycle (SDLC), Static/Dynamic Application Security Testing (SAST/DAST), and regular third-party penetration testing. |
+| **Infrastructure Security** | Immutable infrastructure, automated vulnerability scanning, and network segmentation. |
 
 ### Compliance Controls
 
-NexaFi is designed to support compliance with key financial regulations:
-*   **PCI DSS**: Compliant cardholder data environment with network segmentation and encryption.
-*   **SOC 2 Type II**: Controls for security, availability, and confidentiality, with annual audit and certification.
-*   **GDPR & CCPA**: Data minimization, consent management, and fulfillment of data subject rights.
-*   **Financial Regulations**: Built-in controls for **AML** (Anti-Money Laundering), **KYC** (Know Your Customer), and regulatory reporting.
+| Regulation | Description |
+| :--- | :--- |
+| **PCI DSS** | Compliant cardholder data environment with network segmentation and encryption. |
+| **SOC 2 Type II** | Controls for security, availability, and confidentiality, with annual audit and certification. |
+| **GDPR & CCPA** | Data minimization, consent management, and fulfillment of data subject rights. |
+| **Financial Regulations** | Built-in controls for **AML** (Anti-Money Laundering), **KYC** (Know Your Customer), and regulatory reporting. |
 
 ### Security Operations
 
-Security is actively managed through:
-*   **Incident Response**: Defined plan, 24/7 Security Operations Center, and regular simulations.
-*   **Monitoring & Detection**: Real-time SIEM (Security Information and Event Management), User and Entity Behavior Analytics (UEBA), and threat intelligence integration.
-*   **Vulnerability Management**: Continuous scanning, risk-based prioritization, and automated patching.
+| Operation | Description |
+| :--- | :--- |
+| **Incident Response** | Defined plan, 24/7 Security Operations Center, and regular simulations. |
+| **Monitoring & Detection** | Real-time SIEM (Security Information and Event Management), User and Entity Behavior Analytics (UEBA), and threat intelligence integration. |
+| **Vulnerability Management** | Continuous scanning, risk-based prioritization, and automated patching. |
 
 ---
 
@@ -443,28 +403,44 @@ NexaFi leverages sophisticated AI/ML models to deliver intelligent financial ins
 
 ### Cash Flow Forecasting Model
 
-*   **Model Type**: Ensemble of LSTM neural networks and gradient boosting.
-*   **Input Features**: Historical transactions, recurring payments, seasonal factors, and macroeconomic indicators.
-*   **Output**: Daily cash flow projections for 90 days with confidence intervals.
-*   **Performance**: **92% accuracy** for 30-day forecasts.
-*   **MLOps**: Weekly retraining with daily fine-tuning; uses SHAP values for explainability.
+| Detail | Description |
+| :--- | :--- |
+| **Model Type** | Ensemble of LSTM neural networks and gradient boosting. |
+| **Input Features** | Historical transactions, recurring payments, seasonal factors, and macroeconomic indicators. |
+| **Output** | Daily cash flow projections for 90 days with confidence intervals. |
+| **Performance** | **92% accuracy** for 30-day forecasts. |
+| **MLOps** | Weekly retraining with daily fine-tuning; uses SHAP values for explainability. |
 
 ### Credit Risk Assessment Model
 
-*   **Model Type**: Gradient boosting classifier with neural network components.
-*   **Input Features**: Transaction history, payment behavior, business metrics, industry risk, and alternative data signals.
-*   **Output**: Credit risk score (0-100) with default probability.
-*   **Performance**: **89% accuracy** in predicting defaults, AUC of 0.92.
-*   **MLOps**: Monthly retraining with quarterly validation; regular bias audits for fairness.
+| Detail | Description |
+| :--- | :--- |
+| **Model Type** | Gradient boosting classifier with neural network components. |
+| **Input Features** | Transaction history, payment behavior, business metrics, industry risk, and alternative data signals. |
+| **Output** | Credit risk score (0-100) with default probability. |
+| **Performance** | **89% accuracy** in predicting defaults, AUC of 0.92. |
+| **MLOps** | Monthly retraining with quarterly validation; regular bias audits for fairness. |
 
 ### Intelligent Document Processing
 
-*   **Model Type**: Transformer-based computer vision and NLP pipeline.
-*   **Capabilities**: Document classification, entity extraction (amounts, dates), summarization, and anomaly detection.
-*   **Performance**: **95% extraction accuracy** across 15 document types; processing speed of <2 seconds per document.
+| Detail | Description |
+| :--- | :--- |
+| **Model Type** | Transformer-based computer vision and NLP pipeline. |
+| **Capabilities** | Document classification, entity extraction (amounts, dates), summarization, and anomaly detection. |
+| **Performance** | **95% extraction accuracy** across 15 document types; processing speed of <2 seconds per document. |
 
 ---
 
-## License
+## Contributing Guidelines
+
+| Step | Command/Action |
+| :--- | :--- |
+| **1. Fork** | Fork the repository. |
+| **2. Branch** | Create your feature branch (`git checkout -b feature/amazing-feature`). |
+| **3. Commit** | Commit your changes (`git commit -m 'Add some amazing feature'`). |
+| **4. Push** | Push to the branch (`git push origin feature/amazing-feature`). |
+| **5. Pull Request** | Open a Pull Request. |
+
+## License & Legal Information
 
 NexaFi is released under the **MIT License**.
