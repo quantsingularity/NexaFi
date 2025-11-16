@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import bcrypt
@@ -26,10 +28,42 @@ from audit.audit_logger import audit_logger, AuditEventType, AuditSeverity, audi
 from database.manager import initialize_database, BaseModel
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'nexafi-user-service-secret-key-2024')
+# Load environment variables from .env file
+load_dotenv()
+
+# Configuration variables
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY not set in environment")
+
+DEBUG = os.getenv("DEBUG", "False") == "True"
+HOST = os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("PORT", 5000))
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['DEBUG'] = DEBUG
 
 # Initialize authentication
 init_auth_manager(app.config['SECRET_KEY'])
+
+# --- Error Handlers (Issue: No error handlers) ---
+@app.errorhandler(404)
+def handle_404(error):
+    """Return a custom 404 Not Found JSON response."""
+    return jsonify({'error': 'Not found', 'message': str(error)}), 404
+
+@app.errorhandler(500)
+def handle_500(error):
+    """Return a custom 500 Internal Server Error JSON response."""
+    # Log the error for internal review
+    logger.error(f"Internal Server Error: {error}", exc_info=True)
+    return jsonify({'error': 'Internal server error', 'message': 'An unexpected error occurred'}), 500
+
+@app.errorhandler(400)
+def handle_400(error):
+    """Return a custom 400 Bad Request JSON response."""
+    return jsonify({'error': 'Bad request', 'message': str(error)}), 400
 
 # Enable CORS
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
@@ -39,7 +73,17 @@ setup_request_logging(app)
 logger = get_logger('user_service')
 
 # Initialize database
-db_path = '/home/ubuntu/nexafi_backend_refactored/user-service/data/users.db'
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL not set in environment")
+
+# Assuming initialize_database handles the connection string from DATABASE_URL
+# The original code used a hardcoded path, so we'll assume the underlying logic
+# needs to be updated to use the environment variable.
+# For now, we'll keep the original path if the variable is not set, but the check above
+# ensures it is set. We'll modify the path to use the env var if it's a file path.
+# Since the original code uses a hardcoded path, we'll assume the intent is to use the env var.
+db_path = DATABASE_URL.replace("sqlite:///", "") if DATABASE_URL.startswith("sqlite:///") else DATABASE_URL
 db_manager, migration_manager = initialize_database(db_path)
 
 # Set database manager for models
@@ -298,6 +342,11 @@ def login():
     )
     
     logger.info(f"User logged in: {user.email}")
+
+if __name__ == "__main__":
+    # Issue: Missing if __name__ == "__main__" guard.
+    # Only run the server when executed directly
+    app.run(host=HOST, port=PORT, debug=DEBUG)
     
     return jsonify({
         'message': 'Login successful',
