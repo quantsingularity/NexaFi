@@ -1,9 +1,11 @@
 
-import pytest
 import os
 from unittest.mock import patch
 
+import pytest
+
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
+
 
 class TestInfrastructureConfig:
 

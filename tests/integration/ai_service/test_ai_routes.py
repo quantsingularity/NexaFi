@@ -1,11 +1,16 @@
 
-import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from NexaFi.backend.ai_service.src.main import app
-from NexaFi.backend.ai_service.src.models.user import db, AIModel, AIPrediction, FinancialInsight, ConversationSession, ConversationMessage
+from NexaFi.backend.ai_service.src.models.user import (AIModel, AIPrediction,
+                                                       ConversationMessage,
+                                                       ConversationSession,
+                                                       FinancialInsight, db)
+
 
 @pytest.fixture(scope=\'module\')
 def client():

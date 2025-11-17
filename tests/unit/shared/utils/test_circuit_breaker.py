@@ -1,10 +1,14 @@
 
-import pytest
 import time
 from unittest.mock import MagicMock, patch
 
-from NexaFi.backend.shared.utils.circuit_breaker import CircuitBreaker, CircuitState, circuit_breaker
+import pytest
+
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
+from NexaFi.backend.shared.utils.circuit_breaker import (CircuitBreaker,
+                                                         CircuitState,
+                                                         circuit_breaker)
+
 
 @pytest.fixture
 def default_circuit_breaker():

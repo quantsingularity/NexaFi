@@ -1,20 +1,29 @@
-import unittest
 import os
+import unittest
+
 from PIL import Image, ImageDraw, ImageFont
-from NexaFi.ml.models.document_processing.document_processing import DocumentProcessor
+
+from NexaFi.ml.models.document_processing.document_processing import \
+    DocumentProcessor
+
 
 class TestDocumentProcessor(unittest.TestCase):
     def setUp(self):
         self.processor = DocumentProcessor()
         self.dummy_image_path = "/tmp/test_dummy_doc.png"
         # Create a dummy image for testing
-        img = Image.new("RGB", (600, 200), color = (255, 255, 255))
+        img = Image.new("RGB", (600, 200), color=(255, 255, 255))
         d = ImageDraw.Draw(img)
         try:
             fnt = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 20)
         except IOError:
             fnt = ImageFont.load_default()
-        d.text((10,10), "This is a test document.\nIt contains some text for OCR.", fill=(0,0,0), font=fnt)
+        d.text(
+            (10, 10),
+            "This is a test document.\nIt contains some text for OCR.",
+            fill=(0, 0, 0),
+            font=fnt,
+        )
         img.save(self.dummy_image_path)
 
     def tearDown(self):
@@ -43,7 +52,6 @@ class TestDocumentProcessor(unittest.TestCase):
         self.assertEqual(len(analysis_results["entities"]), 0)
         self.assertEqual(analysis_results["summary"], "")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-

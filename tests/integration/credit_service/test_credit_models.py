@@ -1,10 +1,14 @@
 
-import pytest
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
+
+import pytest
 
 from NexaFi.backend.credit_service.src.main import app
-from NexaFi.backend.credit_service.src.models.user import db, CreditScoreModel, CreditScore, LoanApplication, Loan, LoanDocument, LoanApplicationHistory
+from NexaFi.backend.credit_service.src.models.user import (
+    CreditScore, CreditScoreModel, Loan, LoanApplication,
+    LoanApplicationHistory, LoanDocument, db)
+
 
 @pytest.fixture(scope=\'module\')
 def client():

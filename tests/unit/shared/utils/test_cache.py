@@ -1,11 +1,14 @@
 
-import pytest
-from unittest.mock import MagicMock, patch
-import json
 import hashlib
+import json
+from unittest.mock import MagicMock, patch
 
-from NexaFi.backend.shared.utils.cache import CacheManager, cached, cache_key_for_user
+import pytest
+
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
+from NexaFi.backend.shared.utils.cache import (CacheManager,
+                                               cache_key_for_user, cached)
+
 
 @pytest.fixture
 def mock_redis_client():

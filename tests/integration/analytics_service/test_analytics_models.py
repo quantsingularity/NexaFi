@@ -1,10 +1,16 @@
 
-import pytest
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
+
+import pytest
 
 from NexaFi.backend.analytics_service.src.main import app
-from NexaFi.backend.analytics_service.src.models.user import db, Dashboard, Widget, Report, ReportExecution, DataSource, Metric
+from NexaFi.backend.analytics_service.src.models.user import (Dashboard,
+                                                              DataSource,
+                                                              Metric, Report,
+                                                              ReportExecution,
+                                                              Widget, db)
+
 
 @pytest.fixture(scope=\'module\')
 def client():

@@ -1,12 +1,16 @@
 
-import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime, date, timedelta
 import json
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from NexaFi.backend.payment_service.src.main import app
-from NexaFi.backend.payment_service.src.models.user import db, PaymentMethod, Transaction, Wallet, WalletBalanceHistory, RecurringPayment, ExchangeRate
+from NexaFi.backend.payment_service.src.models.user import (
+    ExchangeRate, PaymentMethod, RecurringPayment, Transaction, Wallet,
+    WalletBalanceHistory, db)
+
 
 @pytest.fixture(scope=\'module\')
 def client():

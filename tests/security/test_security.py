@@ -1,7 +1,8 @@
 
+import time
+
 import pytest
 import requests
-import time
 
 BASE_URLS = {
     "ai-service": "http://localhost:5004",

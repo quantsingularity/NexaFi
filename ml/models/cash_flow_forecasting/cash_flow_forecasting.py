@@ -1,6 +1,7 @@
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 
+
 class CashFlowForecaster:
     def __init__(self):
         self.model = None
@@ -8,10 +9,10 @@ class CashFlowForecaster:
 
     def preprocess_data(self, df):
         # Ensure 'date' column is datetime and set as index
-        df['date'] = pd.to_datetime(df['date'])
-        df = df.set_index('date')
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.set_index("date")
         # Resample to monthly frequency, filling missing values with 0
-        df = df['amount'].resample('M').sum().fillna(0)
+        df = df["amount"].resample("M").sum().fillna(0)
         return df
 
     def train(self, data):
@@ -27,12 +28,15 @@ class CashFlowForecaster:
         forecast = self.model_fit.forecast(steps=steps)
         return forecast
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example Usage:
     # Create some dummy data for demonstration
     data = {
-        'date': pd.to_datetime(['2023-01-15', '2023-02-10', '2023-03-05', '2023-04-20', '2023-05-12']),
-        'amount': [1000, -500, 1200, -700, 1500]
+        "date": pd.to_datetime(
+            ["2023-01-15", "2023-02-10", "2023-03-05", "2023-04-20", "2023-05-12"]
+        ),
+        "amount": [1000, -500, 1200, -700, 1500],
     }
     df = pd.DataFrame(data)
 
@@ -43,5 +47,3 @@ if __name__ == '__main__':
 
     print("Processed Data:\n", processed_data)
     print("\nForecasted Cash Flow for next 3 months:\n", predictions)
-
-

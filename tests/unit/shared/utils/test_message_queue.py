@@ -1,10 +1,14 @@
 
-import pytest
-from unittest.mock import MagicMock, patch, call
 import json
+from unittest.mock import MagicMock, call, patch
 
-from NexaFi.backend.shared.utils.message_queue import MessageQueue, Queues, publish_task, setup_queues
+import pytest
+
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
+from NexaFi.backend.shared.utils.message_queue import (MessageQueue, Queues,
+                                                       publish_task,
+                                                       setup_queues)
+
 
 @pytest.fixture
 def mock_pika():

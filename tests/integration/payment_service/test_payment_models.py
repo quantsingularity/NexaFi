@@ -1,10 +1,14 @@
 
-import pytest
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
+import pytest
+
 from NexaFi.backend.payment_service.src.main import app
-from NexaFi.backend.payment_service.src.models.user import db, PaymentMethod, Transaction, Wallet, WalletBalanceHistory, RecurringPayment, ExchangeRate
+from NexaFi.backend.payment_service.src.models.user import (
+    ExchangeRate, PaymentMethod, RecurringPayment, Transaction, Wallet,
+    WalletBalanceHistory, db)
+
 
 @pytest.fixture(scope=\'module\')
 def client():

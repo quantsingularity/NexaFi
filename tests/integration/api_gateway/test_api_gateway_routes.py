@@ -1,9 +1,11 @@
 
-import pytest
-from unittest.mock import patch, MagicMock
 import json
+from unittest.mock import MagicMock, patch
 
-from NexaFi.backend.api_gateway.src.main import app, SERVICES
+import pytest
+
+from NexaFi.backend.api_gateway.src.main import SERVICES, app
+
 
 @pytest.fixture
 def client():

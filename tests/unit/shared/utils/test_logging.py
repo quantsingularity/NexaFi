@@ -1,12 +1,14 @@
 
-import pytest
-import logging
 import json
-from unittest.mock import MagicMock, patch
+import logging
 from datetime import datetime
+from unittest.mock import MagicMock, patch
 
-from NexaFi.backend.shared.utils.logging import StructuredLogger, get_logger
+import pytest
+
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
+from NexaFi.backend.shared.utils.logging import StructuredLogger, get_logger
+
 
 @pytest.fixture
 def mock_logger():

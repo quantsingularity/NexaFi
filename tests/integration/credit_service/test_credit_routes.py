@@ -1,9 +1,11 @@
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from NexaFi.backend.credit_service.src.main import app
-from NexaFi.backend.credit_service.src.models.user import db, User
+from NexaFi.backend.credit_service.src.models.user import User, db
+
 
 @pytest.fixture(scope=\'module\')
 def client():
