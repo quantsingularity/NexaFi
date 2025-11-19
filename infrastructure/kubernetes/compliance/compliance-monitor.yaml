@@ -381,4 +381,3 @@ spec:
           restartPolicy: OnFailure
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
-

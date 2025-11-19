@@ -106,5 +106,3 @@ test.describe("Mobile Application E2E Tests (Conceptual)", () => {
 // Note: Full mobile E2E testing typically requires specialized frameworks like Appium or Detox
 // and a running mobile emulator or physical device. Playwright is primarily designed for web browser automation.
 // The tests above are conceptual and outline what would be tested in a dedicated mobile E2E environment.
-
-

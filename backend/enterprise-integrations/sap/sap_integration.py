@@ -27,9 +27,14 @@ from pyrfc import Connection
 from requests.auth import HTTPBasicAuth
 from zeep import wsse
 
-from ..shared.base_integration import (AuthMethod, BaseIntegration,
-                                       DataTransformer, IntegrationConfig,
-                                       SecurityManager, SyncResult)
+from ..shared.base_integration import (
+    AuthMethod,
+    BaseIntegration,
+    DataTransformer,
+    IntegrationConfig,
+    SecurityManager,
+    SyncResult,
+)
 
 
 @dataclass

@@ -14,8 +14,7 @@ import pickle
 import threading
 import time
 import uuid
-from concurrent.futures import (ProcessPoolExecutor, ThreadPoolExecutor,
-                                as_completed)
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -63,8 +62,17 @@ from kafka import KafkaConsumer, KafkaProducer
 from kombu import Queue as KombuQueue
 from prometheus_client import Counter, Gauge, Histogram, Summary
 from pymongo import MongoClient
-from sqlalchemy import (Boolean, Column, DateTime, Float, Index, Integer,
-                        String, Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -1108,7 +1116,7 @@ class DistributedTransactionManager:
 
 
 def create_distributed_transaction_manager(
-    config: Dict[str, Any]
+    config: Dict[str, Any],
 ) -> DistributedTransactionManager:
     """Factory function to create distributed transaction manager"""
     return DistributedTransactionManager(config)

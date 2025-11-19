@@ -167,5 +167,3 @@ The NexaFi testing suite is a critical component of the development lifecycle, e
 
 [1] `NexaFi/tests/e2e/mobile_e2e.test.js`
 [2] `NexaFi/tests/e2e/web_e2e.test.js`
-
-

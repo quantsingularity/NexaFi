@@ -9,8 +9,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional
 
 import bleach
-from marshmallow import (Schema, ValidationError, fields, post_load, pre_load,
-                         validate)
+from marshmallow import Schema, ValidationError, fields, post_load, pre_load, validate
 
 
 class FinancialValidators:

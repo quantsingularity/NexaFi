@@ -11,8 +11,7 @@ from flask_cors import CORS
 # Add shared modules to path
 sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
-from logging.logger import (get_logger, log_security_event,
-                            setup_request_logging)
+from logging.logger import get_logger, log_security_event, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_logger
 from middleware.auth import init_auth_manager, optional_auth

@@ -8,8 +8,14 @@ import pytest
 
 from NexaFi.backend.payment_service.src.main import app
 from NexaFi.backend.payment_service.src.models.user import (
-    ExchangeRate, PaymentMethod, RecurringPayment, Transaction, Wallet,
-    WalletBalanceHistory, db)
+    ExchangeRate,
+    PaymentMethod,
+    RecurringPayment,
+    Transaction,
+    Wallet,
+    WalletBalanceHistory,
+    db,
+)
 
 
 @pytest.fixture(scope=\'module\')
@@ -478,5 +484,3 @@ def create_test_exchange_rate(base, target, rate, date):
     db.session.add(er)
     db.session.commit()
     return er
-
-

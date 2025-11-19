@@ -155,5 +155,3 @@ Similar to `frontend_ci.yml`, this is a basic CI workflow for the backend, focus
 - **Troubleshooting**: GitHub Actions provides detailed logs for each workflow run. If a workflow fails, check the logs for specific error messages.
 
 For more information on GitHub Actions, refer to the [official documentation](https://docs.github.com/en/actions).
-
-

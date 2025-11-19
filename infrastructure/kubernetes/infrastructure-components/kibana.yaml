@@ -87,23 +87,22 @@ data:
     server.name: nexafi-kibana
     server.host: 0.0.0.0
     server.port: 5601
-    
+
     # Elasticsearch connection
     elasticsearch.hosts: ["http://elasticsearch-service.nexafi-infra.svc.cluster.local:9200"]
-    
+
     # Security
     xpack.security.enabled: false
     xpack.encryptedSavedObjects.encryptionKey: "nexafi-kibana-encryption-key-32-chars"
-    
+
     # Monitoring
     monitoring.ui.container.elasticsearch.enabled: true
-    
+
     # Logging
     logging.appenders.file.type: file
     logging.appenders.file.fileName: /usr/share/kibana/logs/kibana.log
     logging.appenders.file.layout.type: json
-    
+
     # Performance
     server.maxPayload: 1048576
     elasticsearch.requestTimeout: 30000
-

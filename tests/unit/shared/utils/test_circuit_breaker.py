@@ -5,9 +5,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
-from NexaFi.backend.shared.utils.circuit_breaker import (CircuitBreaker,
-                                                         CircuitState,
-                                                         circuit_breaker)
+from NexaFi.backend.shared.utils.circuit_breaker import (
+    CircuitBreaker,
+    CircuitState,
+    circuit_breaker,
+)
 
 
 @pytest.fixture
@@ -133,6 +135,3 @@ class TestCircuitBreakerDecorator:
         with patch(\'time.time\', return_value=time.time() + 2):
             result = test_func_half_open()
             assert result == \'Success\'
-
-
-

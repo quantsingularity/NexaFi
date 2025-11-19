@@ -180,14 +180,14 @@ from typing import Dict, Any
 
 class InfrastructureConfig:
     """Infrastructure configuration settings"""
-    
+
     # Redis Configuration
     REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
     REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
     REDIS_DB = int(os.getenv('REDIS_DB', 0))
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
     REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-    
+
     # RabbitMQ Configuration
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
     RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', 5672))
@@ -195,28 +195,28 @@ class InfrastructureConfig:
     RABBITMQ_PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'nexafi123')
     RABBITMQ_VHOST = os.getenv('RABBITMQ_VHOST', '/')
     RABBITMQ_URL = f"amqp://{RABBITMQ_USER}:{RABBITMQ_PASSWORD}@{RABBITMQ_HOST}:{RABBITMQ_PORT}{RABBITMQ_VHOST}"
-    
+
     # Elasticsearch Configuration
     ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
     ELASTICSEARCH_PORT = int(os.getenv('ELASTICSEARCH_PORT', 9200))
     ELASTICSEARCH_URL = f"http://{ELASTICSEARCH_HOST}:{ELASTICSEARCH_PORT}"
-    
+
     # Logging Configuration
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    
+
     # Cache Configuration
     CACHE_DEFAULT_TIMEOUT = int(os.getenv('CACHE_DEFAULT_TIMEOUT', 300))
     CACHE_KEY_PREFIX = os.getenv('CACHE_KEY_PREFIX', 'nexafi:')
-    
+
     # Rate Limiting Configuration
     RATE_LIMIT_STORAGE_URL = REDIS_URL
     RATE_LIMIT_DEFAULT = os.getenv('RATE_LIMIT_DEFAULT', '100 per hour')
-    
+
     # Circuit Breaker Configuration
     CIRCUIT_BREAKER_FAILURE_THRESHOLD = int(os.getenv('CIRCUIT_BREAKER_FAILURE_THRESHOLD', 5))
     CIRCUIT_BREAKER_RECOVERY_TIMEOUT = int(os.getenv('CIRCUIT_BREAKER_RECOVERY_TIMEOUT', 60))
-    
+
     @classmethod
     def get_redis_config(cls) -> Dict[str, Any]:
         """Get Redis connection configuration"""
@@ -229,7 +229,7 @@ class InfrastructureConfig:
         if cls.REDIS_PASSWORD:
             config['password'] = cls.REDIS_PASSWORD
         return config
-    
+
     @classmethod
     def get_rabbitmq_config(cls) -> Dict[str, Any]:
         """Get RabbitMQ connection configuration"""
@@ -242,7 +242,7 @@ class InfrastructureConfig:
                 'password': cls.RABBITMQ_PASSWORD
             }
         }
-    
+
     @classmethod
     def get_elasticsearch_config(cls) -> Dict[str, Any]:
         """Get Elasticsearch connection configuration"""
@@ -268,16 +268,16 @@ from ..config.infrastructure import InfrastructureConfig
 
 class CacheManager:
     """Redis-based cache manager"""
-    
+
     def __init__(self):
         self.redis_client = redis.Redis(**InfrastructureConfig.get_redis_config())
         self.default_timeout = InfrastructureConfig.CACHE_DEFAULT_TIMEOUT
         self.key_prefix = InfrastructureConfig.CACHE_KEY_PREFIX
-    
+
     def _make_key(self, key: str) -> str:
         """Create a prefixed cache key"""
         return f"{self.key_prefix}{key}"
-    
+
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache"""
         try:
@@ -287,7 +287,7 @@ class CacheManager:
             return None
         except Exception:
             return None
-    
+
     def set(self, key: str, value: Any, timeout: Optional[int] = None) -> bool:
         """Set value in cache"""
         try:
@@ -300,21 +300,21 @@ class CacheManager:
             )
         except Exception:
             return False
-    
+
     def delete(self, key: str) -> bool:
         """Delete value from cache"""
         try:
             return bool(self.redis_client.delete(self._make_key(key)))
         except Exception:
             return False
-    
+
     def exists(self, key: str) -> bool:
         """Check if key exists in cache"""
         try:
             return bool(self.redis_client.exists(self._make_key(key)))
         except Exception:
             return False
-    
+
     def clear_pattern(self, pattern: str) -> int:
         """Clear all keys matching pattern"""
         try:
@@ -324,14 +324,14 @@ class CacheManager:
             return 0
         except Exception:
             return 0
-    
+
     def increment(self, key: str, amount: int = 1) -> Optional[int]:
         """Increment a counter"""
         try:
             return self.redis_client.incr(self._make_key(key), amount)
         except Exception:
             return None
-    
+
     def expire(self, key: str, timeout: int) -> bool:
         """Set expiration for a key"""
         try:
@@ -356,17 +356,17 @@ def cached(timeout: Optional[int] = None, key_func: Optional[callable] = None):
                 key_parts.extend(str(arg) for arg in args)
                 key_parts.extend(f"{k}:{v}" for k, v in sorted(kwargs.items()))
                 cache_key = hashlib.md5(":".join(key_parts).encode()).hexdigest()
-            
+
             # Try to get from cache
             cached_result = cache.get(cache_key)
             if cached_result is not None:
                 return cached_result
-            
+
             # Execute function and cache result
             result = func(*args, **kwargs)
             cache.set(cache_key, result, timeout)
             return result
-        
+
         return wrapper
     return decorator
 
@@ -393,12 +393,12 @@ logger = logging.getLogger(__name__)
 
 class MessageQueue:
     """RabbitMQ message queue manager"""
-    
+
     def __init__(self):
         self.connection = None
         self.channel = None
         self.config = InfrastructureConfig.get_rabbitmq_config()
-    
+
     def connect(self):
         """Establish connection to RabbitMQ"""
         try:
@@ -418,41 +418,41 @@ class MessageQueue:
         except Exception as e:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
             raise
-    
+
     def disconnect(self):
         """Close connection to RabbitMQ"""
         if self.connection and not self.connection.is_closed:
             self.connection.close()
             logger.info("Disconnected from RabbitMQ")
-    
+
     def declare_queue(self, queue_name: str, durable: bool = True):
         """Declare a queue"""
         if not self.channel:
             self.connect()
-        
+
         self.channel.queue_declare(queue=queue_name, durable=durable)
         logger.info(f"Declared queue: {queue_name}")
-    
+
     def declare_exchange(self, exchange_name: str, exchange_type: str = 'direct'):
         """Declare an exchange"""
         if not self.channel:
             self.connect()
-        
+
         self.channel.exchange_declare(
             exchange=exchange_name,
             exchange_type=exchange_type,
             durable=True
         )
         logger.info(f"Declared exchange: {exchange_name}")
-    
-    def publish_message(self, queue_name: str, message: Dict[str, Any], 
+
+    def publish_message(self, queue_name: str, message: Dict[str, Any],
                        exchange: str = '', routing_key: Optional[str] = None):
         """Publish a message to a queue"""
         if not self.channel:
             self.connect()
-        
+
         routing_key = routing_key or queue_name
-        
+
         self.channel.basic_publish(
             exchange=exchange,
             routing_key=routing_key,
@@ -463,12 +463,12 @@ class MessageQueue:
             )
         )
         logger.info(f"Published message to {queue_name}: {message}")
-    
+
     def consume_messages(self, queue_name: str, callback: Callable):
         """Consume messages from a queue"""
         if not self.channel:
             self.connect()
-        
+
         def wrapper(ch, method, properties, body):
             try:
                 message = json.loads(body)
@@ -477,12 +477,12 @@ class MessageQueue:
             except Exception as e:
                 logger.error(f"Error processing message: {e}")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-        
+
         self.channel.basic_consume(
             queue=queue_name,
             on_message_callback=wrapper
         )
-        
+
         logger.info(f"Started consuming from {queue_name}")
         self.channel.start_consuming()
 
@@ -519,7 +519,7 @@ def setup_queues():
         Queues.PAYMENT_PROCESSING,
         Queues.AUDIT_LOGGING
     ]
-    
+
     try:
         mq.connect()
         for queue in queues:
@@ -550,16 +550,16 @@ class CircuitState(Enum):
 
 class CircuitBreaker:
     """Circuit breaker implementation"""
-    
+
     def __init__(self, failure_threshold: int = None, recovery_timeout: int = None):
         self.failure_threshold = failure_threshold or InfrastructureConfig.CIRCUIT_BREAKER_FAILURE_THRESHOLD
         self.recovery_timeout = recovery_timeout or InfrastructureConfig.CIRCUIT_BREAKER_RECOVERY_TIMEOUT
-        
+
         self.failure_count = 0
         self.last_failure_time = None
         self.state = CircuitState.CLOSED
         self.lock = threading.Lock()
-    
+
     def call(self, func: Callable, *args, **kwargs) -> Any:
         """Execute function with circuit breaker protection"""
         with self.lock:
@@ -568,7 +568,7 @@ class CircuitBreaker:
                     self.state = CircuitState.HALF_OPEN
                 else:
                     raise Exception("Circuit breaker is OPEN")
-            
+
             try:
                 result = func(*args, **kwargs)
                 self._on_success()
@@ -576,21 +576,21 @@ class CircuitBreaker:
             except Exception as e:
                 self._on_failure()
                 raise e
-    
+
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset"""
         return (time.time() - self.last_failure_time) >= self.recovery_timeout
-    
+
     def _on_success(self):
         """Handle successful call"""
         self.failure_count = 0
         self.state = CircuitState.CLOSED
-    
+
     def _on_failure(self):
         """Handle failed call"""
         self.failure_count += 1
         self.last_failure_time = time.time()
-        
+
         if self.failure_count >= self.failure_threshold:
             self.state = CircuitState.OPEN
 
@@ -598,11 +598,11 @@ def circuit_breaker(failure_threshold: int = None, recovery_timeout: int = None)
     """Decorator for circuit breaker protection"""
     def decorator(func):
         breaker = CircuitBreaker(failure_threshold, recovery_timeout)
-        
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             return breaker.call(func, *args, **kwargs)
-        
+
         return wrapper
     return decorator
 EOF
@@ -620,26 +620,26 @@ from ..config.infrastructure import InfrastructureConfig
 
 class StructuredLogger:
     """Structured logging for better log analysis"""
-    
+
     def __init__(self, service_name: str):
         self.service_name = service_name
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(getattr(logging, InfrastructureConfig.LOG_LEVEL))
-        
+
         # Create formatter
         formatter = logging.Formatter(InfrastructureConfig.LOG_FORMAT)
-        
+
         # Create console handler
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
-        
+
         # Create file handler
         file_handler = logging.FileHandler(f'logs/{service_name}.log')
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
-    
-    def _create_log_entry(self, level: str, message: str, 
+
+    def _create_log_entry(self, level: str, message: str,
                          extra_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Create structured log entry"""
         entry = {
@@ -648,32 +648,32 @@ class StructuredLogger:
             'level': level,
             'message': message
         }
-        
+
         if extra_data:
             entry.update(extra_data)
-        
+
         return entry
-    
+
     def info(self, message: str, **kwargs):
         """Log info message"""
         entry = self._create_log_entry('INFO', message, kwargs)
         self.logger.info(json.dumps(entry))
-    
+
     def warning(self, message: str, **kwargs):
         """Log warning message"""
         entry = self._create_log_entry('WARNING', message, kwargs)
         self.logger.warning(json.dumps(entry))
-    
+
     def error(self, message: str, **kwargs):
         """Log error message"""
         entry = self._create_log_entry('ERROR', message, kwargs)
         self.logger.error(json.dumps(entry))
-    
+
     def debug(self, message: str, **kwargs):
         """Log debug message"""
         entry = self._create_log_entry('DEBUG', message, kwargs)
         self.logger.debug(json.dumps(entry))
-    
+
     def critical(self, message: str, **kwargs):
         """Log critical message"""
         entry = self._create_log_entry('CRITICAL', message, kwargs)
@@ -697,4 +697,3 @@ echo "   cd infrastructure && ./start-infrastructure.sh"
 echo ""
 echo "🛑 To stop infrastructure services:"
 echo "   cd infrastructure && ./stop-infrastructure.sh"
-

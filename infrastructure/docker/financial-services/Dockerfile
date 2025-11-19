@@ -89,4 +89,3 @@ LABEL org.opencontainers.image.description="Secure financial services applicatio
 LABEL org.opencontainers.image.vendor="NexaFi"
 LABEL org.opencontainers.image.licenses="Proprietary"
 LABEL org.opencontainers.image.source="https://github.com/nexafi/financial-services"
-

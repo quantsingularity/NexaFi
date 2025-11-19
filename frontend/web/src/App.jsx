@@ -13,7 +13,7 @@ import { Toaster } from '@/components/ui/toaster';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -21,14 +21,14 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-  
+
   return isAuthenticated ? children : <Navigate to="/auth" replace />;
 };
 
 // Public Route Component (redirect if authenticated)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -36,7 +36,7 @@ const PublicRoute = ({ children }) => {
       </div>
     );
   }
-  
+
   return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
 };
 
@@ -46,91 +46,91 @@ const AppRoutes = () => {
     <Router>
       <Routes>
         {/* Public Routes */}
-        <Route 
-          path="/auth" 
+        <Route
+          path="/auth"
           element={
             <PublicRoute>
               <AuthPage />
             </PublicRoute>
-          } 
+          }
         />
-        
+
         {/* Protected Routes */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Layout>
                 <Dashboard />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/accounting/*" 
+
+        <Route
+          path="/accounting/*"
           element={
             <ProtectedRoute>
               <Layout>
                 <AccountingModule />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/payments/*" 
+
+        <Route
+          path="/payments/*"
           element={
             <ProtectedRoute>
               <Layout>
                 <PaymentsModule />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/ai-insights/*" 
+
+        <Route
+          path="/ai-insights/*"
           element={
             <ProtectedRoute>
               <Layout>
                 <AIInsightsModule />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/settings/*" 
+
+        <Route
+          path="/settings/*"
           element={
             <ProtectedRoute>
               <Layout>
                 <SettingsModule />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         {/* Homepage */}
         <Route path="/" element={<Homepage />} />
-        
+
         {/* 404 fallback */}
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
                 <p className="text-gray-600 mb-8">Page not found</p>
-                <a 
-                  href="/dashboard" 
+                <a
+                  href="/dashboard"
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Go to Dashboard
                 </a>
               </div>
             </div>
-          } 
+          }
         />
       </Routes>
     </Router>
@@ -152,4 +152,3 @@ function App() {
 }
 
 export default App;
-

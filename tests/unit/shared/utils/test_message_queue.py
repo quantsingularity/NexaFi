@@ -5,9 +5,12 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
-from NexaFi.backend.shared.utils.message_queue import (MessageQueue, Queues,
-                                                       publish_task,
-                                                       setup_queues)
+from NexaFi.backend.shared.utils.message_queue import (
+    MessageQueue,
+    Queues,
+    publish_task,
+    setup_queues,
+)
 
 
 @pytest.fixture
@@ -16,12 +19,12 @@ def mock_pika():
          patch(\'pika.PlainCredentials\') as mock_credentials_class,
          patch(\'pika.ConnectionParameters\') as mock_params_class,
          patch(\'pika.BasicProperties\') as mock_properties_class:
-        
+
         mock_connection = MagicMock()
         mock_channel = MagicMock()
         mock_connection.channel.return_value = mock_channel
         mock_conn_class.return_value = mock_connection
-        
+
         yield {
             \'mock_conn_class\': mock_conn_class,
             \'mock_credentials_class\': mock_credentials_class,
@@ -94,7 +97,7 @@ class TestMessageQueue:
     def test_consume_messages_success(self, message_queue_instance, mock_pika):
         message_queue_instance.channel = mock_pika[\'mock_channel\']
         mock_callback = MagicMock()
-        
+
         # Simulate a message delivery
         def simulate_message_delivery(queue, callback):
             ch = MagicMock()
@@ -180,5 +183,3 @@ class TestGlobalFunctions:
         mock_mq.connect.assert_called_once()
         mock_mq.declare_queue.assert_not_called()
         mock_mq.disconnect.assert_called_once()
-
-

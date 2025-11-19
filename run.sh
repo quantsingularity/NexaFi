@@ -25,5 +25,3 @@ cd frontend/web
 pnpm run dev
 
 echo "NexaFi application is running!"
-
-

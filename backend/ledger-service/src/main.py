@@ -14,14 +14,20 @@ sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
-                                audit_logger)
+from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
 from middleware.auth import require_auth, require_permission
-from validators.schemas import (AccountSchema, FinancialValidators,
-                                JournalEntryLineSchema, JournalEntrySchema,
-                                SanitizationMixin, Schema, fields, validate,
-                                validate_json_request)
+from validators.schemas import (
+    AccountSchema,
+    FinancialValidators,
+    JournalEntryLineSchema,
+    JournalEntrySchema,
+    SanitizationMixin,
+    Schema,
+    fields,
+    validate,
+    validate_json_request,
+)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -61,7 +67,7 @@ LEDGER_MIGRATIONS = {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (parent_account_id) REFERENCES accounts(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_accounts_code ON accounts(account_code);
         CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);
         CREATE INDEX IF NOT EXISTS idx_accounts_parent ON accounts(parent_account_id);
@@ -88,7 +94,7 @@ LEDGER_MIGRATIONS = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_journal_entries_number ON journal_entries(entry_number);
         CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(entry_date);
         CREATE INDEX IF NOT EXISTS idx_journal_entries_status ON journal_entries(status);
@@ -109,7 +115,7 @@ LEDGER_MIGRATIONS = {
             FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE,
             FOREIGN KEY (account_id) REFERENCES accounts(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_journal_lines_entry_id ON journal_entry_lines(journal_entry_id);
         CREATE INDEX IF NOT EXISTS idx_journal_lines_account_id ON journal_entry_lines(account_id);
         """,
@@ -127,7 +133,7 @@ LEDGER_MIGRATIONS = {
             is_active BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_exchange_rates_currencies ON exchange_rates(from_currency, to_currency);
         CREATE INDEX IF NOT EXISTS idx_exchange_rates_date ON exchange_rates(rate_date);
         """,
@@ -149,7 +155,7 @@ LEDGER_MIGRATIONS = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (account_id) REFERENCES accounts(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_reconciliations_account ON reconciliations(account_id);
         CREATE INDEX IF NOT EXISTS idx_reconciliations_date ON reconciliations(reconciliation_date);
         """,
@@ -176,7 +182,7 @@ class Account(BaseModel):
 
         # Calculate balance from journal entries up to the date
         query = """
-        SELECT 
+        SELECT
             COALESCE(SUM(debit_amount), 0) as total_debits,
             COALESCE(SUM(credit_amount), 0) as total_credits
         FROM journal_entry_lines jel

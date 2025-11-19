@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  CreditCard, 
-  Brain, 
-  Settings, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  CreditCard,
+  Brain,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -20,20 +20,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useAuth, useApp } from '../contexts/AppContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const [activeItem, setActiveItem] = useState('dashboard');
-  
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'accounting', label: 'Accounting', icon: BookOpen },
@@ -46,12 +46,12 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
       <motion.div
         initial={{ x: -300 }}
@@ -82,7 +82,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem === item.id;
-            
+
             return (
               <motion.button
                 key={item.id}
@@ -90,8 +90,8 @@ const Sidebar = ({ isOpen, onClose }) => {
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveItem(item.id)}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                  isActive 
-                    ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200' 
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -126,7 +126,7 @@ const Header = ({ onMenuClick }) => {
           >
             <Menu className="w-5 h-5" />
           </Button>
-          
+
           <div className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -216,14 +216,14 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        
+
         <main className="flex-1 overflow-auto">
           {children}
         </main>
@@ -233,4 +233,3 @@ const Layout = ({ children }) => {
 };
 
 export default Layout;
-

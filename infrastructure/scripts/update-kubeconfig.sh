@@ -34,7 +34,7 @@ show_current_context() {
     print_status "Current kubectl context:"
     kubectl config current-context 2>/dev/null || print_warning "No current context set"
     echo ""
-    
+
     print_status "Available contexts:"
     kubectl config get-contexts
     echo ""
@@ -45,9 +45,9 @@ switch_context() {
     print_status "Available contexts:"
     kubectl config get-contexts
     echo ""
-    
+
     read -p "Enter the context name to switch to: " context_name
-    
+
     if kubectl config use-context "$context_name" &> /dev/null; then
         print_success "Switched to context: $context_name"
     else
@@ -67,9 +67,9 @@ add_cluster() {
     echo "5. DigitalOcean Kubernetes"
     echo "6. Custom cluster"
     echo ""
-    
+
     read -p "Select cluster type (1-6): " cluster_type
-    
+
     case $cluster_type in
         1)
             add_minikube_config
@@ -99,7 +99,7 @@ add_cluster() {
 # Function to add Minikube config
 add_minikube_config() {
     print_status "Setting up Minikube configuration..."
-    
+
     if command -v minikube &> /dev/null; then
         minikube update-context
         print_success "Minikube configuration updated"
@@ -112,11 +112,11 @@ add_minikube_config() {
 # Function to add GKE config
 add_gke_config() {
     print_status "Setting up GKE configuration..."
-    
+
     read -p "Enter your GCP project ID: " project_id
     read -p "Enter cluster name: " cluster_name
     read -p "Enter cluster zone/region: " cluster_zone
-    
+
     if command -v gcloud &> /dev/null; then
         gcloud container clusters get-credentials "$cluster_name" --zone="$cluster_zone" --project="$project_id"
         print_success "GKE configuration added"
@@ -130,10 +130,10 @@ add_gke_config() {
 # Function to add EKS config
 add_eks_config() {
     print_status "Setting up EKS configuration..."
-    
+
     read -p "Enter cluster name: " cluster_name
     read -p "Enter AWS region: " aws_region
-    
+
     if command -v aws &> /dev/null; then
         aws eks update-kubeconfig --name "$cluster_name" --region "$aws_region"
         print_success "EKS configuration added"
@@ -147,10 +147,10 @@ add_eks_config() {
 # Function to add AKS config
 add_aks_config() {
     print_status "Setting up AKS configuration..."
-    
+
     read -p "Enter resource group name: " resource_group
     read -p "Enter cluster name: " cluster_name
-    
+
     if command -v az &> /dev/null; then
         az aks get-credentials --resource-group "$resource_group" --name "$cluster_name"
         print_success "AKS configuration added"
@@ -164,9 +164,9 @@ add_aks_config() {
 # Function to add DigitalOcean config
 add_do_config() {
     print_status "Setting up DigitalOcean Kubernetes configuration..."
-    
+
     read -p "Enter cluster name: " cluster_name
-    
+
     if command -v doctl &> /dev/null; then
         doctl kubernetes cluster kubeconfig save "$cluster_name"
         print_success "DigitalOcean Kubernetes configuration added"
@@ -180,9 +180,9 @@ add_do_config() {
 # Function to add custom config
 add_custom_config() {
     print_status "Setting up custom cluster configuration..."
-    
+
     read -p "Enter path to kubeconfig file: " kubeconfig_path
-    
+
     if [ -f "$kubeconfig_path" ]; then
         export KUBECONFIG="$HOME/.kube/config:$kubeconfig_path"
         kubectl config view --flatten > "$HOME/.kube/config.tmp"
@@ -208,10 +208,10 @@ restore_config() {
         print_warning "No backup files found"
         return
     }
-    
+
     echo ""
     read -p "Enter the full path of the backup file to restore: " backup_file
-    
+
     if [ -f "$backup_file" ]; then
         cp "$backup_file" "$HOME/.kube/config"
         print_success "Configuration restored from: $backup_file"
@@ -223,17 +223,17 @@ restore_config() {
 # Function to validate config
 validate_config() {
     print_status "Validating kubeconfig..."
-    
+
     if kubectl cluster-info &> /dev/null; then
         print_success "✅ Kubeconfig is valid and cluster is accessible"
-        
+
         print_status "Cluster information:"
         kubectl cluster-info
-        
+
         echo ""
         print_status "Node status:"
         kubectl get nodes
-        
+
     else
         print_error "❌ Cannot connect to cluster with current configuration"
         print_status "Please check your kubeconfig and cluster status"
@@ -273,9 +273,9 @@ show_menu() {
     echo "6. Validate current kubeconfig"
     echo "7. Exit"
     echo ""
-    
+
     read -p "Select an option (1-7): " choice
-    
+
     case $choice in
         1)
             show_current_context
@@ -313,10 +313,10 @@ main() {
         print_status "Please install kubectl first: https://kubernetes.io/docs/tasks/tools/"
         exit 1
     fi
-    
+
     # Create .kube directory if it doesn't exist
     mkdir -p "$HOME/.kube"
-    
+
     # Handle command line arguments
     case "${1:-}" in
         "show")
@@ -358,4 +358,3 @@ main() {
 
 # Run main function
 main "$@"
-

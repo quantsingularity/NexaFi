@@ -361,4 +361,3 @@ spec:
   selector:
     matchLabels:
       app: audit-service
-

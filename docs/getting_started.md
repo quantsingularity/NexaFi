@@ -113,5 +113,3 @@ Some services might require initial data for proper functioning. Refer to indivi
 *   **Environment Variables**: Verify that all necessary environment variables are set correctly in the `.env` files.
 
 If you face any issues not covered here, please refer to the specific service documentation or open an issue on the GitHub repository.
-
-

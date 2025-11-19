@@ -38,8 +38,16 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from flask import g, request
-from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, String,
-                        Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 

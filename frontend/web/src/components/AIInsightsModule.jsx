@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Brain, 
-  TrendingUp, 
-  TrendingDown, 
-  MessageSquare, 
-  Lightbulb, 
-  Target, 
+import {
+  Brain,
+  TrendingUp,
+  TrendingDown,
+  MessageSquare,
+  Lightbulb,
+  Target,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -54,15 +54,15 @@ const AIInsightsModule = () => {
   const loadAIData = async () => {
     try {
       setLoading(true);
-      
+
       // Load insights
       const insightsResponse = await apiClient.getInsights({ per_page: 10 });
       setInsights(insightsResponse.insights || []);
-      
+
       // Load chat sessions
       const sessionsResponse = await apiClient.getChatSessions();
       setChatSessions(sessionsResponse.sessions || []);
-      
+
       // Generate mock predictions
       const mockPredictions = {
         cashFlow: {
@@ -78,7 +78,7 @@ const AIInsightsModule = () => {
         }
       };
       setPredictions(mockPredictions);
-      
+
     } catch (error) {
       console.error('Failed to load AI data:', error);
       addNotification({
@@ -327,10 +327,10 @@ const AIInsightsModule = () => {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Predicted']} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="predicted" 
-                      stroke="#3b82f6" 
+                    <Line
+                      type="monotone"
+                      dataKey="predicted"
+                      stroke="#3b82f6"
                       strokeWidth={2}
                       strokeDasharray="5 5"
                     />
@@ -389,7 +389,7 @@ const AIInsightsModule = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4">
                     <Badge className="bg-green-100 text-green-800">
                       <TrendingUp className="w-3 h-3 mr-1" />
@@ -583,7 +583,7 @@ const AIInsightsModule = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 {isTyping && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
@@ -600,7 +600,7 @@ const AIInsightsModule = () => {
                 )}
               </div>
             </ScrollArea>
-            
+
             <div className="flex space-x-2 mt-4">
               <Input
                 value={newMessage}
@@ -697,4 +697,3 @@ const AIInsightsModule = () => {
 };
 
 export default AIInsightsModule;
-

@@ -44,5 +44,3 @@ Details about the Continuous Integration and Continuous Deployment pipelines use
 ## Testing
 
 This section outlines the testing strategy employed in NexaFi, including unit tests, integration tests, and end-to-end tests, along with instructions on how to run them.
-
-

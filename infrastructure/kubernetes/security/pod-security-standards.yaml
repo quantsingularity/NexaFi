@@ -198,4 +198,3 @@ subjects:
 - kind: Group
   name: system:serviceaccounts:compliance
   apiGroup: rbac.authorization.k8s.io
-

@@ -79,13 +79,13 @@ security_low() {
 # Setup security testing environment
 setup_security_testing() {
     log_info "Setting up security testing environment..."
-    
+
     # Create security results directory
     mkdir -p "$SECURITY_RESULTS_DIR"
-    
+
     # Set test timestamp
     SECURITY_TEST_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-    
+
     # Initialize security report
     cat > "$SECURITY_RESULTS_DIR/security-report-$SECURITY_TEST_TIMESTAMP.md" << EOF
 # NexaFi Infrastructure Security Assessment Report
@@ -110,71 +110,71 @@ This report provides a comprehensive security assessment of the NexaFi infrastru
 ## Security Assessment Results
 
 EOF
-    
+
     log_success "Security testing environment setup completed"
 }
 
 # Container Security Testing
 test_container_security() {
     log_info "Testing container security..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test for privileged containers
     log_info "Checking for privileged containers..."
     local privileged_count=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].securityContext.privileged}{"\n"}{end}' 2>/dev/null | grep -c "true" || echo "0")
-    
+
     if [[ $privileged_count -eq 0 ]]; then
         security_pass "No privileged containers detected"
     else
         security_critical "Found $privileged_count privileged containers - immediate remediation required"
     fi
-    
+
     # Test for containers running as root
     log_info "Checking for containers running as root..."
     local root_count=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].securityContext.runAsUser}{"\n"}{end}' 2>/dev/null | grep -c "^0$" || echo "0")
-    
+
     if [[ $root_count -eq 0 ]]; then
         security_pass "No containers running as root user"
     else
         security_high "Found $root_count containers running as root - security risk"
     fi
-    
+
     # Test for read-only root filesystem
     log_info "Checking for read-only root filesystem..."
     local readonly_count=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].securityContext.readOnlyRootFilesystem}{"\n"}{end}' 2>/dev/null | grep -c "true" || echo "0")
     local total_containers=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].name}{"\n"}{end}' 2>/dev/null | wc -l || echo "1")
-    
+
     if [[ $readonly_count -gt $((total_containers / 2)) ]]; then
         security_pass "Most containers use read-only root filesystem"
     else
         security_medium "Consider enabling read-only root filesystem for more containers"
     fi
-    
+
     # Test for capability dropping
     log_info "Checking for dropped capabilities..."
     local dropped_caps=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].securityContext.capabilities.drop}{"\n"}{end}' 2>/dev/null | grep -c "ALL" || echo "0")
-    
+
     if [[ $dropped_caps -gt 0 ]]; then
         security_pass "Containers properly drop unnecessary capabilities"
     else
         security_medium "Consider dropping ALL capabilities and adding only required ones"
     fi
-    
+
     # Test for host network usage
     log_info "Checking for host network usage..."
     local host_network_count=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.hostNetwork}{"\n"}{end}' 2>/dev/null | grep -c "true" || echo "0")
-    
+
     if [[ $host_network_count -eq 0 ]]; then
         security_pass "No pods using host network"
     else
         security_high "Found $host_network_count pods using host network - security risk"
     fi
-    
+
     # Test for host PID usage
     log_info "Checking for host PID usage..."
     local host_pid_count=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.hostPID}{"\n"}{end}' 2>/dev/null | grep -c "true" || echo "0")
-    
+
     if [[ $host_pid_count -eq 0 ]]; then
         security_pass "No pods using host PID namespace"
     else
@@ -185,47 +185,47 @@ test_container_security() {
 # Network Security Testing
 test_network_security() {
     log_info "Testing network security..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test network policies
     log_info "Checking network policies..."
     local network_policies=$(kubectl get networkpolicies --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $network_policies -gt 5 ]]; then
         security_pass "Network segmentation implemented with $network_policies policies"
     else
         security_high "Insufficient network policies for proper micro-segmentation"
     fi
-    
+
     # Test for default deny policies
     log_info "Checking for default deny policies..."
     local deny_policies=$(kubectl get networkpolicies --all-namespaces --context "$cluster_name" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null | grep -c "deny" || echo "0")
-    
+
     if [[ $deny_policies -gt 0 ]]; then
         security_pass "Default deny network policies implemented"
     else
         security_medium "Consider implementing default deny network policies"
     fi
-    
+
     # Test TLS configuration
     log_info "Checking TLS configuration..."
     local tls_ingresses=$(kubectl get ingress --all-namespaces --context "$cluster_name" -o jsonpath='{.items[*].spec.tls}' 2>/dev/null | grep -c "secretName" || echo "0")
     local total_ingresses=$(kubectl get ingress --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "1")
-    
+
     if [[ $tls_ingresses -eq $total_ingresses ]]; then
         security_pass "All ingresses configured with TLS"
     else
         security_high "Some ingresses not configured with TLS encryption"
     fi
-    
+
     # Test service mesh security (if applicable)
     log_info "Checking service mesh security..."
     local istio_pods=$(kubectl get pods -n istio-system --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $istio_pods -gt 0 ]]; then
         security_pass "Service mesh deployed for enhanced security"
-        
+
         # Check mTLS configuration
         local mtls_policies=$(kubectl get peerauthentication --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
         if [[ $mtls_policies -gt 0 ]]; then
@@ -241,44 +241,44 @@ test_network_security() {
 # Access Control Testing
 test_access_control() {
     log_info "Testing access control..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test RBAC configuration
     log_info "Checking RBAC configuration..."
     local cluster_roles=$(kubectl get clusterroles --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
     local roles=$(kubectl get roles --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $((cluster_roles + roles)) -gt 20 ]]; then
         security_pass "Comprehensive RBAC configuration with $((cluster_roles + roles)) roles"
     else
         security_medium "Consider more granular RBAC configuration"
     fi
-    
+
     # Test service account configuration
     log_info "Checking service account configuration..."
     local custom_sa=$(kubectl get serviceaccounts --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | grep -v "default" | wc -l || echo "0")
-    
+
     if [[ $custom_sa -gt 10 ]]; then
         security_pass "Custom service accounts configured for different services"
     else
         security_medium "Consider using dedicated service accounts for each service"
     fi
-    
+
     # Test for overprivileged service accounts
     log_info "Checking for overprivileged service accounts..."
     local cluster_admin_bindings=$(kubectl get clusterrolebindings --context "$cluster_name" -o jsonpath='{.items[?(@.roleRef.name=="cluster-admin")].subjects[*].name}' 2>/dev/null | wc -w || echo "0")
-    
+
     if [[ $cluster_admin_bindings -lt 3 ]]; then
         security_pass "Minimal cluster-admin bindings detected"
     else
         security_high "Too many cluster-admin bindings - review and minimize"
     fi
-    
+
     # Test Pod Security Standards
     log_info "Checking Pod Security Standards..."
     local restricted_namespaces=$(kubectl get namespaces --context "$cluster_name" -o jsonpath='{.items[?(@.metadata.labels.pod-security\.kubernetes\.io/enforce=="restricted")].metadata.name}' 2>/dev/null | wc -w || echo "0")
-    
+
     if [[ $restricted_namespaces -gt 2 ]]; then
         security_pass "Pod Security Standards enforced in $restricted_namespaces namespaces"
     else
@@ -289,43 +289,43 @@ test_access_control() {
 # Data Protection Testing
 test_data_protection() {
     log_info "Testing data protection..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test encryption at rest
     log_info "Checking encryption at rest..."
     local encrypted_secrets=$(kubectl get secrets --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $encrypted_secrets -gt 0 ]]; then
         security_pass "Secrets stored with encryption at rest"
     else
         security_critical "No encrypted secrets found - critical security issue"
     fi
-    
+
     # Test Vault integration
     log_info "Checking Vault integration..."
     local vault_pods=$(kubectl get pods -n security -l app=vault --context "$cluster_name" --no-headers 2>/dev/null | grep -c "Running" || echo "0")
-    
+
     if [[ $vault_pods -gt 0 ]]; then
         security_pass "HashiCorp Vault deployed for secret management"
     else
         security_high "Vault not deployed - consider for enhanced secret management"
     fi
-    
+
     # Test backup encryption
     log_info "Checking backup encryption..."
     local backup_jobs=$(kubectl get cronjobs -n backup-recovery --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $backup_jobs -gt 0 ]]; then
         security_pass "Backup jobs configured with encryption"
     else
         security_medium "Verify backup encryption configuration"
     fi
-    
+
     # Test data retention policies
     log_info "Checking data retention policies..."
     local pvc_count=$(kubectl get pvc --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $pvc_count -gt 0 ]]; then
         security_pass "Persistent volume claims configured with retention policies"
     else
@@ -336,22 +336,22 @@ test_data_protection() {
 # Infrastructure Security Testing
 test_infrastructure_security() {
     log_info "Testing infrastructure security..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test cluster security configuration
     log_info "Checking cluster security configuration..."
-    
+
     # Check if cluster has private endpoint
     security_pass "EKS cluster configured with private endpoint access"
-    
+
     # Check node security
     log_info "Checking node security..."
     local nodes=$(kubectl get nodes --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
-    
+
     if [[ $nodes -gt 0 ]]; then
         security_pass "Kubernetes nodes properly configured ($nodes nodes)"
-        
+
         # Check node OS
         local node_os=$(kubectl get nodes --context "$cluster_name" -o jsonpath='{.items[0].status.nodeInfo.osImage}' 2>/dev/null || echo "unknown")
         if [[ "$node_os" == *"Amazon Linux"* ]]; then
@@ -362,26 +362,26 @@ test_infrastructure_security() {
     else
         security_critical "No nodes found in cluster"
     fi
-    
+
     # Test admission controllers
     log_info "Checking admission controllers..."
     security_pass "Pod Security Standards admission controller enabled"
     security_pass "Resource quota admission controller enabled"
-    
+
     # Test monitoring and logging
     log_info "Checking security monitoring..."
     local monitoring_pods=$(kubectl get pods -n monitoring --context "$cluster_name" --no-headers 2>/dev/null | grep -c "Running" || echo "0")
-    
+
     if [[ $monitoring_pods -gt 5 ]]; then
         security_pass "Comprehensive monitoring stack deployed"
     else
         security_medium "Consider deploying comprehensive monitoring solution"
     fi
-    
+
     # Test audit logging
     log_info "Checking audit logging..."
     local audit_pods=$(kubectl get pods -n compliance -l app=audit-service --context "$cluster_name" --no-headers 2>/dev/null | grep -c "Running" || echo "0")
-    
+
     if [[ $audit_pods -gt 0 ]]; then
         security_pass "Audit logging service deployed"
     else
@@ -392,45 +392,45 @@ test_infrastructure_security() {
 # Application Security Testing
 test_application_security() {
     log_info "Testing application security..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test resource limits
     log_info "Checking resource limits..."
     local pods_with_limits=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].resources.limits}{"\n"}{end}' 2>/dev/null | grep -c "cpu\|memory" || echo "0")
     local total_pods=$(kubectl get pods --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "1")
-    
+
     if [[ $pods_with_limits -gt $((total_pods / 2)) ]]; then
         security_pass "Most pods have resource limits configured"
     else
         security_medium "Consider setting resource limits for all pods"
     fi
-    
+
     # Test health checks
     log_info "Checking health checks..."
     local pods_with_probes=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].livenessProbe}{"\n"}{end}' 2>/dev/null | grep -c "httpGet\|tcpSocket" || echo "0")
-    
+
     if [[ $pods_with_probes -gt $((total_pods / 2)) ]]; then
         security_pass "Most pods have health checks configured"
     else
         security_medium "Consider implementing health checks for all services"
     fi
-    
+
     # Test image security
     log_info "Checking container image security..."
-    
+
     # Check for latest tags (anti-pattern)
     local latest_images=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}' 2>/dev/null | grep -c ":latest" || echo "0")
-    
+
     if [[ $latest_images -eq 0 ]]; then
         security_pass "No containers using 'latest' tag"
     else
         security_medium "Found $latest_images containers using 'latest' tag - use specific versions"
     fi
-    
+
     # Test for image pull policies
     local always_pull=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.spec.containers[*].imagePullPolicy}{"\n"}{end}' 2>/dev/null | grep -c "Always" || echo "0")
-    
+
     if [[ $always_pull -gt 0 ]]; then
         security_pass "Images configured with proper pull policies"
     else
@@ -441,10 +441,10 @@ test_application_security() {
 # Vulnerability Scanning
 run_vulnerability_scan() {
     log_info "Running vulnerability scanning..."
-    
+
     # Simulate vulnerability scanning results
     log_info "Scanning container images for vulnerabilities..."
-    
+
     # Check if vulnerability scanning tools are available
     if command -v trivy &> /dev/null; then
         log_info "Running Trivy vulnerability scan..."
@@ -453,14 +453,14 @@ run_vulnerability_scan() {
     else
         security_medium "Trivy not available - consider implementing vulnerability scanning"
     fi
-    
+
     # Check for security scanning in CI/CD
     if [[ -f "$PROJECT_ROOT/.github/workflows/security.yml" ]] || [[ -f "$PROJECT_ROOT/.gitlab-ci.yml" ]]; then
         security_pass "Security scanning integrated in CI/CD pipeline"
     else
         security_medium "Consider integrating security scanning in CI/CD pipeline"
     fi
-    
+
     # Check for dependency scanning
     if [[ -f "$PROJECT_ROOT/package.json" ]]; then
         log_info "Checking for dependency vulnerabilities..."
@@ -476,15 +476,15 @@ run_vulnerability_scan() {
 # Generate security report
 generate_security_report() {
     log_info "Generating security assessment report..."
-    
+
     local report_file="$SECURITY_RESULTS_DIR/security-report-$SECURITY_TEST_TIMESTAMP.md"
-    
+
     # Calculate security score
     local security_score=0
     if [[ $TOTAL_SECURITY_TESTS -gt 0 ]]; then
         security_score=$(( (PASSED_SECURITY_TESTS * 100) / TOTAL_SECURITY_TESTS ))
     fi
-    
+
     cat >> "$report_file" << EOF
 
 ## Security Assessment Summary
@@ -581,25 +581,25 @@ EOF
 
 EOF
     fi
-    
+
     cat >> "$report_file" << EOF
 
 ## Recommendations
 
 ### Immediate Actions (0-24 hours)
 EOF
-    
+
     if [[ $CRITICAL_ISSUES -gt 0 ]]; then
         echo "- **CRITICAL**: Resolve all critical security issues immediately" >> "$report_file"
         echo "- Implement emergency security patches" >> "$report_file"
         echo "- Review and update security policies" >> "$report_file"
     fi
-    
+
     if [[ $HIGH_ISSUES -gt 0 ]]; then
         echo "- Address all high-severity security issues" >> "$report_file"
         echo "- Enhance monitoring and alerting" >> "$report_file"
     fi
-    
+
     cat >> "$report_file" << EOF
 
 ### Short-term Actions (1-4 weeks)
@@ -653,9 +653,9 @@ EOF
 # Main security testing function
 main() {
     log_info "Starting NexaFi infrastructure security assessment..."
-    
+
     setup_security_testing
-    
+
     # Run all security tests
     test_container_security
     test_network_security
@@ -664,15 +664,15 @@ main() {
     test_infrastructure_security
     test_application_security
     run_vulnerability_scan
-    
+
     generate_security_report
-    
+
     # Print summary
     log_info "Security Assessment Summary:"
     log_info "Total Tests: $TOTAL_SECURITY_TESTS"
     log_success "Passed: $PASSED_SECURITY_TESTS"
     log_error "Failed: $FAILED_SECURITY_TESTS"
-    
+
     if [[ $CRITICAL_ISSUES -gt 0 ]]; then
         log_error "Critical Issues: $CRITICAL_ISSUES"
     fi
@@ -685,14 +685,14 @@ main() {
     if [[ $LOW_ISSUES -gt 0 ]]; then
         log_warning "Low Issues: $LOW_ISSUES"
     fi
-    
+
     # Calculate and display security score
     local security_score=0
     if [[ $TOTAL_SECURITY_TESTS -gt 0 ]]; then
         security_score=$(( (PASSED_SECURITY_TESTS * 100) / TOTAL_SECURITY_TESTS ))
     fi
     log_info "Overall Security Score: ${security_score}%"
-    
+
     # Exit with appropriate code
     if [[ $CRITICAL_ISSUES -gt 0 ]]; then
         log_error "Critical security issues found. Immediate action required."
@@ -713,4 +713,3 @@ main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
-

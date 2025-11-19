@@ -30,9 +30,14 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from requests.auth import HTTPBasicAuth
 from sqlalchemy import create_engine, text
 
-from ..shared.base_integration import (AuthMethod, BaseIntegration,
-                                       DataTransformer, IntegrationConfig,
-                                       SecurityManager, SyncResult)
+from ..shared.base_integration import (
+    AuthMethod,
+    BaseIntegration,
+    DataTransformer,
+    IntegrationConfig,
+    SecurityManager,
+    SyncResult,
+)
 
 
 @dataclass
@@ -729,7 +734,7 @@ class OracleFinancialSync:
         try:
             # Query GL data directly from database
             query = """
-            SELECT 
+            SELECT
                 je_header_id,
                 je_line_num,
                 ledger_id,
@@ -741,8 +746,8 @@ class OracleFinancialSync:
                 accounted_cr,
                 creation_date,
                 last_update_date
-            FROM gl_je_lines 
-            WHERE ledger_id = :ledger_id 
+            FROM gl_je_lines
+            WHERE ledger_id = :ledger_id
             AND period_name = :period_name
             """
 
@@ -1034,7 +1039,7 @@ class OracleIntegration(BaseIntegration):
 
         try:
             query = """
-            SELECT 
+            SELECT
                 gl.je_header_id,
                 gl.je_line_num,
                 gl.ledger_id,
@@ -1048,7 +1053,7 @@ class OracleIntegration(BaseIntegration):
                 gl.creation_date
             FROM gl_je_lines gl
             JOIN gl_code_combinations gcc ON gl.code_combination_id = gcc.code_combination_id
-            WHERE gl.ledger_id = :ledger_id 
+            WHERE gl.ledger_id = :ledger_id
             AND gl.period_name = :period_name
             """
 

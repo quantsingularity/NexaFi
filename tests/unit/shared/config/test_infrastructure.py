@@ -11,4 +11,3 @@ class TestInfrastructureConfig:
 
     @patch.dict(os.environ, {
         \"REDIS_HOST\": \"test_redis_host\",
-

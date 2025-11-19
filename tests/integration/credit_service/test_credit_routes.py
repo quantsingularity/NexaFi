@@ -110,5 +110,3 @@ class TestCreditServiceRoutes:
     def test_delete_user_not_found(self, client):
         response = client.delete(\'/api/users/999\')
         assert response.status_code == 404
-
-

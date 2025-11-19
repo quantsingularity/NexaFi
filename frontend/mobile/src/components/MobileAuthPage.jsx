@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  User, 
-  Building, 
-  Loader2, 
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Building,
+  Loader2,
   ArrowLeft,
   Smartphone,
   Shield,
@@ -121,7 +121,7 @@ const MobileAuthPage = () => {
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
         </Button>
-        
+
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
             <Building className="w-5 h-5 text-white" />
@@ -130,7 +130,7 @@ const MobileAuthPage = () => {
             NexaFi Mobile
           </span>
         </div>
-        
+
         <div className="w-16"></div> {/* Spacer for centering */}
       </div>
 
@@ -158,7 +158,7 @@ const MobileAuthPage = () => {
                 Sign in to your account or create a new one
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -215,8 +215,8 @@ const MobileAuthPage = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       disabled={loading}
                     >
@@ -337,8 +337,8 @@ const MobileAuthPage = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full h-12 text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                       disabled={loading}
                     >
@@ -390,4 +390,3 @@ const MobileAuthPage = () => {
 };
 
 export default MobileAuthPage;
-

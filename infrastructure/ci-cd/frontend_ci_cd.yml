@@ -64,5 +64,3 @@ jobs:
       # - Deploying to a static hosting service (e.g., Netlify, Vercel, GitHub Pages)
       # - Uploading to an S3 bucket
       # - Using a cloud provider's CLI
-
-

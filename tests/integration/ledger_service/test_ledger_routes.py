@@ -6,11 +6,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.ledger_service.src.main import app
-from NexaFi.backend.ledger_service.src.models.user import (Account, Budget,
-                                                           FinancialPeriod,
-                                                           JournalEntry,
-                                                           JournalEntryLine,
-                                                           db)
+from NexaFi.backend.ledger_service.src.models.user import (
+    Account,
+    Budget,
+    FinancialPeriod,
+    JournalEntry,
+    JournalEntryLine,
+    db,
+)
 
 
 @pytest.fixture(scope=\'module\')
@@ -540,5 +543,3 @@ class TestBudgetRoutes:
             assert json_data[\'budget_performance\'][\'actual_spend\'] == 1500.00
             assert json_data[\'budget_performance\'][\'variance\'] == 3500.00
             assert json_data[\'budget_performance\'][\'status\'] == \'under_budget\'
-
-

@@ -167,4 +167,3 @@ data:
         annotations:
           summary: "Audit log failure"
           description: "{{ $value }} audit log failures detected"
-

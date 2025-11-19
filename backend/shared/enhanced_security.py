@@ -173,7 +173,7 @@ class MultiFactorAuthentication:
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE TABLE IF NOT EXISTS mfa_attempts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -184,7 +184,7 @@ class MultiFactorAuthentication:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_id ON mfa_attempts(user_id);
         CREATE INDEX IF NOT EXISTS idx_mfa_attempts_created_at ON mfa_attempts(created_at);
         """
@@ -205,7 +205,7 @@ class MultiFactorAuthentication:
 
         # Store in database
         insert_sql = """
-        INSERT OR REPLACE INTO user_mfa_settings 
+        INSERT OR REPLACE INTO user_mfa_settings
         (user_id, totp_secret, backup_codes, totp_enabled, updated_at)
         VALUES (?, ?, ?, ?, ?)
         """
@@ -331,7 +331,7 @@ class FraudDetectionEngine:
             resolved_by TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE TABLE IF NOT EXISTS user_behavior_patterns (
             user_id TEXT PRIMARY KEY,
             typical_login_hours TEXT,
@@ -341,7 +341,7 @@ class FraudDetectionEngine:
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_fraud_alerts_user_id ON fraud_alerts(user_id);
         CREATE INDEX IF NOT EXISTS idx_fraud_alerts_created_at ON fraud_alerts(created_at);
         """
@@ -547,7 +547,7 @@ class SecurityMonitor:
             location TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE TABLE IF NOT EXISTS threat_indicators (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             indicator_type TEXT NOT NULL,
@@ -558,7 +558,7 @@ class SecurityMonitor:
             occurrence_count INTEGER DEFAULT 1,
             status TEXT DEFAULT 'active'
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_security_events_user_id ON security_events(user_id);
         CREATE INDEX IF NOT EXISTS idx_security_events_ip_address ON security_events(ip_address);
         CREATE INDEX IF NOT EXISTS idx_security_events_created_at ON security_events(created_at);
@@ -575,7 +575,7 @@ class SecurityMonitor:
 
             # Store in database
             insert_sql = """
-            INSERT INTO security_events 
+            INSERT INTO security_events
             (event_type, user_id, ip_address, user_agent, session_id, threat_level, details, location)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
@@ -632,7 +632,7 @@ class SecurityMonitor:
         if result:
             # Update existing indicator
             update_sql = """
-            UPDATE threat_indicators 
+            UPDATE threat_indicators
             SET occurrence_count = occurrence_count + 1, last_seen = ?, threat_level = ?
             WHERE id = ?
             """
@@ -673,7 +673,7 @@ class SecurityMonitor:
         cutoff_time = datetime.utcnow() - timedelta(minutes=minutes)
 
         query_sql = """
-        SELECT COUNT(*) as count FROM security_events 
+        SELECT COUNT(*) as count FROM security_events
         WHERE ip_address = ? AND event_type = ? AND created_at > ?
         """
 
@@ -699,7 +699,7 @@ class SecurityMonitor:
         # Count events by type
         events_query = """
         SELECT event_type, threat_level, COUNT(*) as count
-        FROM security_events 
+        FROM security_events
         WHERE created_at > ?
         GROUP BY event_type, threat_level
         """
@@ -709,7 +709,7 @@ class SecurityMonitor:
         # Get top threat indicators
         indicators_query = """
         SELECT indicator_type, indicator_value, threat_level, occurrence_count
-        FROM threat_indicators 
+        FROM threat_indicators
         WHERE last_seen > ? AND status = 'active'
         ORDER BY occurrence_count DESC
         LIMIT 10
@@ -752,7 +752,7 @@ class SecureSessionManager:
             session_data TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
         CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
         """
@@ -785,8 +785,8 @@ class SecureSessionManager:
 
         # Store session
         insert_sql = """
-        INSERT INTO user_sessions 
-        (session_id, user_id, ip_address, user_agent, device_fingerprint, 
+        INSERT INTO user_sessions
+        (session_id, user_id, ip_address, user_agent, device_fingerprint,
          expires_at, security_level, session_data)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
@@ -828,9 +828,9 @@ class SecureSessionManager:
 
         # Query database
         query_sql = """
-        SELECT user_id, ip_address, expires_at, is_active, security_level, 
+        SELECT user_id, ip_address, expires_at, is_active, security_level,
                mfa_verified, session_data, device_fingerprint
-        FROM user_sessions 
+        FROM user_sessions
         WHERE session_id = ? AND is_active = 1
         """
 

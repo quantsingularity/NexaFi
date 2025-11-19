@@ -34,4 +34,3 @@ const renderAuthPage = (authProps = {}) => {
 };
 
 describe(\"AuthPage\",
-

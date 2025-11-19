@@ -62,13 +62,13 @@ test_skip() {
 # Setup test environment
 setup_test_environment() {
     log_info "Setting up test environment..."
-    
+
     # Create test results directory
     mkdir -p "$TEST_RESULTS_DIR"
-    
+
     # Set test timestamp
     TEST_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-    
+
     # Initialize test report
     cat > "$TEST_RESULTS_DIR/test-report-$TEST_TIMESTAMP.md" << EOF
 # NexaFi Infrastructure Test Report
@@ -80,16 +80,16 @@ setup_test_environment() {
 ## Test Summary
 
 EOF
-    
+
     log_success "Test environment setup completed"
 }
 
 # Infrastructure connectivity tests
 test_infrastructure_connectivity() {
     log_info "Running infrastructure connectivity tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test kubectl connectivity
     if kubectl cluster-info --context "$cluster_name" &> /dev/null; then
         test_pass "Kubernetes cluster connectivity"
@@ -97,7 +97,7 @@ test_infrastructure_connectivity() {
         test_fail "Kubernetes cluster connectivity"
         return 1
     fi
-    
+
     # Test AWS connectivity
     if aws sts get-caller-identity &> /dev/null; then
         test_pass "AWS API connectivity"
@@ -105,7 +105,7 @@ test_infrastructure_connectivity() {
         test_fail "AWS API connectivity"
         return 1
     fi
-    
+
     # Test node health
     local node_count=$(kubectl get nodes --context "$cluster_name" --no-headers | wc -l)
     if [[ $node_count -gt 0 ]]; then
@@ -113,7 +113,7 @@ test_infrastructure_connectivity() {
     else
         test_fail "No Kubernetes nodes available"
     fi
-    
+
     # Test node readiness
     local ready_nodes=$(kubectl get nodes --context "$cluster_name" --no-headers | grep -c " Ready ")
     if [[ $ready_nodes -eq $node_count ]]; then
@@ -126,9 +126,9 @@ test_infrastructure_connectivity() {
 # Security tests
 test_security_configuration() {
     log_info "Running security configuration tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test pod security standards
     local restricted_namespaces=("financial-services" "security" "compliance")
     for ns in "${restricted_namespaces[@]}"; do
@@ -143,7 +143,7 @@ test_security_configuration() {
             test_skip "Namespace $ns not found"
         fi
     done
-    
+
     # Test network policies
     local network_policies=$(kubectl get networkpolicies --all-namespaces --context "$cluster_name" --no-headers | wc -l)
     if [[ $network_policies -gt 0 ]]; then
@@ -151,7 +151,7 @@ test_security_configuration() {
     else
         test_fail "No network policies found"
     fi
-    
+
     # Test RBAC configuration
     local service_accounts=$(kubectl get serviceaccounts --all-namespaces --context "$cluster_name" --no-headers | wc -l)
     if [[ $service_accounts -gt 10 ]]; then  # Expect multiple service accounts
@@ -159,12 +159,12 @@ test_security_configuration() {
     else
         test_fail "Insufficient service accounts configured"
     fi
-    
+
     # Test secrets encryption
     local secrets=$(kubectl get secrets --all-namespaces --context "$cluster_name" --no-headers | wc -l)
     if [[ $secrets -gt 0 ]]; then
         test_pass "Secrets present in cluster ($secrets secrets)"
-        
+
         # Check for default service account tokens (should be minimal)
         local default_tokens=$(kubectl get secrets --all-namespaces --context "$cluster_name" --no-headers | grep -c "default-token" || true)
         if [[ $default_tokens -lt 10 ]]; then
@@ -180,9 +180,9 @@ test_security_configuration() {
 # Compliance tests
 test_compliance_configuration() {
     log_info "Running compliance configuration tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test audit logging
     if kubectl get pods -n compliance -l app=audit-service --context "$cluster_name" &> /dev/null; then
         local audit_pods=$(kubectl get pods -n compliance -l app=audit-service --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -194,7 +194,7 @@ test_compliance_configuration() {
     else
         test_fail "Audit service not found"
     fi
-    
+
     # Test compliance monitoring
     if kubectl get pods -n compliance -l app=compliance-monitor --context "$cluster_name" &> /dev/null; then
         local compliance_pods=$(kubectl get pods -n compliance -l app=compliance-monitor --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -206,7 +206,7 @@ test_compliance_configuration() {
     else
         test_fail "Compliance monitoring not found"
     fi
-    
+
     # Test backup jobs
     if kubectl get cronjobs -n backup-recovery --context "$cluster_name" &> /dev/null; then
         local backup_jobs=$(kubectl get cronjobs -n backup-recovery --context "$cluster_name" --no-headers | wc -l)
@@ -218,7 +218,7 @@ test_compliance_configuration() {
     else
         test_fail "Backup recovery namespace not found"
     fi
-    
+
     # Test data retention policies
     local pvcs=$(kubectl get pvc --all-namespaces --context "$cluster_name" --no-headers | wc -l)
     if [[ $pvcs -gt 0 ]]; then
@@ -231,13 +231,13 @@ test_compliance_configuration() {
 # Financial services tests
 test_financial_services() {
     log_info "Running financial services tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test financial services namespace
     if kubectl get namespace financial-services --context "$cluster_name" &> /dev/null; then
         test_pass "Financial services namespace exists"
-        
+
         # Test financial services pods
         local financial_pods=$(kubectl get pods -n financial-services --context "$cluster_name" --no-headers | grep -c "Running" || true)
         if [[ $financial_pods -gt 0 ]]; then
@@ -245,7 +245,7 @@ test_financial_services() {
         else
             test_fail "No financial services pods running"
         fi
-        
+
         # Test financial services with taints
         local tainted_nodes=$(kubectl get nodes --context "$cluster_name" -o jsonpath='{.items[*].spec.taints[?(@.key=="financial-services")].key}' | wc -w)
         if [[ $tainted_nodes -gt 0 ]]; then
@@ -256,7 +256,7 @@ test_financial_services() {
     else
         test_fail "Financial services namespace not found"
     fi
-    
+
     # Test API Gateway
     if kubectl get pods -n api-gateway --context "$cluster_name" &> /dev/null; then
         local gateway_pods=$(kubectl get pods -n api-gateway --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -273,9 +273,9 @@ test_financial_services() {
 # Monitoring tests
 test_monitoring_stack() {
     log_info "Running monitoring stack tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test Prometheus
     if kubectl get pods -n monitoring -l app=prometheus --context "$cluster_name" &> /dev/null; then
         local prometheus_pods=$(kubectl get pods -n monitoring -l app=prometheus --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -287,7 +287,7 @@ test_monitoring_stack() {
     else
         test_fail "Prometheus not found"
     fi
-    
+
     # Test Grafana
     if kubectl get pods -n monitoring -l app=grafana --context "$cluster_name" &> /dev/null; then
         local grafana_pods=$(kubectl get pods -n monitoring -l app=grafana --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -299,7 +299,7 @@ test_monitoring_stack() {
     else
         test_fail "Grafana not found"
     fi
-    
+
     # Test AlertManager
     if kubectl get pods -n monitoring -l app=alertmanager --context "$cluster_name" &> /dev/null; then
         local alertmanager_pods=$(kubectl get pods -n monitoring -l app=alertmanager --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -311,7 +311,7 @@ test_monitoring_stack() {
     else
         test_fail "AlertManager not found"
     fi
-    
+
     # Test service monitors
     local service_monitors=$(kubectl get servicemonitors --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
     if [[ $service_monitors -gt 0 ]]; then
@@ -324,9 +324,9 @@ test_monitoring_stack() {
 # Infrastructure components tests
 test_infrastructure_components() {
     log_info "Running infrastructure components tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test Redis
     if kubectl get pods -n infrastructure-components -l app=redis --context "$cluster_name" &> /dev/null; then
         local redis_pods=$(kubectl get pods -n infrastructure-components -l app=redis --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -338,7 +338,7 @@ test_infrastructure_components() {
     else
         test_skip "Redis not found"
     fi
-    
+
     # Test RabbitMQ
     if kubectl get pods -n infrastructure-components -l app=rabbitmq --context "$cluster_name" &> /dev/null; then
         local rabbitmq_pods=$(kubectl get pods -n infrastructure-components -l app=rabbitmq --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -350,7 +350,7 @@ test_infrastructure_components() {
     else
         test_skip "RabbitMQ not found"
     fi
-    
+
     # Test Elasticsearch
     if kubectl get pods -n infrastructure-components -l app=elasticsearch --context "$cluster_name" &> /dev/null; then
         local elasticsearch_pods=$(kubectl get pods -n infrastructure-components -l app=elasticsearch --context "$cluster_name" --no-headers | grep -c "Running" || true)
@@ -367,19 +367,19 @@ test_infrastructure_components() {
 # Performance tests
 test_performance() {
     log_info "Running performance tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test resource limits
     local pods_without_limits=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{" "}{.spec.containers[*].resources.limits}{"\n"}{end}' | grep -c "map\[\]" || true)
     local total_pods=$(kubectl get pods --all-namespaces --context "$cluster_name" --no-headers | wc -l)
-    
+
     if [[ $pods_without_limits -lt $((total_pods / 2)) ]]; then
         test_pass "Most pods have resource limits configured"
     else
         test_warning "Many pods without resource limits ($pods_without_limits/$total_pods)"
     fi
-    
+
     # Test HPA configuration
     local hpas=$(kubectl get hpa --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
     if [[ $hpas -gt 0 ]]; then
@@ -387,7 +387,7 @@ test_performance() {
     else
         test_warning "No Horizontal Pod Autoscalers found"
     fi
-    
+
     # Test PDB configuration
     local pdbs=$(kubectl get pdb --all-namespaces --context "$cluster_name" --no-headers 2>/dev/null | wc -l || echo "0")
     if [[ $pdbs -gt 0 ]]; then
@@ -400,12 +400,12 @@ test_performance() {
 # Disaster recovery tests
 test_disaster_recovery() {
     log_info "Running disaster recovery tests..."
-    
+
     # Test backup storage
     local backup_bucket="nexafi-backups-primary-${ENVIRONMENT:-prod}"
     if aws s3 ls "s3://$backup_bucket/" &> /dev/null; then
         test_pass "Primary backup bucket accessible"
-        
+
         # Check for recent backups
         local recent_backups=$(aws s3 ls "s3://$backup_bucket/" --recursive | grep "$(date +%Y-%m-%d)" | wc -l || echo "0")
         if [[ $recent_backups -gt 0 ]]; then
@@ -416,7 +416,7 @@ test_disaster_recovery() {
     else
         test_fail "Primary backup bucket not accessible"
     fi
-    
+
     # Test secondary region connectivity
     local secondary_region="${SECONDARY_REGION:-us-east-1}"
     if aws ec2 describe-regions --region "$secondary_region" &> /dev/null; then
@@ -424,7 +424,7 @@ test_disaster_recovery() {
     else
         test_fail "Secondary region not accessible"
     fi
-    
+
     # Test DR cluster
     local dr_cluster="nexafi-${ENVIRONMENT:-prod}-secondary"
     if aws eks describe-cluster --name "$dr_cluster" --region "$secondary_region" &> /dev/null; then
@@ -437,9 +437,9 @@ test_disaster_recovery() {
 # Security scanning
 test_security_scanning() {
     log_info "Running security scanning tests..."
-    
+
     local cluster_name="nexafi-${ENVIRONMENT:-prod}-primary"
-    
+
     # Test for privileged containers
     local privileged_pods=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{" "}{.spec.containers[*].securityContext.privileged}{"\n"}{end}' | grep -c "true" || true)
     if [[ $privileged_pods -eq 0 ]]; then
@@ -447,7 +447,7 @@ test_security_scanning() {
     else
         test_fail "Privileged containers detected ($privileged_pods containers)"
     fi
-    
+
     # Test for containers running as root
     local root_containers=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{" "}{.spec.containers[*].securityContext.runAsUser}{"\n"}{end}' | grep -c "^0$" || true)
     if [[ $root_containers -eq 0 ]]; then
@@ -455,7 +455,7 @@ test_security_scanning() {
     else
         test_warning "Containers running as root detected ($root_containers containers)"
     fi
-    
+
     # Test for host network usage
     local host_network_pods=$(kubectl get pods --all-namespaces --context "$cluster_name" -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{" "}{.spec.hostNetwork}{"\n"}{end}' | grep -c "true" || true)
     if [[ $host_network_pods -eq 0 ]]; then
@@ -468,9 +468,9 @@ test_security_scanning() {
 # Generate test report
 generate_test_report() {
     log_info "Generating test report..."
-    
+
     local report_file="$TEST_RESULTS_DIR/test-report-$TEST_TIMESTAMP.md"
-    
+
     cat >> "$report_file" << EOF
 
 | Metric | Count |
@@ -538,27 +538,27 @@ EOF
     if [[ $FAILED_TESTS -gt 0 ]]; then
         echo "- **CRITICAL**: $FAILED_TESTS tests failed. Immediate attention required." >> "$report_file"
     fi
-    
+
     if [[ $SKIPPED_TESTS -gt 0 ]]; then
         echo "- **WARNING**: $SKIPPED_TESTS tests were skipped. Review configuration." >> "$report_file"
     fi
-    
+
     if [[ $FAILED_TESTS -eq 0 && $SKIPPED_TESTS -eq 0 ]]; then
         echo "- **SUCCESS**: All tests passed. Infrastructure is properly configured." >> "$report_file"
     fi
-    
+
     echo "" >> "$report_file"
     echo "**Test completed at:** $(date)" >> "$report_file"
-    
+
     log_success "Test report generated: $report_file"
 }
 
 # Main test function
 main() {
     log_info "Starting NexaFi infrastructure testing..."
-    
+
     setup_test_environment
-    
+
     # Run all test suites
     test_infrastructure_connectivity
     test_security_configuration
@@ -569,16 +569,16 @@ main() {
     test_performance
     test_disaster_recovery
     test_security_scanning
-    
+
     generate_test_report
-    
+
     # Print summary
     log_info "Test Summary:"
     log_info "Total Tests: $TOTAL_TESTS"
     log_success "Passed: $PASSED_TESTS"
     log_error "Failed: $FAILED_TESTS"
     log_warning "Skipped: $SKIPPED_TESTS"
-    
+
     # Exit with appropriate code
     if [[ $FAILED_TESTS -gt 0 ]]; then
         log_error "Some tests failed. Please review the test report."
@@ -593,4 +593,3 @@ main() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
-

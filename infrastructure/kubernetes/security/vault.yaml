@@ -6,7 +6,7 @@ metadata:
 data:
   vault.hcl: |
     ui = true
-    
+
     listener "tcp" {
       address = "0.0.0.0:8200"
       tls_disable = false
@@ -15,7 +15,7 @@ data:
       tls_min_version = "tls12"
       tls_cipher_suites = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
     }
-    
+
     storage "consul" {
       address = "consul:8500"
       path = "vault/"
@@ -23,16 +23,16 @@ data:
       disable_clustering = "false"
       max_parallel = "128"
     }
-    
+
     seal "awskms" {
       region = "us-west-2"
       kms_key_id = "alias/vault-unseal-key"
       endpoint = "https://kms.us-west-2.amazonaws.com"
     }
-    
+
     api_addr = "https://vault.nexafi.internal:8200"
     cluster_addr = "https://vault.nexafi.internal:8201"
-    
+
     # Enable audit logging
     audit {
       file {
@@ -43,7 +43,7 @@ data:
         format = "json"
       }
     }
-    
+
     # Performance and security tuning
     max_lease_ttl = "768h"
     default_lease_ttl = "168h"
@@ -52,7 +52,7 @@ data:
     disable_cache = false
     disable_mlock = false
     disable_printable_check = false
-    
+
     # Enable Prometheus metrics
     telemetry {
       prometheus_retention_time = "30s"
@@ -279,4 +279,3 @@ subjects:
 - kind: ServiceAccount
   name: vault
   namespace: security
-

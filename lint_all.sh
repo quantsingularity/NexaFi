@@ -35,13 +35,13 @@ ALL_LINT_SUCCESS=true
 # Lint Python files (Backend)
 lint_python() {
     print_status "Linting Python files in backend/ with flake8 and black..."
-    
+
     # Check for flake8
     if ! command -v flake8 &> /dev/null; then
         print_warning "flake8 not found. Skipping Python linting. Please install with: pip install flake8"
         return
     fi
-    
+
     # Check for black
     if ! command -v black &> /dev/null; then
         print_warning "black not found. Skipping Python formatting check. Please install with: pip install black"
@@ -68,13 +68,13 @@ lint_python() {
 # Lint JavaScript/React files (Frontend)
 lint_javascript() {
     print_status "Linting JavaScript/React files in nexafi-frontend/ and nexafi-mobile-frontend/ with eslint and prettier..."
-    
+
     # Check for eslint
     if ! command -v eslint &> /dev/null; then
         print_warning "eslint not found. Skipping JavaScript linting. Please install with: npm install -g eslint"
         return
     fi
-    
+
     # Check for prettier
     if ! command -v prettier &> /dev/null; then
         print_warning "prettier not found. Skipping JavaScript formatting check. Please install with: npm install -g prettier"
@@ -127,7 +127,7 @@ lint_javascript() {
 # Lint YAML files (Infrastructure)
 lint_yaml() {
     print_status "Linting YAML files in infra/ with yamllint..."
-    
+
     # Check for yamllint
     if ! command -v yamllint &> /dev/null; then
         print_warning "yamllint not found. Skipping YAML linting. Please install with: pip install yamllint"
@@ -149,7 +149,7 @@ lint_yaml() {
 # Lint Markdown files (Documentation)
 lint_markdown() {
     print_status "Linting Markdown files with markdownlint-cli..."
-    
+
     # Check for markdownlint-cli
     if ! command -v markdownlint &> /dev/null; then
         print_warning "markdownlint-cli not found. Skipping Markdown linting. Please install with: npm install -g markdownlint-cli"
@@ -197,4 +197,3 @@ main() {
 
 # Run main function
 main
-

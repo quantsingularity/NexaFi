@@ -79,5 +79,3 @@ Centralized logging is implemented to aggregate logs from all services and infra
 *   **Regular Audits**: Periodic security audits and penetration testing to identify and address potential vulnerabilities.
 
 By adhering to these infrastructure and operational principles, NexaFi ensures a reliable, secure, and high-performing platform for its users.
-
-

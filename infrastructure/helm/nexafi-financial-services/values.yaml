@@ -6,13 +6,13 @@ global:
   imageRegistry: ""
   imagePullSecrets: []
   storageClass: ""
-  
+
 # Application configuration
 app:
   name: financial-services
   version: "1.0.0"
   environment: production
-  
+
 # Image configuration
 image:
   registry: nexafi
@@ -35,7 +35,7 @@ strategy:
 container:
   port: 8080
   name: financial-services
-  
+
 # Security context
 securityContext:
   runAsNonRoot: true
@@ -314,8 +314,8 @@ backup:
 # Database configuration
 postgresql:
   enabled: false  # Use external managed database
-  
-# Redis configuration  
+
+# Redis configuration
 redis:
   enabled: false  # Use external managed Redis
 
@@ -359,7 +359,7 @@ security:
   vault:
     enabled: true
     role: "financial-services"
-    
+
 # Feature flags
 features:
   paymentProcessing: true
@@ -367,4 +367,3 @@ features:
   fraudDetection: true
   complianceReporting: true
   auditTrail: true
-

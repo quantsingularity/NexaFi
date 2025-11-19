@@ -20,11 +20,11 @@ class MobileApiClient {
     const headers = {
       'Content-Type': 'application/json',
     };
-    
+
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
     }
-    
+
     return headers;
   }
 
@@ -37,7 +37,7 @@ class MobileApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           this.setToken(null);
@@ -46,7 +46,7 @@ class MobileApiClient {
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('API request failed:', error);
@@ -242,4 +242,3 @@ class MobileApiClient {
 // Create and export a singleton instance
 const mobileApiClient = new MobileApiClient();
 export default mobileApiClient;
-

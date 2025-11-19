@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  User, 
-  Building, 
-  Bell, 
-  Shield, 
-  Palette, 
-  Globe, 
-  CreditCard, 
+import {
+  User,
+  Building,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
+  CreditCard,
   Key,
   Save,
   Eye,
@@ -384,7 +384,7 @@ const SettingsModule = () => {
                 <p className="font-medium">Email Notifications</p>
                 <p className="text-sm text-gray-500">Receive notifications via email</p>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.email_notifications}
                 onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, email_notifications: checked }))}
               />
@@ -395,7 +395,7 @@ const SettingsModule = () => {
                 <p className="font-medium">Push Notifications</p>
                 <p className="text-sm text-gray-500">Receive browser push notifications</p>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.push_notifications}
                 onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, push_notifications: checked }))}
               />
@@ -406,7 +406,7 @@ const SettingsModule = () => {
                 <p className="font-medium">SMS Notifications</p>
                 <p className="text-sm text-gray-500">Receive notifications via SMS</p>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.sms_notifications}
                 onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, sms_notifications: checked }))}
               />
@@ -417,7 +417,7 @@ const SettingsModule = () => {
                 <p className="font-medium">Marketing Emails</p>
                 <p className="text-sm text-gray-500">Receive product updates and tips</p>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.marketing_emails}
                 onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, marketing_emails: checked }))}
               />
@@ -439,7 +439,7 @@ const SettingsModule = () => {
               <p className="font-medium">Security Alerts</p>
               <p className="text-sm text-gray-500">Login attempts and security events</p>
             </div>
-            <Switch 
+            <Switch
               checked={notificationSettings.security_alerts}
               onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, security_alerts: checked }))}
             />
@@ -450,7 +450,7 @@ const SettingsModule = () => {
               <p className="font-medium">Payment Notifications</p>
               <p className="text-sm text-gray-500">Transaction confirmations and alerts</p>
             </div>
-            <Switch 
+            <Switch
               checked={notificationSettings.payment_notifications}
               onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, payment_notifications: checked }))}
             />
@@ -461,7 +461,7 @@ const SettingsModule = () => {
               <p className="font-medium">AI Insights</p>
               <p className="text-sm text-gray-500">AI-generated financial insights and recommendations</p>
             </div>
-            <Switch 
+            <Switch
               checked={notificationSettings.ai_insights}
               onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, ai_insights: checked }))}
             />
@@ -487,21 +487,21 @@ const SettingsModule = () => {
           <div>
             <Label>Theme</Label>
             <div className="grid grid-cols-3 gap-4 mt-2">
-              <div 
+              <div
                 className={`p-4 border rounded-lg cursor-pointer ${theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
                 onClick={() => setTheme('light')}
               >
                 <div className="w-full h-8 bg-white border rounded mb-2"></div>
                 <p className="text-sm font-medium">Light</p>
               </div>
-              <div 
+              <div
                 className={`p-4 border rounded-lg cursor-pointer ${theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
                 onClick={() => setTheme('dark')}
               >
                 <div className="w-full h-8 bg-gray-800 border rounded mb-2"></div>
                 <p className="text-sm font-medium">Dark</p>
               </div>
-              <div 
+              <div
                 className={`p-4 border rounded-lg cursor-pointer ${theme === 'auto' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
                 onClick={() => setTheme('auto')}
               >
@@ -652,4 +652,3 @@ const SettingsModule = () => {
 };
 
 export default SettingsModule;
-

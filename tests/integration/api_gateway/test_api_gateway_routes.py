@@ -192,5 +192,3 @@ class TestAPIGatewayRoutes:
         assert \"version\" in json_data
         assert \"timestamp\" in json_data
         assert \"available_endpoints\" in json_data
-
-

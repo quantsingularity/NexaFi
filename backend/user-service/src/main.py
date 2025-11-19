@@ -17,14 +17,22 @@ sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
-                                audit_logger)
+from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
-from middleware.auth import (auth_manager, get_user_permissions,
-                             init_auth_manager, require_auth,
-                             require_permission, require_role)
-from validators.schemas import (UserLoginSchema, UserRegistrationSchema,
-                                UserUpdateSchema, validate_json_request)
+from middleware.auth import (
+    auth_manager,
+    get_user_permissions,
+    init_auth_manager,
+    require_auth,
+    require_permission,
+    require_role,
+)
+from validators.schemas import (
+    UserLoginSchema,
+    UserRegistrationSchema,
+    UserUpdateSchema,
+    validate_json_request,
+)
 
 app = Flask(__name__)
 # Load environment variables from .env file

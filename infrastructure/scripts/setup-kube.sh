@@ -44,14 +44,14 @@ detect_os() {
     else
         OS="unknown"
     fi
-    
+
     print_status "Detected OS: $OS"
 }
 
 # Function to install kubectl
 install_kubectl() {
     print_status "Installing kubectl..."
-    
+
     case $OS in
         "debian")
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -78,14 +78,14 @@ install_kubectl() {
             exit 1
             ;;
     esac
-    
+
     print_success "kubectl installed successfully"
 }
 
 # Function to install Docker
 install_docker() {
     print_status "Installing Docker..."
-    
+
     case $OS in
         "debian")
             sudo apt-get update
@@ -113,14 +113,14 @@ install_docker() {
             exit 1
             ;;
     esac
-    
+
     print_success "Docker installation completed"
 }
 
 # Function to install Minikube
 install_minikube() {
     print_status "Installing Minikube..."
-    
+
     case $OS in
         "debian"|"redhat")
             curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
@@ -141,14 +141,14 @@ install_minikube() {
             exit 1
             ;;
     esac
-    
+
     print_success "Minikube installed successfully"
 }
 
 # Function to start Minikube cluster
 start_minikube() {
     print_status "Starting Minikube cluster..."
-    
+
     # Configure Minikube with appropriate resources for NexaFi
     minikube start \
         --cpus=4 \
@@ -156,13 +156,13 @@ start_minikube() {
         --disk-size=50g \
         --driver=docker \
         --kubernetes-version=v1.28.0
-    
+
     # Enable required addons
     minikube addons enable ingress
     minikube addons enable storage-provisioner
     minikube addons enable default-storageclass
     minikube addons enable metrics-server
-    
+
     print_success "Minikube cluster started with required addons"
 }
 
@@ -175,9 +175,9 @@ setup_cloud_cluster() {
     echo "3. Azure Kubernetes Service (AKS)"
     echo "4. DigitalOcean Kubernetes"
     echo ""
-    
+
     read -p "Select cloud provider (1-4): " choice
-    
+
     case $choice in
         1)
             print_status "GKE Setup Instructions:"
@@ -214,7 +214,7 @@ setup_cloud_cluster() {
             exit 1
             ;;
     esac
-    
+
     echo ""
     print_warning "Please complete the cloud setup manually and ensure kubectl is configured"
     read -p "Press Enter when your cloud cluster is ready..."
@@ -223,28 +223,28 @@ setup_cloud_cluster() {
 # Function to verify cluster
 verify_cluster() {
     print_status "Verifying cluster setup..."
-    
+
     # Check kubectl connection
     if ! kubectl cluster-info &> /dev/null; then
         print_error "Cannot connect to Kubernetes cluster"
         exit 1
     fi
-    
+
     # Check node status
     print_status "Cluster nodes:"
     kubectl get nodes
-    
+
     # Check if ingress controller is available
     if kubectl get ingressclass nginx &> /dev/null; then
         print_success "NGINX Ingress Controller is available"
     else
         print_warning "NGINX Ingress Controller not found - will be installed during deployment"
     fi
-    
+
     # Check storage class
     print_status "Available storage classes:"
     kubectl get storageclass
-    
+
     print_success "Cluster verification completed"
 }
 
@@ -269,16 +269,16 @@ main() {
     echo "🚀 NexaFi Kubernetes Cluster Setup"
     echo "=================================="
     echo ""
-    
+
     detect_os
-    
+
     # Check if kubectl is already installed
     if ! command -v kubectl &> /dev/null; then
         install_kubectl
     else
         print_success "kubectl is already installed"
     fi
-    
+
     # Ask user for cluster type
     echo ""
     print_status "Choose cluster setup option:"
@@ -286,9 +286,9 @@ main() {
     echo "2. Cloud cluster (GKE/EKS/AKS/DO)"
     echo "3. Existing cluster (skip setup)"
     echo ""
-    
+
     read -p "Select option (1-3): " cluster_choice
-    
+
     case $cluster_choice in
         1)
             # Check if Docker is installed for Minikube
@@ -298,12 +298,12 @@ main() {
                 print_warning "Then run this script again"
                 exit 0
             fi
-            
+
             # Check if Minikube is installed
             if ! command -v minikube &> /dev/null; then
                 install_minikube
             fi
-            
+
             start_minikube
             ;;
         2)
@@ -317,10 +317,10 @@ main() {
             exit 1
             ;;
     esac
-    
+
     # Verify cluster setup
     verify_cluster
-    
+
     # Show next steps
     show_next_steps
 }
@@ -341,4 +341,3 @@ esac
 
 # Run main function
 main "$@"
-

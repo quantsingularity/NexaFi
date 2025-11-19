@@ -60,5 +60,3 @@ jobs:
       # - Pushing models to a model registry (e.g., MLflow, Sagemaker)
       # - Updating serving endpoints
       # - Running data pipelines
-
-

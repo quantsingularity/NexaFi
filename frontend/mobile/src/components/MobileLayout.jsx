@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Menu, 
-  X, 
-  Home, 
-  BarChart3, 
-  CreditCard, 
-  Brain, 
-  Settings, 
+import {
+  Menu,
+  X,
+  Home,
+  BarChart3,
+  CreditCard,
+  Brain,
+  Settings,
   LogOut,
   Bell,
   Search,
@@ -71,7 +71,7 @@ const MobileLayout = ({ children }) => {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            
+
             <div>
               <h1 className="text-lg font-semibold text-gray-900">{pageTitle}</h1>
               {!isOnline && (
@@ -91,7 +91,7 @@ const MobileLayout = ({ children }) => {
                 3
               </Badge>
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"
@@ -129,7 +129,7 @@ const MobileLayout = ({ children }) => {
               onClick={closeSidebar}
               className="fixed inset-0 bg-black/50 z-50"
             />
-            
+
             {/* Sidebar */}
             <motion.div
               initial={{ x: '-100%' }}
@@ -184,7 +184,7 @@ const MobileLayout = ({ children }) => {
                   {navigationItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
-                    
+
                     return (
                       <motion.button
                         key={item.path}
@@ -233,7 +233,7 @@ const MobileLayout = ({ children }) => {
           {navigationItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <motion.button
                 key={item.path}
@@ -255,4 +255,3 @@ const MobileLayout = ({ children }) => {
 };
 
 export default MobileLayout;
-

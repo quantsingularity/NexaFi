@@ -42,8 +42,16 @@ from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, String,
-                        Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from twilio.rest import Client as TwilioClient
@@ -1032,16 +1040,16 @@ class AutomatedResponseSystem:
         try:
             alert_message = f"""
             SECURITY ALERT: {threat_event.threat_type.value.upper()}
-            
+
             Severity: {threat_event.severity.value}
             Confidence: {threat_event.confidence}
             Source IP: {threat_event.source_ip}
             Target: {threat_event.target_resource}
             User: {threat_event.user_id or 'Unknown'}
             Time: {threat_event.timestamp}
-            
+
             Description: {threat_event.description}
-            
+
             MITRE ATT&CK:
             Tactics: {', '.join(threat_event.mitre_tactics)}
             Techniques: {', '.join(threat_event.mitre_techniques)}

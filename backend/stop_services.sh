@@ -14,25 +14,25 @@ NC='\033[0m' # No Color
 stop_service() {
     local service_name=$1
     local pid_file="logs/${service_name}.pid"
-    
+
     if [ -f "$pid_file" ]; then
         local pid=$(cat "$pid_file")
         if kill -0 "$pid" 2>/dev/null; then
             echo -e "${YELLOW}Stopping $service_name (PID: $pid)...${NC}"
             kill "$pid"
-            
+
             # Wait for process to stop
             local attempts=0
             while kill -0 "$pid" 2>/dev/null && [ $attempts -lt 10 ]; do
                 sleep 1
                 attempts=$((attempts + 1))
             done
-            
+
             if kill -0 "$pid" 2>/dev/null; then
                 echo -e "${RED}Force killing $service_name...${NC}"
                 kill -9 "$pid" 2>/dev/null || true
             fi
-            
+
             echo -e "${GREEN}$service_name stopped${NC}"
         else
             echo -e "${YELLOW}$service_name was not running${NC}"
@@ -78,4 +78,3 @@ if [ "$1" = "--clean-logs" ]; then
     rm -f logs/*.pid
     echo -e "${GREEN}Log files cleaned${NC}"
 fi
-

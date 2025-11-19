@@ -10,7 +10,7 @@ import './App.css';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-  
+
   return isAuthenticated ? children : <Navigate to="/auth" replace />;
 };
 
@@ -33,7 +33,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={
         isAuthenticated ? <Navigate to="/dashboard" replace /> : <MobileAuthPage />
       } />
-      
+
       {/* Protected Routes */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
@@ -42,7 +42,7 @@ const AppRoutes = () => {
           </MobileLayout>
         </ProtectedRoute>
       } />
-      
+
       <Route path="/accounting" element={
         <ProtectedRoute>
           <MobileLayout>
@@ -50,7 +50,7 @@ const AppRoutes = () => {
           </MobileLayout>
         </ProtectedRoute>
       } />
-      
+
       <Route path="/payments" element={
         <ProtectedRoute>
           <MobileLayout>
@@ -61,7 +61,7 @@ const AppRoutes = () => {
           </MobileLayout>
         </ProtectedRoute>
       } />
-      
+
       <Route path="/ai-insights" element={
         <ProtectedRoute>
           <MobileLayout>
@@ -72,7 +72,7 @@ const AppRoutes = () => {
           </MobileLayout>
         </ProtectedRoute>
       } />
-      
+
       <Route path="/settings" element={
         <ProtectedRoute>
           <MobileLayout>
@@ -83,7 +83,7 @@ const AppRoutes = () => {
           </MobileLayout>
         </ProtectedRoute>
       } />
-      
+
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -103,4 +103,3 @@ function App() {
 }
 
 export default App;
-

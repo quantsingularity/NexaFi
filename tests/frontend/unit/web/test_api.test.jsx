@@ -82,4 +82,3 @@ describe(\"ApiClient\", () => {
     const result = await apiClient.request(\"/test\");
     expect(mockFetch).toHaveBeenCalledWith(
       \"http://localhost:5000/api/v1/test\",
-

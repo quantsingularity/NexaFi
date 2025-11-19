@@ -6,8 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
-from NexaFi.backend.shared.utils.cache import (CacheManager,
-                                               cache_key_for_user, cached)
+from NexaFi.backend.shared.utils.cache import CacheManager, cache_key_for_user, cached
 
 
 @pytest.fixture
@@ -153,7 +152,7 @@ class TestCacheKeyForUser:
 
         # Note: The order of kwargs in the generated key might vary, so we sort for comparison
         generated_key = cache_key_for_user(user_id, arg1, kwarg2=kwarg2, kwarg1=kwarg1)
-        
+
         # Re-calculate expected key with sorted kwargs to match the function's internal sorting
         sorted_kwargs = sorted([(k, v) for k, v in {\'kwarg2\': kwarg2, \'kwarg1\': kwarg1}.items()])
         expected_key_parts_sorted = [user_id, arg1]
@@ -161,5 +160,3 @@ class TestCacheKeyForUser:
         expected_cache_key_sorted = hashlib.md5(\":\".join(expected_key_parts_sorted).encode()).hexdigest()
 
         assert generated_key == expected_cache_key_sorted
-
-

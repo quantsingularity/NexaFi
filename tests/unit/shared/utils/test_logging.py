@@ -68,13 +68,13 @@ class TestStructuredLogger:
             structured_logger.info(\'Info message\', user_id=\'123\')
             expected_log = {
                 \'timestamp\': \'2024-01-01T12:00:00\
-', 
+',
                 \'service\': \'test_service\
-', 
+',
                 \'level\': \'INFO\
-', 
+',
                 \'message\': \'Info message\
-', 
+',
                 \'user_id\': \'123\'
             }
             mock_logger.return_value.info.assert_called_once_with(json.dumps(expected_log))
@@ -84,11 +84,11 @@ class TestStructuredLogger:
             structured_logger.warning(\'Warning message\')
             expected_log = {
                 \'timestamp\': \'2024-01-01T12:00:00\
-', 
+',
                 \'service\': \'test_service\
-', 
+',
                 \'level\': \'WARNING\
-', 
+',
                 \'message\': \'Warning message\'
             }
             mock_logger.return_value.warning.assert_called_once_with(json.dumps(expected_log))
@@ -98,13 +98,13 @@ class TestStructuredLogger:
             structured_logger.error(\'Error message\', error_code=500)
             expected_log = {
                 \'timestamp\': \'2024-01-01T12:00:00\
-', 
+',
                 \'service\': \'test_service\
-', 
+',
                 \'level\': \'ERROR\
-', 
+',
                 \'message\': \'Error message\
-', 
+',
                 \'error_code\': 500
             }
             mock_logger.return_value.error.assert_called_once_with(json.dumps(expected_log))
@@ -114,11 +114,11 @@ class TestStructuredLogger:
             structured_logger.debug(\'Debug message\')
             expected_log = {
                 \'timestamp\': \'2024-01-01T12:00:00\
-', 
+',
                 \'service\': \'test_service\
-', 
+',
                 \'level\': \'DEBUG\
-', 
+',
                 \'message\': \'Debug message\'
             }
             mock_logger.return_value.debug.assert_called_once_with(json.dumps(expected_log))
@@ -128,11 +128,11 @@ class TestStructuredLogger:
             structured_logger.critical(\'Critical message\')
             expected_log = {
                 \'timestamp\': \'2024-01-01T12:00:00\
-', 
+',
                 \'service\': \'test_service\
-', 
+',
                 \'level\': \'CRITICAL\
-', 
+',
                 \'message\': \'Critical message\'
             }
             mock_logger.return_value.critical.assert_called_once_with(json.dumps(expected_log))
@@ -143,5 +143,3 @@ class TestStructuredLogger:
             logger = get_logger(\'another_service_for_get_logger\')
             assert isinstance(logger, StructuredLogger)
             mock_logger.assert_called_once_with(\'another_service_for_get_logger\')
-
-

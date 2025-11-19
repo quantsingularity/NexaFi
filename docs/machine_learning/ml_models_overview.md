@@ -70,5 +70,3 @@ The machine learning capabilities in NexaFi are primarily delivered through the 
 *   **Experiment Tracking**: Tools like MLflow or Weights & Biases for managing ML experiments.
 
 By leveraging these machine learning capabilities, NexaFi aims to provide a more intelligent, secure, and personalized financial experience for its users.
-
-

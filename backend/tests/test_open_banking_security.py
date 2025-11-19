@@ -14,15 +14,27 @@ from unittest.mock import MagicMock, Mock, patch
 # Add shared modules to path
 sys.path.append("/home/ubuntu/NexaFi/backend/shared")
 
-from enhanced_security import (AdvancedEncryption, FraudDetectionEngine,
-                               MultiFactorAuthentication, SecureSessionManager,
-                               SecurityEvent, SecurityEventType, SecurityLevel,
-                               SecurityMonitor, ThreatLevel)
-from open_banking_compliance import (AuthenticationMethod, ConsentStatus,
-                                     FAPI2SecurityProfile,
-                                     OpenBankingAPIValidator,
-                                     PSD2ConsentManager, SCAManager, SCAStatus,
-                                     TransactionRiskAnalysis)
+from enhanced_security import (
+    AdvancedEncryption,
+    FraudDetectionEngine,
+    MultiFactorAuthentication,
+    SecureSessionManager,
+    SecurityEvent,
+    SecurityEventType,
+    SecurityLevel,
+    SecurityMonitor,
+    ThreatLevel,
+)
+from open_banking_compliance import (
+    AuthenticationMethod,
+    ConsentStatus,
+    FAPI2SecurityProfile,
+    OpenBankingAPIValidator,
+    PSD2ConsentManager,
+    SCAManager,
+    SCAStatus,
+    TransactionRiskAnalysis,
+)
 
 
 class TestFAPI2SecurityProfile(unittest.TestCase):

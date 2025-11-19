@@ -139,5 +139,3 @@ NexaFi's backend is composed of several independent microservices, each designed
     *   `GET /api/v1/documents/user/{user_id}`: List documents for a user.
 *   **Data Models**: `Document` (id, user_id, filename, file_type, storage_path, uploaded_at, status).
 *   **Storage**: Typically uses secure object storage (e.g., AWS S3, Google Cloud Storage) for actual file storage, with metadata stored in a database.
-
-

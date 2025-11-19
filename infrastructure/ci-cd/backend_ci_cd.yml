@@ -65,5 +65,3 @@ jobs:
       # - Using a cloud provider's CLI (e.g., AWS CLI, Azure CLI, gcloud CLI)
       # - Interacting with a CI/CD tool like ArgoCD, Spinnaker, or Jenkins
       # Example: ./ci-cd/scripts/deploy_backend.sh
-
-

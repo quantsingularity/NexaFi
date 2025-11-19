@@ -59,7 +59,7 @@ Rigorous testing and validation are critical for financial models. Each model un
 Potential model risks, such as fundamental errors, incorrect usage, or misunderstood limitations, are identified and documented. This includes discussions on the model's boundaries, conditions under which its performance might degrade, and strategies for mitigating identified risks. For instance, the unsupervised nature of the Isolation Forest model for fraud detection is explicitly noted, along with the need for ongoing monitoring to assess its effectiveness against evolving fraud patterns.
 
 ### 5. Explainability and Interpretability
-While some models may inherently be 
+While some models may inherently be
 
 
 complex, efforts are made to ensure that key decisions and outputs are explainable. Documentation aims to provide insights into how models arrive at their predictions or classifications, facilitating understanding for both technical and non-technical stakeholders, which is crucial for regulatory scrutiny and internal governance.
@@ -71,4 +71,3 @@ After deployment, models are subject to continuous monitoring to ensure their pe
 All model code, configurations, and documentation are maintained under version control. This ensures a complete audit trail of all changes, allowing for reproducibility and accountability. The structured directory (`models/`, `features/`, `pipelines/`) facilitates clear organization and traceability of all components related to each machine learning model.
 
 These practices collectively aim to ensure that the machine learning models developed for NexaFi are not only technically sound but also meet the stringent requirements for transparency, accountability, and risk management prevalent in the financial industry.
-

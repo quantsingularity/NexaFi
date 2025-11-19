@@ -41,7 +41,7 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
@@ -51,7 +51,7 @@ class ApiClient {
       if (contentType && contentType.includes('application/json')) {
         return await response.json();
       }
-      
+
       return await response.text();
     } catch (error) {
       console.error('API Request failed:', error);
@@ -243,4 +243,3 @@ class ApiClient {
 const apiClient = new ApiClient();
 
 export default apiClient;
-

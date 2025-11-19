@@ -100,30 +100,29 @@ metadata:
 data:
   rabbitmq.conf: |
     # RabbitMQ configuration for NexaFi
-    
+
     # Clustering
     cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s
     cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
     cluster_formation.k8s.address_type = hostname
-    
+
     # Memory and disk management
     vm_memory_high_watermark.relative = 0.6
     disk_free_limit.relative = 2.0
-    
+
     # Networking
     listeners.tcp.default = 5672
     management.tcp.port = 15672
-    
+
     # Security
     default_user = nexafi
     default_vhost = nexafi
-    
+
     # Performance
     channel_max = 2047
     connection_max = 1000
     heartbeat = 60
-    
+
     # Logging
     log.console = true
     log.console.level = info
-

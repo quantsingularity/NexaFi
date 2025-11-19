@@ -27,8 +27,10 @@ import lightgbm as lgb
 import lime
 import lime.lime_tabular
 import pdpbox
+
 # Explainability Libraries
 import shap
+
 # Machine Learning Libraries
 import sklearn
 import xgboost as xgb
@@ -43,8 +45,7 @@ from sklearn.base import BaseEstimator
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.inspection import partial_dependence, permutation_importance
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                             recall_score)
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.tree import DecisionTreeClassifier
 
 # Deep Learning Explainability
@@ -52,9 +53,15 @@ try:
     import tensorflow as tf
     import torch
     import torch.nn as nn
-    from captum.attr import (DeepLift, GradientShap, IntegratedGradients,
-                             LayerActivation, LayerConductance,
-                             LayerGradientXActivation, Occlusion)
+    from captum.attr import (
+        DeepLift,
+        GradientShap,
+        IntegratedGradients,
+        LayerActivation,
+        LayerConductance,
+        LayerGradientXActivation,
+        Occlusion,
+    )
     from tensorflow import keras
 
     DEEP_LEARNING_AVAILABLE = True
@@ -76,9 +83,19 @@ import redis
 import seaborn as sns
 import structlog
 from plotly.subplots import make_subplots
+
 # Database and Storage
-from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, LargeBinary,
-                        String, Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 

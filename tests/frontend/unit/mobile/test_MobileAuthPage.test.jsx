@@ -134,5 +134,3 @@ describe(\"MobileAuthPage\", () => {
     expect(passwordInput.getAttribute(\"type\")).toBe(\"password\");
   });
 });
-
-

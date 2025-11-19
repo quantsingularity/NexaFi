@@ -85,5 +85,3 @@ All tests are integrated into the CI/CD pipelines (see [CI/CD Pipelines](ci_cd_p
 *   **Dashboard Integration**: Test results and coverage metrics can be integrated into dashboards (e.g., SonarQube, custom dashboards) for a holistic view of code quality.
 
 By maintaining a rigorous testing discipline, NexaFi aims to deliver a high-quality, reliable, and secure financial platform to its users.
-
-

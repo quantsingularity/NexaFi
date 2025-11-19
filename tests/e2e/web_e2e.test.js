@@ -95,7 +95,7 @@ test.describe('Web Application E2E Tests', () => {
     await page.click('div[role="option"]:has-text("Expense")');
     await page.click('div[role="combobox"]:has-text("Select payment method")');
     // Assuming there's at least one payment method available, select the first one
-    await page.locator('div[role="option"]').first().click(); 
+    await page.locator('div[role="option"]').first().click();
 
     await page.click('button:has-text("Create Transaction")');
 
@@ -103,5 +103,3 @@ test.describe('Web Application E2E Tests', () => {
     await expect(page.getByText('E2E Test Transaction')).toBeVisible();
   });
 });
-
-

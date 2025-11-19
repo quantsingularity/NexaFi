@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  CreditCard, 
-  PieChart, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  CreditCard,
+  PieChart,
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
@@ -284,20 +284,20 @@ const Dashboard = () => {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
-                <Area 
-                  type="monotone" 
-                  dataKey="income" 
-                  stackId="1" 
-                  stroke="#3b82f6" 
-                  fill="#3b82f6" 
+                <Area
+                  type="monotone"
+                  dataKey="income"
+                  stackId="1"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
                   fillOpacity={0.6}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="expenses" 
-                  stackId="2" 
-                  stroke="#ef4444" 
-                  fill="#ef4444" 
+                <Area
+                  type="monotone"
+                  dataKey="expenses"
+                  stackId="2"
+                  stroke="#ef4444"
+                  fill="#ef4444"
                   fillOpacity={0.6}
                 />
               </AreaChart>
@@ -387,4 +387,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

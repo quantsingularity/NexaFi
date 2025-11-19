@@ -43,5 +43,3 @@ class TestUserModel:
         assert user_dict[\'username\'] == \'testuser2\'
         assert user_dict[\'email\'] == \'test2@example.com\'
         assert \'id\' in user_dict
-
-

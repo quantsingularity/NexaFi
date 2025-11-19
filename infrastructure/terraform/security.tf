@@ -5,7 +5,7 @@ resource "aws_kms_key" "database" {
   description             = "NexaFi database encryption key"
   deletion_window_in_days = 30
   enable_key_rotation     = true
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -35,7 +35,7 @@ resource "aws_kms_key" "database" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-database-key"
     Type = "encryption"
@@ -52,7 +52,7 @@ resource "aws_kms_key" "backup" {
   description             = "NexaFi backup encryption key"
   deletion_window_in_days = 30
   enable_key_rotation     = true
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -82,7 +82,7 @@ resource "aws_kms_key" "backup" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-backup-key"
     Type = "encryption"
@@ -99,25 +99,25 @@ resource "aws_kms_alias" "backup" {
 resource "aws_wafv2_web_acl" "nexafi_api" {
   name  = "${local.name_prefix}-api-waf"
   scope = "REGIONAL"
-  
+
   default_action {
     allow {}
   }
-  
+
   # Rate limiting rule
   rule {
     name     = "RateLimitRule"
     priority = 1
-    
+
     action {
       block {}
     }
-    
+
     statement {
       rate_based_statement {
         limit              = 2000
         aggregate_key_type = "IP"
-        
+
         scope_down_statement {
           geo_match_statement {
             country_codes = ["US", "CA", "GB", "DE", "FR", "JP", "AU"]
@@ -125,23 +125,23 @@ resource "aws_wafv2_web_acl" "nexafi_api" {
         }
       }
     }
-    
+
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "RateLimitRule"
       sampled_requests_enabled   = true
     }
   }
-  
+
   # SQL injection protection
   rule {
     name     = "SQLInjectionRule"
     priority = 2
-    
+
     action {
       block {}
     }
-    
+
     statement {
       sqli_match_statement {
         field_to_match {
@@ -149,35 +149,35 @@ resource "aws_wafv2_web_acl" "nexafi_api" {
             oversize_handling = "CONTINUE"
           }
         }
-        
+
         text_transformation {
           priority = 1
           type     = "URL_DECODE"
         }
-        
+
         text_transformation {
           priority = 2
           type     = "HTML_ENTITY_DECODE"
         }
       }
     }
-    
+
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "SQLInjectionRule"
       sampled_requests_enabled   = true
     }
   }
-  
+
   # XSS protection
   rule {
     name     = "XSSRule"
     priority = 3
-    
+
     action {
       block {}
     }
-    
+
     statement {
       xss_match_statement {
         field_to_match {
@@ -185,77 +185,77 @@ resource "aws_wafv2_web_acl" "nexafi_api" {
             oversize_handling = "CONTINUE"
           }
         }
-        
+
         text_transformation {
           priority = 1
           type     = "URL_DECODE"
         }
-        
+
         text_transformation {
           priority = 2
           type     = "HTML_ENTITY_DECODE"
         }
       }
     }
-    
+
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "XSSRule"
       sampled_requests_enabled   = true
     }
   }
-  
+
   # AWS Managed Rules
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 4
-    
+
     override_action {
       none {}
     }
-    
+
     statement {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
       }
     }
-    
+
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "CommonRuleSetMetric"
       sampled_requests_enabled   = true
     }
   }
-  
+
   rule {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 5
-    
+
     override_action {
       none {}
     }
-    
+
     statement {
       managed_rule_group_statement {
         name        = "AWSManagedRulesKnownBadInputsRuleSet"
         vendor_name = "AWS"
       }
     }
-    
+
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "KnownBadInputsRuleSetMetric"
       sampled_requests_enabled   = true
     }
   }
-  
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "NexaFiAPIWAF"
     sampled_requests_enabled   = true
   }
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-api-waf"
     Type = "waf"
@@ -267,11 +267,11 @@ resource "aws_acm_certificate" "nexafi_api" {
   domain_name               = "api.nexafi.com"
   subject_alternative_names = ["*.api.nexafi.com", "app.nexafi.com", "*.app.nexafi.com"]
   validation_method         = "DNS"
-  
+
   lifecycle {
     create_before_destroy = true
   }
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-api-certificate"
     Type = "certificate"
@@ -284,11 +284,11 @@ resource "aws_secretsmanager_secret" "database_credentials" {
   description             = "Database credentials for NexaFi"
   kms_key_id             = aws_kms_key.nexafi_primary.arn
   recovery_window_in_days = 30
-  
+
   replica {
     region = var.secondary_region
   }
-  
+
   tags = merge(local.common_tags, local.compliance_tags, {
     Name = "${local.name_prefix}-database-credentials"
     Type = "secret"
@@ -308,11 +308,11 @@ resource "aws_secretsmanager_secret" "jwt_secret" {
   description             = "JWT signing secret for NexaFi authentication"
   kms_key_id             = aws_kms_key.nexafi_primary.arn
   recovery_window_in_days = 30
-  
+
   replica {
     region = var.secondary_region
   }
-  
+
   tags = merge(local.common_tags, local.compliance_tags, {
     Name = "${local.name_prefix}-jwt-secret"
     Type = "secret"
@@ -340,7 +340,7 @@ resource "aws_ssm_parameter" "app_config" {
     region      = var.primary_region
     cluster     = module.eks_primary.cluster_name
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-app-config"
     Type = "parameter"
@@ -350,7 +350,7 @@ resource "aws_ssm_parameter" "app_config" {
 # IAM roles and policies for financial services
 resource "aws_iam_role" "financial_services_role" {
   name = "${local.name_prefix}-financial-services-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -369,7 +369,7 @@ resource "aws_iam_role" "financial_services_role" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, local.compliance_tags, {
     Name = "${local.name_prefix}-financial-services-role"
     Type = "iam-role"
@@ -379,7 +379,7 @@ resource "aws_iam_role" "financial_services_role" {
 resource "aws_iam_policy" "financial_services_policy" {
   name        = "${local.name_prefix}-financial-services-policy"
   description = "IAM policy for financial services"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -435,7 +435,7 @@ resource "aws_iam_policy" "financial_services_policy" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-financial-services-policy"
     Type = "iam-policy"
@@ -454,14 +454,14 @@ resource "aws_securityhub_insight" "nexafi_critical_findings" {
       comparison = "EQUALS"
       value      = "CRITICAL"
     }
-    
+
     resource_tags {
       comparison = "EQUALS"
       key        = "Project"
       value      = "NexaFi"
     }
   }
-  
+
   group_by_attribute = "ResourceId"
   name               = "NexaFi Critical Security Findings"
 }
@@ -469,14 +469,14 @@ resource "aws_securityhub_insight" "nexafi_critical_findings" {
 # Config rules for compliance
 resource "aws_config_config_rule" "encrypted_volumes" {
   name = "${local.name_prefix}-encrypted-volumes"
-  
+
   source {
     owner             = "AWS"
     source_identifier = "ENCRYPTED_VOLUMES"
   }
-  
+
   depends_on = [aws_config_configuration_recorder.nexafi]
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-encrypted-volumes-rule"
     Type = "config-rule"
@@ -485,14 +485,14 @@ resource "aws_config_config_rule" "encrypted_volumes" {
 
 resource "aws_config_config_rule" "root_access_key_check" {
   name = "${local.name_prefix}-root-access-key-check"
-  
+
   source {
     owner             = "AWS"
     source_identifier = "ROOT_ACCESS_KEY_CHECK"
   }
-  
+
   depends_on = [aws_config_configuration_recorder.nexafi]
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-root-access-key-check"
     Type = "config-rule"
@@ -501,14 +501,14 @@ resource "aws_config_config_rule" "root_access_key_check" {
 
 resource "aws_config_config_rule" "mfa_enabled_for_iam_console_access" {
   name = "${local.name_prefix}-mfa-enabled-for-iam-console-access"
-  
+
   source {
     owner             = "AWS"
     source_identifier = "MFA_ENABLED_FOR_IAM_CONSOLE_ACCESS"
   }
-  
+
   depends_on = [aws_config_configuration_recorder.nexafi]
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-mfa-enabled-rule"
     Type = "config-rule"
@@ -531,7 +531,7 @@ resource "aws_macie2_account" "nexafi" {
 resource "aws_s3_bucket" "security_logs" {
   bucket        = "${local.name_prefix}-security-logs-${random_id.bucket_suffix.hex}"
   force_destroy = false
-  
+
   tags = merge(local.common_tags, local.compliance_tags, {
     Name = "${local.name_prefix}-security-logs"
     Type = "security-logs"
@@ -547,7 +547,7 @@ resource "aws_s3_bucket_versioning" "security_logs" {
 
 resource "aws_s3_bucket_encryption" "security_logs" {
   bucket = aws_s3_bucket.security_logs.id
-  
+
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -561,7 +561,7 @@ resource "aws_s3_bucket_encryption" "security_logs" {
 
 resource "aws_s3_bucket_public_access_block" "security_logs" {
   bucket = aws_s3_bucket.security_logs.id
-  
+
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -570,26 +570,26 @@ resource "aws_s3_bucket_public_access_block" "security_logs" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "security_logs" {
   bucket = aws_s3_bucket.security_logs.id
-  
+
   rule {
     id     = "security_log_lifecycle"
     status = "Enabled"
-    
+
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
     }
-    
+
     transition {
       days          = 90
       storage_class = "GLACIER"
     }
-    
+
     transition {
       days          = 365
       storage_class = "DEEP_ARCHIVE"
     }
-    
+
     expiration {
       days = 2555  # 7 years
     }
@@ -608,11 +608,11 @@ resource "aws_cloudwatch_metric_alarm" "high_error_rate" {
   threshold           = "100"
   alarm_description   = "This metric monitors high error rate"
   alarm_actions       = [aws_sns_topic.security_alerts.arn]
-  
+
   dimensions = {
     LoadBalancer = "app/${local.name_prefix}-alb"
   }
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-high-error-rate-alarm"
     Type = "cloudwatch-alarm"
@@ -630,7 +630,7 @@ resource "aws_cloudwatch_metric_alarm" "failed_login_attempts" {
   threshold           = "10"
   alarm_description   = "This metric monitors failed login attempts"
   alarm_actions       = [aws_sns_topic.security_alerts.arn]
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-failed-login-attempts-alarm"
     Type = "cloudwatch-alarm"
@@ -641,7 +641,7 @@ resource "aws_cloudwatch_metric_alarm" "failed_login_attempts" {
 resource "aws_sns_topic" "security_alerts" {
   name              = "${local.name_prefix}-security-alerts"
   kms_master_key_id = aws_kms_key.nexafi_primary.arn
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-security-alerts"
     Type = "sns-topic"
@@ -652,7 +652,7 @@ resource "aws_sns_topic" "security_alerts" {
 resource "aws_cloudwatch_event_rule" "guardduty_findings" {
   name        = "${local.name_prefix}-guardduty-findings"
   description = "Capture GuardDuty findings"
-  
+
   event_pattern = jsonencode({
     source      = ["aws.guardduty"]
     detail-type = ["GuardDuty Finding"]
@@ -660,7 +660,7 @@ resource "aws_cloudwatch_event_rule" "guardduty_findings" {
       severity = [7.0, 8.0, 8.9]  # High and Critical findings
     }
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-guardduty-findings-rule"
     Type = "eventbridge-rule"
@@ -672,4 +672,3 @@ resource "aws_cloudwatch_event_target" "guardduty_sns" {
   target_id = "SendToSNS"
   arn       = aws_sns_topic.security_alerts.arn
 }
-

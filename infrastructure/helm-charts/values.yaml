@@ -3,7 +3,7 @@ global:
   imageRegistry: ""
   imagePullSecrets: []
   storageClass: ""
-  
+
 # Environment configuration
 environment: production
 region: us-east-1
@@ -407,4 +407,3 @@ backup:
     type: "s3"
     bucket: "nexafi-backups"
     region: "us-east-1"
-

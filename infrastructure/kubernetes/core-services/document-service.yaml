@@ -95,4 +95,3 @@ spec:
     port: 80
     targetPort: 5007
   type: ClusterIP
-

@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowRight, 
-  Building, 
-  Brain, 
-  BarChart3, 
-  Shield, 
-  Zap, 
-  Users, 
-  TrendingUp, 
+import {
+  ArrowRight,
+  Building,
+  Brain,
+  BarChart3,
+  Shield,
+  Zap,
+  Users,
+  TrendingUp,
   CheckCircle,
   Star,
   Play
@@ -89,7 +89,7 @@ const Homepage = () => {
                 NexaFi
               </span>
             </div>
-            
+
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
               <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">Testimonials</a>
@@ -117,35 +117,35 @@ const Homepage = () => {
               <Badge className="mb-6 bg-blue-100 text-blue-800 hover:bg-blue-100">
                 🚀 AI-Powered Financial Management
               </Badge>
-              
+
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
                 The Future of
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   {" "}Financial Management
                 </span>
               </h1>
-              
+
               <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Transform your business with AI-powered insights, automated workflows, and comprehensive financial analytics. 
+                Transform your business with AI-powered insights, automated workflows, and comprehensive financial analytics.
                 Make smarter decisions with real-time data and predictive intelligence.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-3"
                   onClick={() => navigate('/auth')}
                 >
                   Start Free Trial
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-                
+
                 <Button variant="outline" size="lg" className="text-lg px-8 py-3">
                   <Play className="mr-2 w-5 h-5" />
                   Watch Demo
                 </Button>
               </div>
-              
+
               <div className="mt-12 flex items-center justify-center space-x-8 text-sm text-gray-500">
                 <div className="flex items-center">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
@@ -261,8 +261,8 @@ const Homepage = () => {
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
               Join thousands of businesses already using NexaFi to optimize their financial operations and drive growth.
             </p>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3"
               onClick={() => navigate('/auth')}
             >
@@ -288,7 +288,7 @@ const Homepage = () => {
                 Advanced financial management platform powered by AI.
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
@@ -298,7 +298,7 @@ const Homepage = () => {
                 <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
@@ -308,7 +308,7 @@ const Homepage = () => {
                 <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
@@ -319,7 +319,7 @@ const Homepage = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2024 NexaFi. All rights reserved.</p>
           </div>
@@ -330,4 +330,3 @@ const Homepage = () => {
 };
 
 export default Homepage;
-

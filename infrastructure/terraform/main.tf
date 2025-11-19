@@ -30,10 +30,10 @@ terraform {
     region         = "us-west-2"
     encrypt        = true
     dynamodb_table = "nexafi-terraform-locks"
-    
+
     # Enhanced security for state file
     kms_key_id = "alias/nexafi-terraform-state"
-    
+
     # Versioning and lifecycle
     versioning = true
   }
@@ -42,7 +42,7 @@ terraform {
 # Provider configurations
 provider "aws" {
   region = var.primary_region
-  
+
   default_tags {
     tags = {
       Project             = "NexaFi"
@@ -59,7 +59,7 @@ provider "aws" {
 provider "aws" {
   alias  = "secondary"
   region = var.secondary_region
-  
+
   default_tags {
     tags = {
       Project             = "NexaFi"
@@ -77,7 +77,7 @@ provider "aws" {
 provider "kubernetes" {
   host                   = module.eks_primary.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
-  
+
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
@@ -89,7 +89,7 @@ provider "helm" {
   kubernetes {
     host                   = module.eks_primary.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
-    
+
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
@@ -101,7 +101,7 @@ provider "helm" {
 # Local values for common configurations
 locals {
   name_prefix = "nexafi-${var.environment}"
-  
+
   common_tags = {
     Project             = "NexaFi"
     Environment         = var.environment
@@ -109,7 +109,7 @@ locals {
     SecurityCompliance = "PCI-DSS,SOC2,GDPR"
     DataClassification = "Confidential"
   }
-  
+
   # Financial industry compliance requirements
   compliance_tags = {
     PCI_DSS_Scope      = "true"
@@ -119,7 +119,7 @@ locals {
     GLBA_Applicable    = "true"
     FFIEC_Applicable   = "true"
   }
-  
+
   # Security configuration
   security_config = {
     enable_encryption_at_rest     = true
@@ -130,7 +130,7 @@ locals {
     enable_intrusion_detection   = true
     enable_data_loss_prevention  = true
   }
-  
+
   # Monitoring and alerting
   monitoring_config = {
     enable_cloudtrail           = true
@@ -141,7 +141,7 @@ locals {
     enable_macie               = true
     enable_cloudwatch_insights = true
   }
-  
+
   # Backup and disaster recovery
   backup_config = {
     backup_retention_days       = 2555  # 7 years for financial compliance
@@ -170,7 +170,7 @@ resource "aws_kms_key" "nexafi_primary" {
   description             = "NexaFi primary encryption key"
   deletion_window_in_days = 30
   enable_key_rotation     = true
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -197,7 +197,7 @@ resource "aws_kms_key" "nexafi_primary" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-primary-key"
     Type = "encryption"
@@ -213,37 +213,37 @@ resource "aws_kms_alias" "nexafi_primary" {
 resource "aws_cloudtrail" "nexafi_audit" {
   name           = "${local.name_prefix}-audit-trail"
   s3_bucket_name = aws_s3_bucket.audit_logs.bucket
-  
+
   include_global_service_events = true
   is_multi_region_trail        = true
   enable_logging               = true
-  
+
   # Enhanced logging for financial compliance
   enable_log_file_validation = true
-  
+
   # KMS encryption for audit logs
   kms_key_id = aws_kms_key.nexafi_primary.arn
-  
+
   event_selector {
     read_write_type                 = "All"
     include_management_events       = true
     exclude_management_event_sources = []
-    
+
     data_resource {
       type   = "AWS::S3::Object"
       values = ["arn:aws:s3:::${aws_s3_bucket.audit_logs.bucket}/*"]
     }
-    
+
     data_resource {
       type   = "AWS::KMS::Key"
       values = ["*"]
     }
   }
-  
+
   insight_selector {
     insight_type = "ApiCallRateInsight"
   }
-  
+
   tags = merge(local.common_tags, local.compliance_tags, {
     Name = "${local.name_prefix}-audit-trail"
     Type = "audit"
@@ -254,7 +254,7 @@ resource "aws_cloudtrail" "nexafi_audit" {
 resource "aws_s3_bucket" "audit_logs" {
   bucket        = "${local.name_prefix}-audit-logs-${random_id.bucket_suffix.hex}"
   force_destroy = false
-  
+
   tags = merge(local.common_tags, local.compliance_tags, {
     Name = "${local.name_prefix}-audit-logs"
     Type = "audit"
@@ -274,7 +274,7 @@ resource "aws_s3_bucket_versioning" "audit_logs" {
 
 resource "aws_s3_bucket_encryption" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
-  
+
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -288,7 +288,7 @@ resource "aws_s3_bucket_encryption" "audit_logs" {
 
 resource "aws_s3_bucket_public_access_block" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
-  
+
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -297,34 +297,34 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
-  
+
   rule {
     id     = "audit_log_lifecycle"
     status = "Enabled"
-    
+
     # Transition to IA after 30 days
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
     }
-    
+
     # Transition to Glacier after 90 days
     transition {
       days          = 90
       storage_class = "GLACIER"
     }
-    
+
     # Transition to Deep Archive after 365 days
     transition {
       days          = 365
       storage_class = "DEEP_ARCHIVE"
     }
-    
+
     # Retain for 7 years (financial compliance)
     expiration {
       days = 2555
     }
-    
+
     noncurrent_version_expiration {
       noncurrent_days = 90
     }
@@ -334,7 +334,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
 # GuardDuty for threat detection
 resource "aws_guardduty_detector" "nexafi" {
   enable = true
-  
+
   datasources {
     s3_logs {
       enable = true
@@ -352,7 +352,7 @@ resource "aws_guardduty_detector" "nexafi" {
       }
     }
   }
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-guardduty"
     Type = "security"
@@ -368,7 +368,7 @@ resource "aws_securityhub_account" "nexafi" {
 resource "aws_config_configuration_recorder" "nexafi" {
   name     = "${local.name_prefix}-config-recorder"
   role_arn = aws_iam_role.config.arn
-  
+
   recording_group {
     all_supported                 = true
     include_global_resource_types = true
@@ -383,7 +383,7 @@ resource "aws_config_delivery_channel" "nexafi" {
 resource "aws_s3_bucket" "config" {
   bucket        = "${local.name_prefix}-config-${random_id.bucket_suffix.hex}"
   force_destroy = false
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-config"
     Type = "compliance"
@@ -393,7 +393,7 @@ resource "aws_s3_bucket" "config" {
 # IAM role for Config
 resource "aws_iam_role" "config" {
   name = "${local.name_prefix}-config-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -406,7 +406,7 @@ resource "aws_iam_role" "config" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-config-role"
     Type = "iam"
@@ -519,4 +519,3 @@ output "audit_logs_bucket" {
   description = "Name of the audit logs S3 bucket"
   value       = aws_s3_bucket.audit_logs.bucket
 }
-

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  CreditCard, 
-  Wallet, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Plus, 
-  Filter, 
-  Download, 
-  Eye, 
-  Edit, 
+import {
+  CreditCard,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Plus,
+  Filter,
+  Download,
+  Eye,
+  Edit,
   Trash2,
   CheckCircle,
   Clock,
@@ -49,25 +49,25 @@ const PaymentsModule = () => {
   const loadPaymentData = async () => {
     try {
       setLoading(true);
-      
+
       // Load payment methods
       const methodsResponse = await apiClient.getPaymentMethods();
       setPaymentMethods(methodsResponse.payment_methods || []);
-      
+
       // Load transactions
       const transactionsResponse = await apiClient.getTransactions({ per_page: 20 });
       setTransactions(transactionsResponse.transactions || []);
-      
+
       // Load wallets
       const walletsResponse = await apiClient.getWallets();
       setWallets(walletsResponse.wallets || []);
-      
+
       // Load analytics
       const endDate = new Date().toISOString().split('T')[0];
       const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const analyticsResponse = await apiClient.getPaymentAnalytics(startDate, endDate);
       setAnalytics(analyticsResponse);
-      
+
     } catch (error) {
       console.error('Failed to load payment data:', error);
       addNotification({
@@ -181,11 +181,11 @@ const PaymentsModule = () => {
                   <XAxis dataKey="month" />
                   <YAxis />
                   <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="income" 
-                    stroke="#3b82f6" 
-                    fill="#3b82f6" 
+                  <Area
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
                     fillOpacity={0.6}
                   />
                 </AreaChart>
@@ -713,4 +713,3 @@ const CreateTransactionForm = ({ onSuccess }) => {
 };
 
 export default PaymentsModule;
-

@@ -19,12 +19,16 @@ sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
-                                audit_logger)
+from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
 from middleware.auth import require_auth, require_permission
-from validators.schemas import (SanitizationMixin, Schema, fields, validate,
-                                validate_json_request)
+from validators.schemas import (
+    SanitizationMixin,
+    Schema,
+    fields,
+    validate,
+    validate_json_request,
+)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -61,7 +65,7 @@ COMPLIANCE_MIGRATIONS = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_kyc_user_id ON kyc_verifications(user_id);
         CREATE INDEX IF NOT EXISTS idx_kyc_status ON kyc_verifications(status);
         """,
@@ -82,7 +86,7 @@ COMPLIANCE_MIGRATIONS = {
             reviewed_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_aml_transaction_id ON aml_checks(transaction_id);
         CREATE INDEX IF NOT EXISTS idx_aml_user_id ON aml_checks(user_id);
         CREATE INDEX IF NOT EXISTS idx_aml_risk_level ON aml_checks(risk_level);
@@ -102,7 +106,7 @@ COMPLIANCE_MIGRATIONS = {
             last_screened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_sanctions_entity_id ON sanctions_screening(entity_id);
         CREATE INDEX IF NOT EXISTS idx_sanctions_result ON sanctions_screening(screening_result);
         """,
@@ -121,7 +125,7 @@ COMPLIANCE_MIGRATIONS = {
             submitted_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_compliance_reports_type ON compliance_reports(report_type);
         CREATE INDEX IF NOT EXISTS idx_compliance_reports_period ON compliance_reports(report_period_start, report_period_end);
         """,
@@ -201,7 +205,7 @@ class RiskScorer:
 
     @staticmethod
     def calculate_transaction_risk(
-        transaction_data: Dict[str, Any]
+        transaction_data: Dict[str, Any],
     ) -> tuple[int, List[str]]:
         """Calculate risk score for a transaction"""
         risk_score = 0

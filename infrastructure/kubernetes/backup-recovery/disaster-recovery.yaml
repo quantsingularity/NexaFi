@@ -11,7 +11,7 @@ data:
     disaster_recovery:
       rto_target_minutes: 60  # Recovery Time Objective
       rpo_target_minutes: 15  # Recovery Point Objective
-      
+
       scenarios:
         - name: "primary_region_failure"
           description: "Complete failure of primary AWS region"
@@ -25,7 +25,7 @@ data:
             - "restore_critical_services"
             - "verify_service_health"
             - "notify_stakeholders"
-          
+
         - name: "database_corruption"
           description: "Critical database corruption or failure"
           trigger_conditions:
@@ -37,7 +37,7 @@ data:
             - "restore_from_latest_backup"
             - "verify_data_integrity"
             - "restart_dependent_services"
-            
+
         - name: "security_breach"
           description: "Confirmed security breach requiring isolation"
           trigger_conditions:
@@ -55,13 +55,13 @@ data:
     failover:
       primary_region: "us-west-2"
       secondary_region: "us-east-1"
-      
+
       dns_configuration:
         primary_endpoint: "api.nexafi.com"
         secondary_endpoint: "api-dr.nexafi.com"
         health_check_interval: 30
         failure_threshold: 3
-        
+
       service_priorities:
         critical:
           - "auth-service"
@@ -76,7 +76,7 @@ data:
           - "analytics-service"
           - "document-service"
           - "ai-service"
-          
+
       data_replication:
         financial_database:
           method: "streaming_replication"
@@ -95,27 +95,27 @@ data:
         interval: 30
         timeout: 10
         failure_threshold: 3
-        
+
       - name: "database_health"
         type: "database_connection"
         connection_string: "postgresql://financial-db.database.svc.cluster.local:5432/financial"
         interval: 60
         timeout: 5
         failure_threshold: 2
-        
+
       - name: "vault_health"
         endpoint: "https://vault.security.svc.cluster.local:8200/v1/sys/health"
         interval: 60
         timeout: 5
         failure_threshold: 2
-        
+
     metrics:
       - dr_failover_time_seconds
       - dr_rto_compliance_ratio
       - dr_rpo_compliance_ratio
       - dr_test_success_rate
       - backup_restore_time_seconds
-      
+
     alerts:
       - name: "DRFailoverTriggered"
         condition: "dr_failover_triggered == 1"
@@ -320,135 +320,135 @@ data:
   failover-to-secondary.sh: |
     #!/bin/bash
     set -e
-    
+
     echo "Starting failover to secondary region..."
-    
+
     # Update Route53 DNS records
     aws route53 change-resource-record-sets \
       --hosted-zone-id $ROUTE53_HOSTED_ZONE_ID \
       --change-batch file:///app/scripts/dns-failover.json
-    
+
     # Scale up secondary region EKS cluster
     aws eks update-nodegroup-config \
       --cluster-name nexafi-secondary \
       --nodegroup-name financial-services \
       --scaling-config minSize=3,maxSize=10,desiredSize=5 \
       --region $SECONDARY_REGION
-    
+
     # Deploy critical services to secondary region
     kubectl apply -f /app/manifests/critical-services/ \
       --context=secondary-cluster
-    
+
     # Wait for services to be ready
     kubectl wait --for=condition=ready pod \
       -l tier=critical \
       --timeout=300s \
       --context=secondary-cluster
-    
+
     # Verify service health
     /app/scripts/verify-services.sh secondary
-    
+
     echo "Failover to secondary region completed"
 
   failback-to-primary.sh: |
     #!/bin/bash
     set -e
-    
+
     echo "Starting failback to primary region..."
-    
+
     # Ensure primary region is healthy
     /app/scripts/verify-services.sh primary
-    
+
     # Sync data from secondary to primary
     /app/scripts/sync-data.sh secondary primary
-    
+
     # Deploy services to primary region
     kubectl apply -f /app/manifests/all-services/ \
       --context=primary-cluster
-    
+
     # Wait for services to be ready
     kubectl wait --for=condition=ready pod \
       -l tier=critical \
       --timeout=300s \
       --context=primary-cluster
-    
+
     # Update Route53 DNS records back to primary
     aws route53 change-resource-record-sets \
       --hosted-zone-id $ROUTE53_HOSTED_ZONE_ID \
       --change-batch file:///app/scripts/dns-failback.json
-    
+
     # Scale down secondary region
     aws eks update-nodegroup-config \
       --cluster-name nexafi-secondary \
       --nodegroup-name financial-services \
       --scaling-config minSize=1,maxSize=3,desiredSize=1 \
       --region $SECONDARY_REGION
-    
+
     echo "Failback to primary region completed"
 
   verify-services.sh: |
     #!/bin/bash
     set -e
-    
+
     REGION=$1
     CONTEXT="${REGION}-cluster"
-    
+
     echo "Verifying services in $REGION region..."
-    
+
     # Check critical services
     CRITICAL_SERVICES=("auth-service" "payment-service" "ledger-service" "api-gateway")
-    
+
     for service in "${CRITICAL_SERVICES[@]}"; do
       echo "Checking $service..."
-      
+
       # Check if pods are running
       kubectl get pods -l app=$service \
         --context=$CONTEXT \
         --field-selector=status.phase=Running
-      
+
       # Check service health endpoint
       SERVICE_IP=$(kubectl get svc $service \
         --context=$CONTEXT \
         -o jsonpath='{.spec.clusterIP}')
-      
+
       curl -f http://$SERVICE_IP:8080/health || {
         echo "Health check failed for $service"
         exit 1
       }
     done
-    
+
     echo "All critical services are healthy in $REGION region"
 
   sync-data.sh: |
     #!/bin/bash
     set -e
-    
+
     SOURCE_REGION=$1
     TARGET_REGION=$2
-    
+
     echo "Syncing data from $SOURCE_REGION to $TARGET_REGION..."
-    
+
     # Sync financial database
     pg_dump -h financial-db-$SOURCE_REGION.nexafi.com \
       -U postgres financial | \
     psql -h financial-db-$TARGET_REGION.nexafi.com \
       -U postgres financial
-    
+
     # Sync user database
     pg_dump -h user-db-$SOURCE_REGION.nexafi.com \
       -U postgres users | \
     psql -h user-db-$TARGET_REGION.nexafi.com \
       -U postgres users
-    
+
     # Sync Vault data
     vault operator raft snapshot save \
       -address=https://vault-$SOURCE_REGION.nexafi.com:8200 \
       /tmp/vault-snapshot.snap
-    
+
     vault operator raft snapshot restore \
       -address=https://vault-$TARGET_REGION.nexafi.com:8200 \
       /tmp/vault-snapshot.snap
-    
+
     echo "Data sync completed from $SOURCE_REGION to $TARGET_REGION"
 
   dns-failover.json: |
@@ -561,19 +561,19 @@ spec:
             - |
               set -e
               echo "Starting DR test..."
-              
+
               # Test backup restoration
               /app/scripts/test-backup-restore.sh
-              
+
               # Test secondary region readiness
               /app/scripts/test-secondary-region.sh
-              
+
               # Test failover procedures (simulation)
               /app/scripts/test-failover-simulation.sh
-              
+
               # Generate test report
               /app/scripts/generate-dr-report.sh
-              
+
               echo "DR test completed successfully"
             volumeMounts:
             - name: tmp
@@ -596,4 +596,3 @@ spec:
               name: dr-scripts
               defaultMode: 0755
           restartPolicy: OnFailure
-

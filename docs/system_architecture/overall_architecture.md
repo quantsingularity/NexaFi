@@ -100,5 +100,3 @@ To ensure the health and performance of the NexaFi system, comprehensive observa
 *   **Tracing**: Distributed tracing (e.g., Jaeger, Zipkin) to visualize request flows across multiple microservices, aiding in debugging and performance optimization.
 
 This architectural design ensures that NexaFi is not only functional but also resilient, scalable, and easy to manage in a dynamic financial technology landscape.
-
-

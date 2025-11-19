@@ -26,7 +26,7 @@ jobs:
         path: frontend/build
 
     - name: Trigger Frontend Deployment
-      run: | 
+      run: |
         echo "Triggering frontend deployment using ci-cd/pipelines/frontend.yaml"
         # In a real scenario, this would involve calling a deployment script or tool
         # For demonstration, we'll just echo a message.
@@ -52,5 +52,3 @@ jobs:
     steps:
       - name: Backend deployment placeholder
         run: echo "Backend deployment logic would go here"
-
-

@@ -110,4 +110,3 @@ CMD ["sh", "-c", "gunicorn --bind ${HOST}:${PORT} --workers ${WORKERS} --timeout
 
 # Alternative development command (can be overridden)
 # CMD ["python", "model_server.py"]
-

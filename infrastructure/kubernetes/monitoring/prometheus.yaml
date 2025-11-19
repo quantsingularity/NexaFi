@@ -405,10 +405,10 @@ data:
       rules:
       - record: nexafi:transaction_rate
         expr: sum(rate(financial_transactions_total[5m])) by (service, type)
-      
+
       - record: nexafi:transaction_latency_p95
         expr: histogram_quantile(0.95, sum(rate(financial_transaction_duration_seconds_bucket[5m])) by (le, service))
-      
+
       - record: nexafi:error_rate
         expr: sum(rate(financial_errors_total[5m])) by (service, error_type) / sum(rate(financial_requests_total[5m])) by (service)
 
@@ -417,7 +417,7 @@ data:
       rules:
       - record: nexafi:auth_success_rate
         expr: sum(rate(auth_attempts_total{status="success"}[5m])) / sum(rate(auth_attempts_total[5m]))
-      
+
       - record: nexafi:failed_login_rate
         expr: sum(rate(auth_attempts_total{status="failed"}[5m])) by (source_ip)
 
@@ -426,7 +426,7 @@ data:
       rules:
       - record: nexafi:compliance_score
         expr: (1 - (sum(compliance_violations_total) / sum(compliance_checks_total))) * 100
-      
+
       - record: nexafi:audit_coverage
         expr: sum(audit_events_total) by (event_type) / sum(total_events) by (event_type) * 100
 ---
@@ -572,4 +572,3 @@ spec:
   resources:
     requests:
       storage: 100Gi
-

@@ -424,4 +424,3 @@ spec:
       port: 9200
     - protocol: TCP
       port: 9300
-

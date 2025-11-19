@@ -21,7 +21,7 @@ data:
         verification: true
         rpo_minutes: 15  # Recovery Point Objective
         rto_minutes: 60  # Recovery Time Objective
-        
+
       - name: "user-data-policy"
         description: "User data backup policy"
         retention:
@@ -34,7 +34,7 @@ data:
         verification: true
         rpo_minutes: 60
         rto_minutes: 120
-        
+
       - name: "system-config-policy"
         description: "System configuration backup policy"
         retention:
@@ -55,21 +55,21 @@ data:
         destination: "s3://nexafi-backups-primary/financial-db"
         schedule: "0 */4 * * *"  # Every 4 hours
         type: "database"
-        
+
       - name: "user-db-backup"
         policy: "user-data-policy"
         source: "postgresql://user-db.database.svc.cluster.local:5432/users"
         destination: "s3://nexafi-backups-primary/user-db"
         schedule: "0 2 * * *"  # Daily at 2 AM
         type: "database"
-        
+
       - name: "vault-backup"
         policy: "system-config-policy"
         source: "consul://consul.security.svc.cluster.local:8500/vault"
         destination: "s3://nexafi-backups-primary/vault"
         schedule: "0 1 * * *"  # Daily at 1 AM
         type: "consul"
-        
+
       - name: "kubernetes-etcd-backup"
         policy: "system-config-policy"
         source: "etcd"
@@ -90,7 +90,7 @@ data:
           - "Start financial services"
           - "Run smoke tests"
         estimated_time_minutes: 45
-        
+
       - name: "disaster-recovery"
         description: "Full disaster recovery procedure"
         steps:
@@ -114,7 +114,7 @@ data:
       - restore_job_failure_total
       - backup_verification_success_total
       - backup_verification_failure_total
-    
+
     alerts:
       - name: "BackupJobFailed"
         condition: "backup_job_failure_total > 0"
@@ -373,22 +373,22 @@ spec:
             - |
               set -e
               echo "Starting financial database backup..."
-              
+
               # Create backup
               pg_dump --verbose --no-password --format=custom --compress=9 \
                 --file=/tmp/backup.dump
-              
+
               # Encrypt backup
               openssl enc -aes-256-cbc -salt -in /tmp/backup.dump \
                 -out /tmp/backup.dump.enc -k "$ENCRYPTION_KEY"
-              
+
               # Upload to S3
               aws s3 cp /tmp/backup.dump.enc \
                 s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
-              
+
               # Verify backup
               aws s3 ls s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
-              
+
               echo "Financial database backup completed successfully"
             volumeMounts:
             - name: tmp
@@ -474,21 +474,21 @@ spec:
             - |
               set -e
               echo "Starting Vault backup..."
-              
+
               # Create Vault snapshot
               vault operator raft snapshot save /tmp/vault-snapshot.snap
-              
+
               # Encrypt snapshot
               openssl enc -aes-256-cbc -salt -in /tmp/vault-snapshot.snap \
                 -out /tmp/vault-snapshot.snap.enc -k "$ENCRYPTION_KEY"
-              
+
               # Upload to S3
               aws s3 cp /tmp/vault-snapshot.snap.enc \
                 s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
-              
+
               # Verify backup
               aws s3 ls s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
-              
+
               echo "Vault backup completed successfully"
             volumeMounts:
             - name: tmp
@@ -578,10 +578,10 @@ spec:
             - |
               set -e
               echo "Starting backup verification..."
-              
+
               # Run backup verification script
               /app/verify-backups.sh
-              
+
               echo "Backup verification completed"
             volumeMounts:
             - name: tmp
@@ -597,4 +597,3 @@ spec:
           - name: tmp
             emptyDir: {}
           restartPolicy: OnFailure
-

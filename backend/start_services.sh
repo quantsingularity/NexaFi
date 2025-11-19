@@ -27,16 +27,16 @@ start_service() {
     local service_name=$1
     local port=$2
     local service_dir=$3
-    
+
     echo -e "${YELLOW}Starting $service_name on port $port...${NC}"
-    
+
     if ! check_port $port; then
         echo -e "${RED}Cannot start $service_name - port $port is in use${NC}"
         return 1
     fi
-    
+
     cd "$service_dir"
-    
+
     # Install dependencies if requirements.txt exists
     if [ -f "requirements.txt" ]; then
         echo "Installing dependencies for $service_name..."
@@ -45,17 +45,17 @@ start_service() {
             return 1
         }
     fi
-    
+
     # Set environment variables
     export SERVICE_NAME="$service_name"
     export SERVICE_PORT="$port"
     export PYTHONPATH="${PYTHONPATH}:$(pwd)/../../shared"
-    
+
     # Start the service in background
     nohup python3 src/main.py > "../logs/${service_name}.log" 2>&1 &
     local pid=$!
     echo $pid > "../logs/${service_name}.pid"
-    
+
     # Wait a moment and check if service started successfully
     sleep 2
     if kill -0 $pid 2>/dev/null; then
@@ -73,20 +73,20 @@ wait_for_service() {
     local port=$2
     local max_attempts=30
     local attempt=1
-    
+
     echo "Waiting for $service_name to be ready..."
-    
+
     while [ $attempt -le $max_attempts ]; do
         if curl -s "http://localhost:$port/api/v1/health" >/dev/null 2>&1; then
             echo -e "${GREEN}$service_name is ready${NC}"
             return 0
         fi
-        
+
         echo "Attempt $attempt/$max_attempts - waiting for $service_name..."
         sleep 2
         attempt=$((attempt + 1))
     done
-    
+
     echo -e "${RED}$service_name failed to become ready${NC}"
     return 1
 }
@@ -131,7 +131,7 @@ failed_services=()
 for service_info in "${services[@]}"; do
     IFS=':' read -r service_name port <<< "$service_info"
     service_dir="$service_name"
-    
+
     if [ -d "$service_dir" ]; then
         if start_service "$service_name" "$port" "$service_dir"; then
             # Wait for service to be ready (except for API gateway)
@@ -188,4 +188,3 @@ else
     echo "Check the logs in the logs/ directory for more details"
     exit 1
 fi
-

@@ -7,9 +7,16 @@ from functools import wraps
 
 import numpy as np
 from flask import Blueprint, jsonify, request
-from src.models.user import (AIModel, AIPrediction, ConversationMessage,
-                             ConversationSession, FeatureStore,
-                             FinancialInsight, ModelTrainingJob, db)
+from src.models.user import (
+    AIModel,
+    AIPrediction,
+    ConversationMessage,
+    ConversationSession,
+    FeatureStore,
+    FinancialInsight,
+    ModelTrainingJob,
+    db,
+)
 
 user_bp = Blueprint("ai", __name__)
 

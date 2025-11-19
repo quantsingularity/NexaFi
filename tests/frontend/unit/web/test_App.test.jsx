@@ -45,5 +45,4 @@ describe(\'App Routing and Authentication\', () => {
 
   test(\'renders AuthPage for /auth route when not authenticated\', () => {
     renderApp([\'/auth\'], false);
-    expect(screen.getByText(/Sign In/i)).toBeInTheDocument(); // Assuming AuthPage has a 
-
+    expect(screen.getByText(/Sign In/i)).toBeInTheDocument(); // Assuming AuthPage has a

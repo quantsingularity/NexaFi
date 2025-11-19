@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  FileText, 
-  BarChart3, 
+import {
+  Plus,
+  FileText,
+  BarChart3,
   Calculator,
   Download,
   Filter,
@@ -34,7 +34,7 @@ const AccountingModule = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { addNotification } = useApp();
-  
+
   const [activeTab, setActiveTab] = useState('overview');
   const [accounts, setAccounts] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
@@ -48,19 +48,19 @@ const AccountingModule = () => {
   const loadAccountingData = async () => {
     try {
       setLoading(true);
-      
+
       // Load accounts
       const accountsResponse = await apiClient.getAccounts();
       setAccounts(accountsResponse.accounts || []);
-      
+
       // Load journal entries
       const entriesResponse = await apiClient.getJournalEntries({ per_page: 10 });
       setJournalEntries(entriesResponse.journal_entries || []);
-      
+
       // Load trial balance
       const trialBalanceResponse = await apiClient.getTrialBalance();
       setReports(prev => ({ ...prev, trialBalance: trialBalanceResponse }));
-      
+
     } catch (error) {
       console.error('Failed to load accounting data:', error);
       addNotification({
@@ -296,7 +296,7 @@ const AccountingModule = () => {
   const FinancialReports = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Financial Reports</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="cursor-pointer hover:shadow-lg transition-shadow">
           <CardHeader>
@@ -556,7 +556,7 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
   const updateLine = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      lines: prev.lines.map((line, i) => 
+      lines: prev.lines.map((line, i) =>
         i === index ? { ...line, [field]: value } : line
       )
     }));
@@ -671,4 +671,3 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
 };
 
 export default AccountingModule;
-

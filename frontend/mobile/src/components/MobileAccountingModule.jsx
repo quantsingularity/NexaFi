@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  TrendingUp, 
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreVertical,
+  TrendingUp,
   TrendingDown,
   DollarSign,
   Building,
@@ -268,7 +268,7 @@ const MobileAccountingModule = () => {
       {/* Accounts List */}
       <div className="space-y-3">
         {accountsData
-          .filter(account => 
+          .filter(account =>
             account.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             account.type.toLowerCase().includes(searchQuery.toLowerCase())
           )
@@ -359,7 +359,7 @@ const MobileAccountingModule = () => {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   {entry.accounts.map((account, index) => (
                     <div key={index} className="flex justify-between text-sm">
@@ -452,7 +452,7 @@ const MobileAccountingModule = () => {
               <SelectItem value="custom">Custom</SelectItem>
             </SelectContent>
           </Select>
-          
+
           <div className="grid grid-cols-2 gap-3">
             <Select>
               <SelectTrigger>
@@ -465,7 +465,7 @@ const MobileAccountingModule = () => {
                 <SelectItem value="this-year">This Year</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="To date" />
@@ -478,7 +478,7 @@ const MobileAccountingModule = () => {
               </SelectContent>
             </Select>
           </div>
-          
+
           <Button className="w-full">
             Generate Report
           </Button>
@@ -523,4 +523,3 @@ const MobileAccountingModule = () => {
 };
 
 export default MobileAccountingModule;
-

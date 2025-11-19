@@ -21,7 +21,7 @@ To ensure the NexaFi infrastructure adheres to financial industry best practices
 **Current State**: Multi-region AWS deployment with dedicated VPCs, segmented into public, private, and database subnets. VPC Flow Logs are enabled.
 
 **Enhancements**:
-*   **Advanced Network Segmentation**: Further subdivide private subnets into application, data, and management tiers. Implement stricter Network Access Control Lists (NACLs) and Security Groups (SGs) at each tier to enforce granular traffic control. This creates a 
+*   **Advanced Network Segmentation**: Further subdivide private subnets into application, data, and management tiers. Implement stricter Network Access Control Lists (NACLs) and Security Groups (SGs) at each tier to enforce granular traffic control. This creates a
 
 
 ### 2. Kubernetes Architecture (EKS)
@@ -107,4 +107,3 @@ To ensure the NexaFi infrastructure adheres to financial industry best practices
 
 ## Conclusion
 This enhanced infrastructure architecture provides a robust, secure, and compliant foundation for NexaFi's operations in the financial industry. By implementing these measures, NexaFi can ensure the integrity, confidentiality, and availability of its systems and data, meeting regulatory requirements and building trust with its users. The next steps involve detailed implementation of these architectural components, followed by rigorous testing and validation.
-

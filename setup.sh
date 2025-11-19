@@ -50,5 +50,3 @@ cd frontend/web
 pnpm install
 
 echo "NexaFi setup complete!"
-
-

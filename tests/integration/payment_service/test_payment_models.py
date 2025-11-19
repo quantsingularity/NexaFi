@@ -6,8 +6,14 @@ import pytest
 
 from NexaFi.backend.payment_service.src.main import app
 from NexaFi.backend.payment_service.src.models.user import (
-    ExchangeRate, PaymentMethod, RecurringPayment, Transaction, Wallet,
-    WalletBalanceHistory, db)
+    ExchangeRate,
+    PaymentMethod,
+    RecurringPayment,
+    Transaction,
+    Wallet,
+    WalletBalanceHistory,
+    db,
+)
 
 
 @pytest.fixture(scope=\'module\')
@@ -199,5 +205,3 @@ class TestExchangeRateModel:
         retrieved_er = ExchangeRate.query.filter_by(base_currency=\'USD\', target_currency=\'JPY\').first()
         assert retrieved_er is not None
         assert retrieved_er.rate == Decimal(\'150.00\')
-
-

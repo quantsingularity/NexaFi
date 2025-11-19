@@ -130,7 +130,7 @@ def test_rate_limiting_on_login():
     """Test if the login endpoint has basic rate limiting to prevent brute-force attacks."""
     login_endpoint = "/auth/login"
     test_credentials = {\"email\": \"nonexistent@example.com\", \"password\": \"wrongpassword\"}
-    
+
     responses = []
     for _ in range(15): # Try 15 login attempts quickly
         response = requests.post(f\"{BASE_URLS[\"api-gateway\"]}{login_endpoint}", json=test_credentials)
@@ -242,7 +242,7 @@ def test_security_misconfiguration():
     # This is highly application-specific.
     # Example: Check for default admin passwords, exposed debug interfaces.
     # For NexaFi, we can check if debug mode is enabled in production (assuming it's not).
-    
+
     # Check if debug mode is explicitly off in main.py for each service (conceptual)
     # This would involve reading the source code or checking a /health or /info endpoint that reveals debug status.
     # For now, we'll assume debug is off by default in deployed environments.

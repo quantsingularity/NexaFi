@@ -82,5 +82,3 @@ The NexaFi mobile application provides a native-like experience for users on iOS
 *   **Running Locally**: Refer to the [Getting Started](getting_started.md) section for instructions on how to set up and run the mobile application locally.
 
 Both frontend applications are designed to be user-centric, providing a secure and efficient way to interact with the NexaFi financial services. Regular updates and feature enhancements are planned to continuously improve the user experience.
-
-

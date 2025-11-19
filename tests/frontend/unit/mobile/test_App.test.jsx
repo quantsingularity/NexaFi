@@ -43,5 +43,4 @@ describe(\"Mobile App Routing and Authentication\", () => {
 
   test(\"renders MobileAuthPage for /auth route when not authenticated\", () => {
     renderApp([\"/auth\"]);
-    expect(screen.getByText(/Mobile Sign In/i)).toBeInTheDocument(); // Assuming MobileAuthPage has a 
-
+    expect(screen.getByText(/Mobile Sign In/i)).toBeInTheDocument(); // Assuming MobileAuthPage has a

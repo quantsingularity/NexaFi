@@ -18,17 +18,28 @@ sys.path.append("/home/ubuntu/NexaFi/backend/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
-                                audit_logger)
+from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
-from enhanced_security import (AdvancedEncryption, FraudDetectionEngine,
-                               MultiFactorAuthentication, SecureSessionManager,
-                               SecurityEvent, SecurityEventType, SecurityLevel,
-                               SecurityMonitor, ThreatLevel)
+from enhanced_security import (
+    AdvancedEncryption,
+    FraudDetectionEngine,
+    MultiFactorAuthentication,
+    SecureSessionManager,
+    SecurityEvent,
+    SecurityEventType,
+    SecurityLevel,
+    SecurityMonitor,
+    ThreatLevel,
+)
 from middleware.auth import require_auth, require_permission
 from open_banking_compliance import FAPI2SecurityProfile
-from validators.schemas import (SanitizationMixin, Schema, fields, validate,
-                                validate_json_request)
+from validators.schemas import (
+    SanitizationMixin,
+    Schema,
+    fields,
+    validate,
+    validate_json_request,
+)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -93,7 +104,7 @@ AUTH_MIGRATIONS = {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT TRUE
         );
-        
+
         CREATE TABLE IF NOT EXISTS oauth_authorization_codes (
             code TEXT PRIMARY KEY,
             client_id TEXT NOT NULL,
@@ -108,7 +119,7 @@ AUTH_MIGRATIONS = {
             FOREIGN KEY (client_id) REFERENCES oauth_clients(client_id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE TABLE IF NOT EXISTS oauth_access_tokens (
             token_id TEXT PRIMARY KEY,
             access_token_hash TEXT NOT NULL,
@@ -123,7 +134,7 @@ AUTH_MIGRATIONS = {
             FOREIGN KEY (client_id) REFERENCES oauth_clients(client_id),
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_oauth_codes_client_id ON oauth_authorization_codes(client_id);
         CREATE INDEX IF NOT EXISTS idx_oauth_codes_user_id ON oauth_authorization_codes(user_id);
         CREATE INDEX IF NOT EXISTS idx_oauth_tokens_client_id ON oauth_access_tokens(client_id);
@@ -147,7 +158,7 @@ AUTH_MIGRATIONS = {
             expires_at TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_registered_devices_user_id ON registered_devices(user_id);
         CREATE INDEX IF NOT EXISTS idx_registered_devices_fingerprint ON registered_devices(device_fingerprint);
         """,

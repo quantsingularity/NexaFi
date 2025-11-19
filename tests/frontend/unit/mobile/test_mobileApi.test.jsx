@@ -179,5 +179,3 @@ describe(\"MobileApiClient\", () => {
     expect(localStorage.removeItem).not.toHaveBeenCalledWith(\"other_item\");
   });
 });
-
-

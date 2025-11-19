@@ -24,12 +24,16 @@ sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
-                                audit_logger)
+from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
 from middleware.auth import require_auth, require_permission
-from validators.schemas import (SanitizationMixin, Schema, fields, validate,
-                                validate_json_request)
+from validators.schemas import (
+    SanitizationMixin,
+    Schema,
+    fields,
+    validate,
+    validate_json_request,
+)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -71,7 +75,7 @@ NOTIFICATION_MIGRATIONS = {
             error_message TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
         CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status);
         CREATE INDEX IF NOT EXISTS idx_notifications_scheduled_at ON notifications(scheduled_at);
@@ -93,7 +97,7 @@ NOTIFICATION_MIGRATIONS = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification_preferences(user_id);
         """,
     },
@@ -112,7 +116,7 @@ NOTIFICATION_MIGRATIONS = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_notification_templates_name ON notification_templates(template_name);
         CREATE INDEX IF NOT EXISTS idx_notification_templates_type ON notification_templates(template_type);
         """,
@@ -190,16 +194,16 @@ DEFAULT_TEMPLATES = {
         "subject_template": "Security Alert - {alert_type}",
         "body_template": """
         Dear {user_name},
-        
+
         We detected a security event on your account:
-        
+
         Alert Type: {alert_type}
         Time: {timestamp}
         IP Address: {ip_address}
         Details: {details}
-        
+
         If this was not you, please contact our security team immediately.
-        
+
         Best regards,
         NexaFi Security Team
         """,
@@ -211,16 +215,16 @@ DEFAULT_TEMPLATES = {
         "subject_template": "Transaction Confirmation - {amount} {currency}",
         "body_template": """
         Dear {user_name},
-        
+
         Your transaction has been processed successfully:
-        
+
         Amount: {amount} {currency}
         Transaction ID: {transaction_id}
         Date: {timestamp}
         Description: {description}
-        
+
         Thank you for using NexaFi.
-        
+
         Best regards,
         NexaFi Team
         """,
@@ -239,15 +243,15 @@ DEFAULT_TEMPLATES = {
         "subject_template": "KYC Verification Update - {status}",
         "body_template": """
         Dear {user_name},
-        
+
         Your KYC verification status has been updated:
-        
+
         Status: {status}
         Verification Type: {verification_type}
         Updated: {timestamp}
-        
+
         {additional_message}
-        
+
         Best regards,
         NexaFi Compliance Team
         """,

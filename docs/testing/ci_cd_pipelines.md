@@ -71,5 +71,3 @@ A common branching strategy like GitFlow or GitHub Flow is recommended to manage
 *   **Infrastructure as Code (IaC)**: Manage infrastructure using code (e.g., Terraform, CloudFormation) to ensure consistency and reproducibility.
 
 By embracing a robust CI/CD culture and implementing these pipelines, NexaFi can deliver new features and improvements to its users with speed, confidence, and quality.
-
-

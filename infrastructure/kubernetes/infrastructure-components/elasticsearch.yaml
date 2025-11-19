@@ -91,4 +91,3 @@ spec:
     targetPort: 9300
     name: transport
   type: ClusterIP
-

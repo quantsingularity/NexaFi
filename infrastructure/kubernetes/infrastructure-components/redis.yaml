@@ -85,23 +85,22 @@ data:
     # Redis configuration for NexaFi
     bind 0.0.0.0
     port 6379
-    
+
     # Memory management
     maxmemory 256mb
     maxmemory-policy allkeys-lru
-    
+
     # Persistence
     save 900 1
     save 300 10
     save 60 10000
-    
+
     # Security
     requirepass nexafi_redis_password
-    
+
     # Logging
     loglevel notice
-    
+
     # Performance
     tcp-keepalive 300
     timeout 0
-

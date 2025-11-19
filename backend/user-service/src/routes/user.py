@@ -12,10 +12,20 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_cors import cross_origin
 from werkzeug.security import generate_password_hash
 
-from ..models.user import (AuditLog, EmailVerification, PasswordReset,
-                           Permission, Role, RolePermission, User,
-                           UserCustomField, UserProfile, UserRole, UserSession,
-                           db)
+from ..models.user import (
+    AuditLog,
+    EmailVerification,
+    PasswordReset,
+    Permission,
+    Role,
+    RolePermission,
+    User,
+    UserCustomField,
+    UserProfile,
+    UserRole,
+    UserSession,
+    db,
+)
 
 user_bp = Blueprint("user", __name__)
 

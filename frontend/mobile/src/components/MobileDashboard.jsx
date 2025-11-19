@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  CreditCard, 
-  PieChart, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  CreditCard,
+  PieChart,
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
@@ -103,7 +103,7 @@ const MobileDashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       if (isOnline) {
         // Try to fetch fresh data
         const data = await mobileApiClient.getDashboardData();
@@ -213,7 +213,7 @@ const MobileDashboard = () => {
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1">
                 <TrendingUp className="w-4 h-4 text-green-300" />
@@ -446,4 +446,3 @@ const MobileDashboard = () => {
 };
 
 export default MobileDashboard;
-

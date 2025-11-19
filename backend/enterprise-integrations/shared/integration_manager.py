@@ -23,9 +23,14 @@ from prometheus_client import Counter, Gauge, Histogram, generate_latest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .base_integration import (BaseIntegration, IntegrationConfig,
-                               IntegrationManager, IntegrationStatus,
-                               SyncResult, setup_database)
+from .base_integration import (
+    BaseIntegration,
+    IntegrationConfig,
+    IntegrationManager,
+    IntegrationStatus,
+    SyncResult,
+    setup_database,
+)
 
 # Import specific integrations
 try:
@@ -34,8 +39,7 @@ except ImportError:
     SAPIntegration = None
 
 try:
-    from ..oracle.oracle_integration import (OracleIntegration,
-                                             create_oracle_integration)
+    from ..oracle.oracle_integration import OracleIntegration, create_oracle_integration
 except ImportError:
     OracleIntegration = None
 

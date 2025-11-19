@@ -6,10 +6,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.ai_service.src.main import app
-from NexaFi.backend.ai_service.src.models.user import (AIModel, AIPrediction,
-                                                       ConversationMessage,
-                                                       ConversationSession,
-                                                       FinancialInsight, db)
+from NexaFi.backend.ai_service.src.models.user import (
+    AIModel,
+    AIPrediction,
+    ConversationMessage,
+    ConversationSession,
+    FinancialInsight,
+    db,
+)
 
 
 @pytest.fixture(scope=\'module\')
@@ -349,5 +353,3 @@ class TestConversationalAIRoutes:
         )
         assert response.status_code == 404
         assert response.get_json()[\'error\'] == \'Chat session not found\'
-
-

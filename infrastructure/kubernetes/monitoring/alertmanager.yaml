@@ -36,7 +36,7 @@ data:
         group_interval: 5s
         repeat_interval: 15m
         continue: true
-      
+
       # Security alerts
       - match:
           service_type: security
@@ -45,7 +45,7 @@ data:
         group_interval: 5s
         repeat_interval: 30m
         continue: true
-      
+
       # Compliance violations
       - match:
           service_type: compliance
@@ -54,7 +54,7 @@ data:
         group_interval: 0s
         repeat_interval: 5m
         continue: true
-      
+
       # Infrastructure warnings
       - match:
           severity: warning
@@ -62,7 +62,7 @@ data:
         group_wait: 30s
         group_interval: 5m
         repeat_interval: 2h
-      
+
       # Critical infrastructure alerts
       - match:
           severity: critical
@@ -77,7 +77,7 @@ data:
       target_match:
         severity: 'warning'
       equal: ['alertname', 'cluster', 'service']
-    
+
     - source_match:
         alertname: 'FinancialServiceDown'
       target_match_re:
@@ -123,7 +123,7 @@ data:
         subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} - Financial Service Alert'
         body: |
           CRITICAL FINANCIAL SERVICE ALERT
-          
+
           {{ range .Alerts }}
           Alert: {{ .Annotations.summary }}
           Description: {{ .Annotations.description }}
@@ -132,7 +132,7 @@ data:
           Severity: {{ .Labels.severity }}
           Started: {{ .StartsAt }}
           {{ if .EndsAt }}Ended: {{ .EndsAt }}{{ end }}
-          
+
           Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
           {{ end }}
 
@@ -159,7 +159,7 @@ data:
         subject: '🔒 Security Alert: {{ .GroupLabels.alertname }}'
         body: |
           SECURITY ALERT
-          
+
           {{ range .Alerts }}
           Alert: {{ .Annotations.summary }}
           Description: {{ .Annotations.description }}
@@ -168,7 +168,7 @@ data:
           Severity: {{ .Labels.severity }}
           Started: {{ .StartsAt }}
           {{ if .EndsAt }}Ended: {{ .EndsAt }}{{ end }}
-          
+
           Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
           {{ end }}
 
@@ -195,7 +195,7 @@ data:
         subject: '⚖️ COMPLIANCE VIOLATION: {{ .GroupLabels.alertname }}'
         body: |
           COMPLIANCE VIOLATION DETECTED
-          
+
           {{ range .Alerts }}
           Alert: {{ .Annotations.summary }}
           Description: {{ .Annotations.description }}
@@ -204,7 +204,7 @@ data:
           Framework: {{ .Labels.framework }}
           Started: {{ .StartsAt }}
           {{ if .EndsAt }}Ended: {{ .EndsAt }}{{ end }}
-          
+
           Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
           {{ end }}
 
@@ -272,7 +272,7 @@ data:
     <h2>NexaFi Alert Notification</h2>
     <p><strong>Status:</strong> {{ .Status | toUpper }}</p>
     <p><strong>Alert Group:</strong> {{ .GroupLabels.alertname }}</p>
-    
+
     {{ range .Alerts }}
     <hr>
     <h3>{{ .Annotations.summary }}</h3>
@@ -282,7 +282,7 @@ data:
     <p><strong>Severity:</strong> {{ .Labels.severity | default "N/A" }}</p>
     <p><strong>Started:</strong> {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}</p>
     {{ if .EndsAt }}<p><strong>Ended:</strong> {{ .EndsAt.Format "2006-01-02 15:04:05 UTC" }}</p>{{ end }}
-    
+
     <h4>Labels:</h4>
     <ul>
     {{ range .Labels.SortedPairs }}
@@ -442,4 +442,3 @@ spec:
   resources:
     requests:
       storage: 10Gi
-

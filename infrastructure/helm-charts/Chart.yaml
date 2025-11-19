@@ -46,4 +46,3 @@ annotations:
   category: Financial Services
   compliance: "PCI-DSS, SOX, GDPR"
   security: "Zero Trust, mTLS, Encryption at Rest"
-

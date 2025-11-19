@@ -230,7 +230,7 @@ class PSD2ConsentManager:
             last_action_date TIMESTAMP,
             FOREIGN KEY (psu_id) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_psd2_consents_psu_id ON psd2_consents(psu_id);
         CREATE INDEX IF NOT EXISTS idx_psd2_consents_tpp_id ON psd2_consents(tpp_id);
         CREATE INDEX IF NOT EXISTS idx_psd2_consents_status ON psd2_consents(status);
@@ -270,9 +270,9 @@ class PSD2ConsentManager:
 
         # Store in database
         insert_sql = """
-        INSERT INTO psd2_consents 
-        (consent_id, psu_id, tpp_id, status, valid_until, frequency_per_day, 
-         recurring_indicator, combined_service_indicator, access_data, 
+        INSERT INTO psd2_consents
+        (consent_id, psu_id, tpp_id, status, valid_until, frequency_per_day,
+         recurring_indicator, combined_service_indicator, access_data,
          creation_date_time, status_change_date_time)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
@@ -323,7 +323,7 @@ class PSD2ConsentManager:
     def update_consent_status(self, consent_id: str, new_status: ConsentStatus) -> bool:
         """Update consent status"""
         update_sql = """
-        UPDATE psd2_consents 
+        UPDATE psd2_consents
         SET status = ?, status_change_date_time = ?
         WHERE consent_id = ?
         """
@@ -383,7 +383,7 @@ class SCAManager:
             FOREIGN KEY (psu_id) REFERENCES users(id),
             FOREIGN KEY (consent_id) REFERENCES psd2_consents(consent_id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_sca_psu_id ON sca_authentications(psu_id);
         CREATE INDEX IF NOT EXISTS idx_sca_consent_id ON sca_authentications(consent_id);
         CREATE INDEX IF NOT EXISTS idx_sca_status ON sca_authentications(status);
@@ -415,8 +415,8 @@ class SCAManager:
 
         # Store in database
         insert_sql = """
-        INSERT INTO sca_authentications 
-        (authentication_id, psu_id, consent_id, transaction_id, status, sca_method, 
+        INSERT INTO sca_authentications
+        (authentication_id, psu_id, consent_id, transaction_id, status, sca_method,
          challenge_data, expires_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
@@ -465,7 +465,7 @@ class SCAManager:
         """Verify SCA response"""
         # Get authentication record
         query_sql = """
-        SELECT * FROM sca_authentications 
+        SELECT * FROM sca_authentications
         WHERE authentication_id = ?
         """
         result = self.db_manager.fetch_one(query_sql, (authentication_id,))
@@ -496,7 +496,7 @@ class SCAManager:
     def _update_sca_status(self, authentication_id: str, status: SCAStatus):
         """Update SCA status"""
         update_sql = """
-        UPDATE sca_authentications 
+        UPDATE sca_authentications
         SET status = ?, completed_at = ?
         WHERE authentication_id = ?
         """
@@ -509,7 +509,7 @@ class SCAManager:
     def _increment_attempts(self, authentication_id: str):
         """Increment authentication attempts"""
         update_sql = """
-        UPDATE sca_authentications 
+        UPDATE sca_authentications
         SET attempts = attempts + 1
         WHERE authentication_id = ?
         """

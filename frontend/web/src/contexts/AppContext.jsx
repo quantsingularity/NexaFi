@@ -9,30 +9,30 @@ const authReducer = (state, action) => {
     case 'LOGIN_START':
       return { ...state, loading: true, error: null };
     case 'LOGIN_SUCCESS':
-      return { 
-        ...state, 
-        loading: false, 
-        isAuthenticated: true, 
+      return {
+        ...state,
+        loading: false,
+        isAuthenticated: true,
         user: action.payload.user,
         token: action.payload.token,
-        error: null 
+        error: null
       };
     case 'LOGIN_FAILURE':
-      return { 
-        ...state, 
-        loading: false, 
-        isAuthenticated: false, 
+      return {
+        ...state,
+        loading: false,
+        isAuthenticated: false,
         user: null,
         token: null,
-        error: action.payload 
+        error: action.payload
       };
     case 'LOGOUT':
-      return { 
-        ...state, 
-        isAuthenticated: false, 
+      return {
+        ...state,
+        isAuthenticated: false,
         user: null,
         token: null,
-        error: null 
+        error: null
       };
     case 'UPDATE_USER':
       return { ...state, user: { ...state.user, ...action.payload } };
@@ -80,13 +80,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await apiClient.login(credentials);
       const { access_token, user } = response;
-      
+
       apiClient.setToken(access_token);
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user, token: access_token }
       });
-      
+
       return response;
     } catch (error) {
       dispatch({
@@ -102,13 +102,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await apiClient.register(userData);
       const { access_token, user } = response;
-      
+
       apiClient.setToken(access_token);
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user, token: access_token }
       });
-      
+
       return response;
     } catch (error) {
       dispatch({
@@ -180,14 +180,14 @@ const appReducer = (state, action) => {
     case 'SET_NOTIFICATIONS':
       return { ...state, notifications: action.payload };
     case 'ADD_NOTIFICATION':
-      return { 
-        ...state, 
-        notifications: [...state.notifications, action.payload] 
+      return {
+        ...state,
+        notifications: [...state.notifications, action.payload]
       };
     case 'REMOVE_NOTIFICATION':
-      return { 
-        ...state, 
-        notifications: state.notifications.filter(n => n.id !== action.payload) 
+      return {
+        ...state,
+        notifications: state.notifications.filter(n => n.id !== action.payload)
       };
     default:
       return state;
@@ -228,11 +228,11 @@ export const AppProvider = ({ children }) => {
 
   const addNotification = (notification) => {
     const id = Date.now().toString();
-    dispatch({ 
-      type: 'ADD_NOTIFICATION', 
-      payload: { ...notification, id } 
+    dispatch({
+      type: 'ADD_NOTIFICATION',
+      payload: { ...notification, id }
     });
-    
+
     // Auto-remove after 5 seconds
     setTimeout(() => {
       dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
@@ -268,4 +268,3 @@ export const useApp = () => {
   }
   return context;
 };
-

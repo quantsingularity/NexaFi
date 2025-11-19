@@ -4,8 +4,14 @@ from decimal import Decimal
 from functools import wraps
 
 from flask import Blueprint, jsonify, request
-from src.models.user import (Account, Budget, FinancialPeriod, JournalEntry,
-                             JournalEntryLine, db)
+from src.models.user import (
+    Account,
+    Budget,
+    FinancialPeriod,
+    JournalEntry,
+    JournalEntryLine,
+    db,
+)
 
 user_bp = Blueprint("ledger", __name__)
 

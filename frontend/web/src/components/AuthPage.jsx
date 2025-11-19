@@ -47,7 +47,7 @@ const AuthPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       return;
     }
@@ -128,7 +128,7 @@ const AuthPage = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
@@ -153,8 +153,8 @@ const AuthPage = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     disabled={loading}
                   >
@@ -188,7 +188,7 @@ const AuthPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="last_name">Last Name</Label>
                       <Input
@@ -234,7 +234,7 @@ const AuthPage = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
@@ -272,8 +272,8 @@ const AuthPage = () => {
                     />
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                     disabled={loading}
                   >
@@ -301,4 +301,3 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
-

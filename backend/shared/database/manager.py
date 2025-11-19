@@ -290,7 +290,7 @@ INITIAL_MIGRATIONS = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
         CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);
         """,
@@ -307,7 +307,7 @@ INITIAL_MIGRATIONS = {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (granted_by) REFERENCES users(id)
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
         CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role_name);
         """,
@@ -333,7 +333,7 @@ INITIAL_MIGRATIONS = {
             previous_hash TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-        
+
         CREATE INDEX IF NOT EXISTS idx_audit_log_event_type ON audit_log(event_type);
         CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON audit_log(user_id);
         CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);

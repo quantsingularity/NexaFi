@@ -59,8 +59,17 @@ from flask_cors import CORS
 from prometheus_client import Counter, Gauge, Histogram, Summary
 from pybloom_live import BloomFilter
 from pymemcache.client.base import Client as MemcacheClient
-from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, LargeBinary,
-                        String, Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 

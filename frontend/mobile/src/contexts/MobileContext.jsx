@@ -38,11 +38,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await mobileApiClient.login(credentials);
       const { token, user: userData } = response;
-      
+
       mobileApiClient.setToken(token);
       setUser(userData);
       setIsAuthenticated(true);
-      
+
       return { success: true };
     } catch (error) {
       console.error('Login failed:', error);
@@ -54,11 +54,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await mobileApiClient.register(userData);
       const { token, user: newUser } = response;
-      
+
       mobileApiClient.setToken(token);
       setUser(newUser);
       setIsAuthenticated(true);
-      
+
       return { success: true };
     } catch (error) {
       console.error('Registration failed:', error);
@@ -203,4 +203,3 @@ export const MobileProviders = ({ children }) => {
     </AppProvider>
   );
 };
-
