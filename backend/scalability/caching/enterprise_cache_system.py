@@ -3,73 +3,34 @@ Enterprise Caching System for NexaFi
 Multi-tier, high-performance caching with intelligent cache management
 """
 
-import asyncio
-import gc
 import hashlib
-import heapq
 import json
-import logging
-import os
 import pickle
-import struct
 import threading
 import time
-import weakref
 import zlib
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from functools import lru_cache, wraps
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from functools import wraps
+from typing import Any, Callable, Dict, List, Optional
 
-import aiomemcache
-import aioredis
-import asyncpg
-import bloom_filter
 import cbor2
-import consistent_hash
-import consul
-import elasticsearch
-import etcd3
-import hazelcast
 import lz4.frame
-import memcache
-import motor.motor_asyncio
 import msgpack
-import numpy as np
 import orjson
-import pandas as pd
-import pymemcache
 import redis
 import redis.sentinel
-import requests
 import structlog
-import uvloop
-import xxhash
 import zstandard as zstd
 from cachetools import LFUCache, LRUCache, TTLCache
-from cassandra.auth import PlainTextAuthProvider
-from cassandra.cluster import Cluster
 from consistent_hash import ConsistentHash
-from elasticsearch import Elasticsearch
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from prometheus_client import Counter, Gauge, Histogram, Summary
+from prometheus_client import Counter, Histogram
 from pybloom_live import BloomFilter
 from pymemcache.client.base import Client as MemcacheClient
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    Integer,
-    LargeBinary,
-    String,
-    Text,
-    create_engine,
-)
+from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -672,7 +633,7 @@ class MultiTierCache:
 
     def get(self, key: str) -> Optional[Any]:
         """Get value from multi-tier cache"""
-        start_time = time.time()
+        time.time()
 
         # Try each cache level in order
         for level in sorted(self.caches.keys(), key=lambda x: x.value):
@@ -815,7 +776,7 @@ class CacheManager:
         """Invalidate cache entries by tags"""
         # This would require tag tracking in the cache implementation
         # For now, we'll implement a simple pattern-based invalidation
-        cache = self.get_cache(cache_name)
+        self.get_cache(cache_name)
 
         # In a full implementation, we'd maintain a tag-to-key mapping
         # and invalidate all keys associated with the given tags

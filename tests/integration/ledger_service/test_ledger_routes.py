@@ -6,14 +6,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.ledger_service.src.main import app
-from NexaFi.backend.ledger_service.src.models.user import (
-    Account,
-    Budget,
-    FinancialPeriod,
-    JournalEntry,
-    JournalEntryLine,
-    db,
-)
+from NexaFi.backend.ledger_service.src.models.user import (Account, Budget,
+                                                           FinancialPeriod,
+                                                           JournalEntry,
+                                                           JournalEntryLine,
+                                                           db)
 
 
 @pytest.fixture(scope=\'module\')

@@ -3,13 +3,10 @@ import json
 import os
 import secrets
 import sys
-import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import parse_qs, urlencode
+from urllib.parse import urlencode
 
 import bcrypt
-import jwt
 from flask import Flask, g, jsonify, redirect, request, url_for
 from flask_cors import CORS
 
@@ -18,28 +15,17 @@ sys.path.append("/home/ubuntu/NexaFi/backend/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
+from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
+                                audit_logger)
 from database.manager import BaseModel, initialize_database
-from enhanced_security import (
-    AdvancedEncryption,
-    FraudDetectionEngine,
-    MultiFactorAuthentication,
-    SecureSessionManager,
-    SecurityEvent,
-    SecurityEventType,
-    SecurityLevel,
-    SecurityMonitor,
-    ThreatLevel,
-)
-from middleware.auth import require_auth, require_permission
+from enhanced_security import (AdvancedEncryption, FraudDetectionEngine,
+                               MultiFactorAuthentication, SecureSessionManager,
+                               SecurityEvent, SecurityEventType, SecurityLevel,
+                               SecurityMonitor, ThreatLevel)
+from middleware.auth import require_auth
 from open_banking_compliance import FAPI2SecurityProfile
-from validators.schemas import (
-    SanitizationMixin,
-    Schema,
-    fields,
-    validate,
-    validate_json_request,
-)
+from validators.schemas import (SanitizationMixin, Schema, fields, validate,
+                                validate_json_request)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(

@@ -5,39 +5,24 @@ Comprehensive integration with Oracle ERP Cloud, Oracle Database, Oracle HCM, an
 
 import base64
 import csv
-import hashlib
-import hmac
 import io
-import json
 import logging
 import os
-import xml.dom.minidom as minidom
-import xml.etree.ElementTree as ET
 import zipfile
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from urllib.parse import quote, urlencode, urlparse
+from typing import Any, Dict, List, Optional
 
 import cx_Oracle
 import jwt
-import oracledb
 import pandas as pd
 import requests
-import sqlalchemy
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from requests.auth import HTTPBasicAuth
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 
-from ..shared.base_integration import (
-    AuthMethod,
-    BaseIntegration,
-    DataTransformer,
-    IntegrationConfig,
-    SecurityManager,
-    SyncResult,
-)
+from ..shared.base_integration import (AuthMethod, BaseIntegration,
+                                       DataTransformer, IntegrationConfig,
+                                       SyncResult)
 
 
 @dataclass

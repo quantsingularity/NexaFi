@@ -1,22 +1,12 @@
-import json
 import random
-import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
 from functools import wraps
 
 import numpy as np
 from flask import Blueprint, jsonify, request
-from src.models.user import (
-    AIModel,
-    AIPrediction,
-    ConversationMessage,
-    ConversationSession,
-    FeatureStore,
-    FinancialInsight,
-    ModelTrainingJob,
-    db,
-)
+from src.models.user import (AIModel, AIPrediction, ConversationMessage,
+                             ConversationSession, FinancialInsight, db)
 
 user_bp = Blueprint("ai", __name__)
 

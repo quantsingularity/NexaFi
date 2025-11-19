@@ -3,13 +3,11 @@ Database utilities and connection management for NexaFi
 Implements connection pooling, transaction management, and database migrations
 """
 
-import json
 import os
 import sqlite3
 import threading
 from contextlib import contextmanager
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class DatabaseManager:

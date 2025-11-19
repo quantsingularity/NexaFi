@@ -6,14 +6,8 @@ import pytest
 
 from NexaFi.backend.credit_service.src.main import app
 from NexaFi.backend.credit_service.src.models.user import (
-    CreditScore,
-    CreditScoreModel,
-    Loan,
-    LoanApplication,
-    LoanApplicationHistory,
-    LoanDocument,
-    db,
-)
+    CreditScore, CreditScoreModel, Loan, LoanApplication,
+    LoanApplicationHistory, LoanDocument, db)
 
 
 @pytest.fixture(scope=\'module\')

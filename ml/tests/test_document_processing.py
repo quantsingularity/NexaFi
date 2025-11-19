@@ -3,7 +3,8 @@ import unittest
 
 from PIL import Image, ImageDraw, ImageFont
 
-from NexaFi.ml.models.document_processing.document_processing import DocumentProcessor
+from NexaFi.ml.models.document_processing.document_processing import \
+    DocumentProcessor
 
 
 class TestDocumentProcessor(unittest.TestCase):

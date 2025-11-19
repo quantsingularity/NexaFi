@@ -1,9 +1,6 @@
-import json
 import uuid
 from datetime import datetime
-from decimal import Decimal
 
-import numpy as np
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()

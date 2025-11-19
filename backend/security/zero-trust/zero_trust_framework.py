@@ -3,51 +3,22 @@ Zero-Trust Security Framework for NexaFi
 Implements comprehensive zero-trust architecture with never trust, always verify principles
 """
 
-import asyncio
 import hashlib
-import hmac
 import ipaddress
 import json
 import logging
 import os
-import re
-import socket
-import ssl
-import threading
-import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from functools import wraps
-from typing import Any, Dict, List, Optional, Tuple, Union
-from urllib.parse import urlparse
+from typing import Any, Dict, List, Optional, Tuple
 
-import aiohttp
-import bcrypt
-import dns.resolver
 import geoip2.database
-import jwt
 import redis
-import requests
 import user_agents
-import whois
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from flask import g, request
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    Integer,
-    String,
-    Text,
-    create_engine,
-)
+from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, String,
+                        Text, create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 

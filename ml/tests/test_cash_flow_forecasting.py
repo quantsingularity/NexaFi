@@ -2,9 +2,8 @@ import unittest
 
 import pandas as pd
 
-from NexaFi.ml.models.cash_flow_forecasting.cash_flow_forecasting import (
-    CashFlowForecaster,
-)
+from NexaFi.ml.models.cash_flow_forecasting.cash_flow_forecasting import \
+    CashFlowForecaster
 
 
 class TestCashFlowForecaster(unittest.TestCase):

@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 import bcrypt
 import jwt
 import redis
-from flask import current_app, g, jsonify, request
+from flask import g, jsonify, request
 
 
 class AuthManager:

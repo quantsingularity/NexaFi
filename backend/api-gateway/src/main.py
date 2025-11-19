@@ -1,19 +1,19 @@
-import json
 import os
 import sys
 import time
 from datetime import datetime
 
 import requests
-from flask import Flask, g, jsonify, redirect, request
+from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
 # Add shared modules to path
 sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
-from logging.logger import get_logger, log_security_event, setup_request_logging
+from logging.logger import (get_logger, log_security_event,
+                            setup_request_logging)
 
-from audit.audit_logger import AuditEventType, AuditSeverity, audit_logger
+from audit.audit_logger import audit_logger
 from middleware.auth import init_auth_manager, optional_auth
 from middleware.rate_limiter import add_rate_limit_headers, rate_limit
 

@@ -7,20 +7,14 @@ import jwt
 import pytest
 
 from NexaFi.backend.user_service.src.main import app
-from NexaFi.backend.user_service.src.models.user import (
-    AuditLog,
-    EmailVerification,
-    PasswordReset,
-    Permission,
-    Role,
-    RolePermission,
-    User,
-    UserCustomField,
-    UserProfile,
-    UserRole,
-    UserSession,
-    db,
-)
+from NexaFi.backend.user_service.src.models.user import (AuditLog,
+                                                         EmailVerification,
+                                                         PasswordReset,
+                                                         Permission, Role,
+                                                         RolePermission, User,
+                                                         UserCustomField,
+                                                         UserProfile, UserRole,
+                                                         UserSession, db)
 
 
 @pytest.fixture(scope=\'module\')

@@ -3,7 +3,6 @@ Enterprise Integration Manager for NexaFi
 Centralized management of all enterprise system integrations
 """
 
-import asyncio
 import json
 import logging
 import os
@@ -11,26 +10,16 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Type
 
-import prometheus_client
 import redis
 import schedule
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-from .base_integration import (
-    BaseIntegration,
-    IntegrationConfig,
-    IntegrationManager,
-    IntegrationStatus,
-    SyncResult,
-    setup_database,
-)
+from .base_integration import BaseIntegration, SyncResult, setup_database
 
 # Import specific integrations
 try:
@@ -39,7 +28,8 @@ except ImportError:
     SAPIntegration = None
 
 try:
-    from ..oracle.oracle_integration import OracleIntegration, create_oracle_integration
+    from ..oracle.oracle_integration import (OracleIntegration,
+                                             create_oracle_integration)
 except ImportError:
     OracleIntegration = None
 

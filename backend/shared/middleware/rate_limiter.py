@@ -3,11 +3,9 @@ Rate limiting middleware for NexaFi API Gateway
 Implements industry-standard rate limiting for financial services
 """
 
-import hashlib
-import json
 import time
 from functools import wraps
-from typing import Dict, Optional
+from typing import Dict
 
 import redis
 from flask import g, jsonify, request

@@ -9,15 +9,12 @@ import os
 import shutil
 import subprocess
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import docker
 import git
-import mlflow
-import pytest
-import yaml
 from kubernetes import client
 from kubernetes import config as k8s_config
 from mlflow.tracking import MlflowClient

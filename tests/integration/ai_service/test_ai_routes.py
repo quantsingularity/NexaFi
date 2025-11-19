@@ -6,14 +6,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.ai_service.src.main import app
-from NexaFi.backend.ai_service.src.models.user import (
-    AIModel,
-    AIPrediction,
-    ConversationMessage,
-    ConversationSession,
-    FinancialInsight,
-    db,
-)
+from NexaFi.backend.ai_service.src.models.user import (AIModel, AIPrediction,
+                                                       ConversationMessage,
+                                                       ConversationSession,
+                                                       FinancialInsight, db)
 
 
 @pytest.fixture(scope=\'module\')

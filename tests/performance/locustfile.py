@@ -1,6 +1,5 @@
 import random
 
-import locust
 from locust import HttpUser, between, task
 
 

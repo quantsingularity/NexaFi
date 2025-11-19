@@ -4,12 +4,12 @@ Implements comprehensive validation for financial data
 """
 
 import re
-from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import bleach
-from marshmallow import Schema, ValidationError, fields, post_load, pre_load, validate
+from marshmallow import (Schema, ValidationError, fields, post_load, pre_load,
+                         validate)
 
 
 class FinancialValidators:
@@ -280,7 +280,7 @@ def validate_json_request(schema_class):
 
             except ValidationError as e:
                 return jsonify({"error": "Validation failed", "details": str(e)}), 400
-            except Exception as e:
+            except Exception:
                 return jsonify({"error": "Internal validation error"}), 500
 
         return decorated_function

@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
-from NexaFi.backend.shared.utils.cache import CacheManager, cache_key_for_user, cached
+from NexaFi.backend.shared.utils.cache import (CacheManager,
+                                               cache_key_for_user, cached)
 
 
 @pytest.fixture

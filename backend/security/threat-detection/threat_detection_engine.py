@@ -3,55 +3,32 @@ Advanced Threat Detection Engine for NexaFi
 Real-time threat detection, anomaly detection, and automated response system
 """
 
-import asyncio
-import hashlib
-import hmac
-import ipaddress
 import json
 import logging
 import os
 import re
 import smtplib
-import threading
 import time
 import warnings
-from collections import defaultdict, deque
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict, dataclass
+from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import aiohttp
 import joblib
-import magic
-import networkx as nx
 import numpy as np
-import pagerduty
-import pandas as pd
 import redis
 import requests
 import slack_sdk
-import websockets
-import yara
-from prometheus_client import Counter, Gauge, Histogram
+from prometheus_client import Counter, Histogram
 from scipy import stats
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    Integer,
-    String,
-    Text,
-    create_engine,
-)
+from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, String,
+                        Text, create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from twilio.rest import Client as TwilioClient
@@ -1335,7 +1312,7 @@ class ThreatDetectionEngine:
             # Extract features for anomaly detection
             user_features = self._extract_user_features(event_data)
             network_features = self._extract_network_features(event_data)
-            api_features = self._extract_api_features(event_data)
+            self._extract_api_features(event_data)
 
             # Check user behavior anomalies
             if user_features:
@@ -1569,7 +1546,7 @@ class ThreatDetectionEngine:
             self.db_session.commit()
 
             # Execute automated response
-            response_results = self.response_system.execute_response(threat)
+            self.response_system.execute_response(threat)
 
             # Update metrics
             self.threat_counter.labels(

@@ -6,14 +6,8 @@ import pytest
 
 from NexaFi.backend.payment_service.src.main import app
 from NexaFi.backend.payment_service.src.models.user import (
-    ExchangeRate,
-    PaymentMethod,
-    RecurringPayment,
-    Transaction,
-    Wallet,
-    WalletBalanceHistory,
-    db,
-)
+    ExchangeRate, PaymentMethod, RecurringPayment, Transaction, Wallet,
+    WalletBalanceHistory, db)
 
 
 @pytest.fixture(scope=\'module\')

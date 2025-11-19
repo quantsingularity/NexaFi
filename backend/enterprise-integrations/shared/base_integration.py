@@ -3,35 +3,28 @@ Base Enterprise Integration Framework for NexaFi
 Provides common functionality for all enterprise system integrations
 """
 
-import asyncio
 import hashlib
 import json
 import logging
 import os
 import threading
 import time
-import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
-from xml.dom import minidom
+from typing import Any, Callable, Dict, List, Optional
 
-import aiohttp
-import backoff
-import jwt
-import prometheus_client
 import redis
 import requests
 import schedule
-import yaml
 from circuit_breaker import CircuitBreaker
 from cryptography.fernet import Fernet
 from prometheus_client import Counter, Gauge, Histogram
 from requests.adapters import HTTPAdapter
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, create_engine
+from sqlalchemy import (Boolean, Column, DateTime, Integer, String, Text,
+                        create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urllib3.util.retry import Retry
@@ -404,17 +397,14 @@ class BaseIntegration(ABC):
     @abstractmethod
     def authenticate(self) -> bool:
         """Authenticate with the enterprise system"""
-        pass
 
     @abstractmethod
     def test_connection(self) -> bool:
         """Test connection to the enterprise system"""
-        pass
 
     @abstractmethod
     def sync_data(self, entity_type: str, **kwargs) -> SyncResult:
         """Sync data with the enterprise system"""
-        pass
 
     def _make_request(
         self,
@@ -506,7 +496,6 @@ class BaseIntegration(ABC):
     @abstractmethod
     def _get_auth_headers(self) -> Dict[str, str]:
         """Get authentication headers"""
-        pass
 
     def _log_request(
         self,
@@ -636,7 +625,6 @@ class BaseIntegration(ABC):
     @abstractmethod
     def _process_webhook_data(self, payload: Dict[str, Any]):
         """Process webhook data (to be implemented by subclasses)"""
-        pass
 
     def get_integration_status(self) -> Dict[str, Any]:
         """Get integration status and health"""

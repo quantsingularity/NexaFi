@@ -4,37 +4,20 @@ Comprehensive integration with SAP ERP, S/4HANA, SuccessFactors, and other SAP s
 """
 
 import base64
-import hashlib
-import hmac
-import json
 import logging
 import os
-import xml.dom.minidom as minidom
-import xml.etree.ElementTree as ET
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from urllib.parse import quote, urlencode
+from typing import Any, Dict, List, Optional
 
-import jwt
-import oauthlib.oauth2
-import pandas as pd
-import pyrfc
 import requests
-import zeep
 from oauthlib.oauth2 import WebApplicationClient
 from pyrfc import Connection
 from requests.auth import HTTPBasicAuth
-from zeep import wsse
 
-from ..shared.base_integration import (
-    AuthMethod,
-    BaseIntegration,
-    DataTransformer,
-    IntegrationConfig,
-    SecurityManager,
-    SyncResult,
-)
+from ..shared.base_integration import (AuthMethod, BaseIntegration,
+                                       DataTransformer, IntegrationConfig,
+                                       SyncResult)
 
 
 @dataclass

@@ -3,7 +3,6 @@ Enhanced structured logging system for NexaFi
 Implements comprehensive logging with correlation IDs and security event tracking
 """
 
-import json
 import logging
 import os
 import sys

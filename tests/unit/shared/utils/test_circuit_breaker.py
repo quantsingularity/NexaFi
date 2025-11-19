@@ -5,11 +5,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
-from NexaFi.backend.shared.utils.circuit_breaker import (
-    CircuitBreaker,
-    CircuitState,
-    circuit_breaker,
-)
+from NexaFi.backend.shared.utils.circuit_breaker import (CircuitBreaker,
+                                                         CircuitState,
+                                                         circuit_breaker)
 
 
 @pytest.fixture

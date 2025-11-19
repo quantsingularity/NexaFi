@@ -1,10 +1,9 @@
-import json
 import os
 import sys
 import uuid
-from datetime import datetime, timedelta
-from decimal import ROUND_HALF_UP, Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from decimal import Decimal
+from typing import List, Optional, Tuple
 
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
@@ -14,20 +13,13 @@ sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
+from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
+                                audit_logger)
 from database.manager import BaseModel, initialize_database
 from middleware.auth import require_auth, require_permission
-from validators.schemas import (
-    AccountSchema,
-    FinancialValidators,
-    JournalEntryLineSchema,
-    JournalEntrySchema,
-    SanitizationMixin,
-    Schema,
-    fields,
-    validate,
-    validate_json_request,
-)
+from validators.schemas import (AccountSchema, FinancialValidators,
+                                JournalEntrySchema, SanitizationMixin, Schema,
+                                fields, validate, validate_json_request)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(

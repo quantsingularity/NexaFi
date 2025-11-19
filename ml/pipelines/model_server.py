@@ -3,7 +3,6 @@ Enterprise Model Serving Infrastructure for NexaFi
 High-performance, scalable model serving with comprehensive monitoring
 """
 
-import hashlib
 import json
 import logging
 import os
@@ -13,10 +12,9 @@ import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import boto3
-import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
@@ -26,13 +24,8 @@ import redis
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from mlflow.tracking import MlflowClient
-from prometheus_client import (
-    CONTENT_TYPE_LATEST,
-    Counter,
-    Gauge,
-    Histogram,
-    generate_latest,
-)
+from prometheus_client import (CONTENT_TYPE_LATEST, Counter, Gauge, Histogram,
+                               generate_latest)
 from sklearn.base import BaseEstimator
 
 # Metrics for monitoring
@@ -639,7 +632,7 @@ class ModelServer:
                 model_name = data.get("model_name")
                 model_version = data.get("model_version", "latest")
                 batch_features = data.get("batch_features")
-                metadata = data.get("metadata", {})
+                data.get("metadata", {})
 
                 if not model_name or not batch_features:
                     raise ValueError("model_name and batch_features are required")
