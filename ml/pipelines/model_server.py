@@ -24,8 +24,13 @@ import redis
 from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 from mlflow.tracking import MlflowClient
-from prometheus_client import (CONTENT_TYPE_LATEST, Counter, Gauge, Histogram,
-                               generate_latest)
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 from sklearn.base import BaseEstimator
 
 # Metrics for monitoring

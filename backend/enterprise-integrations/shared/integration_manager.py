@@ -28,8 +28,7 @@ except ImportError:
     SAPIntegration = None
 
 try:
-    from ..oracle.oracle_integration import (OracleIntegration,
-                                             create_oracle_integration)
+    from ..oracle.oracle_integration import OracleIntegration, create_oracle_integration
 except ImportError:
     OracleIntegration = None
 

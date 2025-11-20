@@ -17,20 +17,34 @@ sys.path.append("/home/ubuntu/NexaFi/backend/shared")
 
 from logging.logger import get_logger, setup_request_logging
 
-from audit.audit_logger import (AuditEventType, AuditSeverity, audit_action,
-                                audit_logger)
+from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import initialize_database
-from enhanced_security import (AdvancedEncryption, FraudDetectionEngine,
-                               MultiFactorAuthentication, SecurityEvent,
-                               SecurityEventType, SecurityMonitor, ThreatLevel)
+from enhanced_security import (
+    AdvancedEncryption,
+    FraudDetectionEngine,
+    MultiFactorAuthentication,
+    SecurityEvent,
+    SecurityEventType,
+    SecurityMonitor,
+    ThreatLevel,
+)
 from middleware.auth import require_auth, require_permission
-from open_banking_compliance import (AuthenticationMethod, ConsentStatus,
-                                     FAPI2SecurityProfile,
-                                     OpenBankingAPIValidator,
-                                     PSD2ConsentManager, SCAManager,
-                                     TransactionRiskAnalysis)
-from validators.schemas import (SanitizationMixin, Schema, fields, validate,
-                                validate_json_request)
+from open_banking_compliance import (
+    AuthenticationMethod,
+    ConsentStatus,
+    FAPI2SecurityProfile,
+    OpenBankingAPIValidator,
+    PSD2ConsentManager,
+    SCAManager,
+    TransactionRiskAnalysis,
+)
+from validators.schemas import (
+    SanitizationMixin,
+    Schema,
+    fields,
+    validate,
+    validate_json_request,
+)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(

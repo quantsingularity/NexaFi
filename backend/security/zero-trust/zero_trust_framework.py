@@ -17,8 +17,16 @@ from typing import Any, Dict, List, Optional, Tuple
 import geoip2.database
 import redis
 import user_agents
-from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, String,
-                        Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 

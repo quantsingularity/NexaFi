@@ -4,8 +4,15 @@ from decimal import Decimal
 from functools import wraps
 
 from flask import Blueprint, jsonify, request
-from src.models.user import (ExchangeRate, PaymentMethod, RecurringPayment,
-                             Transaction, Wallet, WalletBalanceHistory, db)
+from src.models.user import (
+    ExchangeRate,
+    PaymentMethod,
+    RecurringPayment,
+    Transaction,
+    Wallet,
+    WalletBalanceHistory,
+    db,
+)
 
 user_bp = Blueprint("payment", __name__)
 

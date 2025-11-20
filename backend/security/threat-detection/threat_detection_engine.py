@@ -27,8 +27,16 @@ from prometheus_client import Counter, Histogram
 from scipy import stats
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
-from sqlalchemy import (Boolean, Column, DateTime, Float, Integer, String,
-                        Text, create_engine)
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+    Text,
+    create_engine,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from twilio.rest import Client as TwilioClient

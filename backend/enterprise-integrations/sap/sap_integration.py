@@ -15,9 +15,13 @@ from oauthlib.oauth2 import WebApplicationClient
 from pyrfc import Connection
 from requests.auth import HTTPBasicAuth
 
-from ..shared.base_integration import (AuthMethod, BaseIntegration,
-                                       DataTransformer, IntegrationConfig,
-                                       SyncResult)
+from ..shared.base_integration import (
+    AuthMethod,
+    BaseIntegration,
+    DataTransformer,
+    IntegrationConfig,
+    SyncResult,
+)
 
 
 @dataclass

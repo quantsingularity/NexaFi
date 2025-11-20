@@ -23,8 +23,7 @@ from circuit_breaker import CircuitBreaker
 from cryptography.fernet import Fernet
 from prometheus_client import Counter, Gauge, Histogram
 from requests.adapters import HTTPAdapter
-from sqlalchemy import (Boolean, Column, DateTime, Integer, String, Text,
-                        create_engine)
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urllib3.util.retry import Retry

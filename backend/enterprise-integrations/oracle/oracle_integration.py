@@ -20,9 +20,13 @@ import requests
 from requests.auth import HTTPBasicAuth
 from sqlalchemy import create_engine
 
-from ..shared.base_integration import (AuthMethod, BaseIntegration,
-                                       DataTransformer, IntegrationConfig,
-                                       SyncResult)
+from ..shared.base_integration import (
+    AuthMethod,
+    BaseIntegration,
+    DataTransformer,
+    IntegrationConfig,
+    SyncResult,
+)
 
 
 @dataclass
