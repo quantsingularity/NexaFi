@@ -441,123 +441,123 @@ spec:
         runAsGroup: 472
         fsGroup: 472
       containers:
-      - name: grafana
-        image: grafana/grafana:10.1.0
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        env:
-        - name: GF_SECURITY_ADMIN_USER
-          valueFrom:
-            secretKeyRef:
-              name: grafana-admin
-              key: username
-        - name: GF_SECURITY_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: grafana-admin
-              key: password
-        - name: GF_INSTALL_PLUGINS
-          value: "grafana-piechart-panel,grafana-worldmap-panel,grafana-clock-panel"
-        ports:
-        - containerPort: 3000
-          name: http
-          protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /api/health
-            port: 3000
-            scheme: HTTPS
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 30
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /api/health
-            port: 3000
-            scheme: HTTPS
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        volumeMounts:
-        - name: config
-          mountPath: /etc/grafana
-          readOnly: true
-        - name: secrets
-          mountPath: /etc/secrets
-          readOnly: true
-        - name: ssl-certs
-          mountPath: /etc/ssl/certs
-          readOnly: true
-        - name: ssl-private
-          mountPath: /etc/ssl/private
-          readOnly: true
-        - name: storage
-          mountPath: /var/lib/grafana
-        - name: dashboards-financial
-          mountPath: /var/lib/grafana/dashboards/financial
-          readOnly: true
-        - name: tmp
-          mountPath: /tmp
-        - name: logs
-          mountPath: /var/log/grafana
+        - name: grafana
+          image: grafana/grafana:10.1.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: username
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: password
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-piechart-panel,grafana-worldmap-panel,grafana-clock-panel"
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/grafana
+              readOnly: true
+            - name: secrets
+              mountPath: /etc/secrets
+              readOnly: true
+            - name: ssl-certs
+              mountPath: /etc/ssl/certs
+              readOnly: true
+            - name: ssl-private
+              mountPath: /etc/ssl/private
+              readOnly: true
+            - name: storage
+              mountPath: /var/lib/grafana
+            - name: dashboards-financial
+              mountPath: /var/lib/grafana/dashboards/financial
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /var/log/grafana
       volumes:
-      - name: config
-        configMap:
-          name: grafana-config
-      - name: secrets
-        secret:
-          secretName: grafana-secrets
-          defaultMode: 0400
-      - name: ssl-certs
-        secret:
-          secretName: grafana-tls
-          items:
-          - key: tls.crt
-            path: tls.crt
-          defaultMode: 0400
-      - name: ssl-private
-        secret:
-          secretName: grafana-tls
-          items:
-          - key: tls.key
-            path: tls.key
-          defaultMode: 0400
-      - name: storage
-        persistentVolumeClaim:
-          claimName: grafana-storage
-      - name: dashboards-financial
-        configMap:
-          name: grafana-dashboards-financial
-      - name: tmp
-        emptyDir: {}
-      - name: logs
-        emptyDir: {}
+        - name: config
+          configMap:
+            name: grafana-config
+        - name: secrets
+          secret:
+            secretName: grafana-secrets
+            defaultMode: 0400
+        - name: ssl-certs
+          secret:
+            secretName: grafana-tls
+            items:
+              - key: tls.crt
+                path: tls.crt
+            defaultMode: 0400
+        - name: ssl-private
+          secret:
+            secretName: grafana-tls
+            items:
+              - key: tls.key
+                path: tls.key
+            defaultMode: 0400
+        - name: storage
+          persistentVolumeClaim:
+            claimName: grafana-storage
+        - name: dashboards-financial
+          configMap:
+            name: grafana-dashboards-financial
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - grafana
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - grafana
+                topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
@@ -570,10 +570,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 3000
-    targetPort: 3000
-    protocol: TCP
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
   selector:
     app: grafana
 ---
@@ -587,7 +587,7 @@ metadata:
     component: monitoring
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   storageClassName: gp3-encrypted
   resources:
     requests:

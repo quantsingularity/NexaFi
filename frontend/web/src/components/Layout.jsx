@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   BookOpen,
@@ -15,31 +15,31 @@ import {
   Building,
   ChevronDown,
   Sun,
-  Moon
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+  Moon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { useAuth, useApp } from '../contexts/AppContext';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { useAuth, useApp } from "../contexts/AppContext";
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const [activeItem, setActiveItem] = useState('dashboard');
+  const [activeItem, setActiveItem] = useState("dashboard");
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'accounting', label: 'Accounting', icon: BookOpen },
-    { id: 'payments', label: 'Payments', icon: CreditCard },
-    { id: 'ai-insights', label: 'AI Insights', icon: Brain },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "accounting", label: "Accounting", icon: BookOpen },
+    { id: "payments", label: "Payments", icon: CreditCard },
+    { id: "ai-insights", label: "AI Insights", icon: Brain },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   return (
@@ -91,11 +91,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                 onClick={() => setActiveItem(item.id)}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                <Icon
+                  className={`w-5 h-5 ${isActive ? "text-blue-600" : "text-gray-400"}`}
+                />
                 <span className="font-medium">{item.label}</span>
               </motion.button>
             );
@@ -110,8 +112,8 @@ const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useApp();
   const [notifications] = useState([
-    { id: 1, title: 'Cash flow alert', type: 'warning' },
-    { id: 2, title: 'Payment received', type: 'success' },
+    { id: 1, title: "Cash flow alert", type: "warning" },
+    { id: 2, title: "Payment received", type: "success" },
   ]);
 
   return (
@@ -141,9 +143,13 @@ const Header = ({ onMenuClick }) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
           >
-            {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            {theme === "light" ? (
+              <Moon className="w-4 h-4" />
+            ) : (
+              <Sun className="w-4 h-4" />
+            )}
           </Button>
 
           {/* Notifications */}
@@ -162,7 +168,10 @@ const Header = ({ onMenuClick }) => {
               <DropdownMenuLabel>Notifications</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {notifications.map((notification) => (
-                <DropdownMenuItem key={notification.id} className="flex flex-col items-start p-4">
+                <DropdownMenuItem
+                  key={notification.id}
+                  className="flex flex-col items-start p-4"
+                >
                   <div className="font-medium">{notification.title}</div>
                   <div className="text-sm text-gray-500">Just now</div>
                 </DropdownMenuItem>
@@ -177,12 +186,17 @@ const Header = ({ onMenuClick }) => {
                 <Avatar className="w-8 h-8">
                   <AvatarImage src={user?.avatar} />
                   <AvatarFallback>
-                    {user?.first_name?.[0]}{user?.last_name?.[0]}
+                    {user?.first_name?.[0]}
+                    {user?.last_name?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
-                  <div className="text-sm font-medium">{user?.first_name} {user?.last_name}</div>
-                  <div className="text-xs text-gray-500">{user?.business_name}</div>
+                  <div className="text-sm font-medium">
+                    {user?.first_name} {user?.last_name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {user?.business_name}
+                  </div>
                 </div>
                 <ChevronDown className="w-4 h-4" />
               </Button>
@@ -216,17 +230,12 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

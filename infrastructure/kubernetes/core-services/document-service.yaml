@@ -18,67 +18,67 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: document-service
-        image: nexafi/document-service:latest
-        ports:
-        - containerPort: 5007
-        env:
-        - name: FLASK_ENV
-          value: "production"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: document-db-url
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: aws-access-key
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: aws-secret-key
-        - name: S3_BUCKET_NAME
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: s3-bucket-name
-        - name: REDIS_HOST
-          value: "redis-service.nexafi-infra.svc.cluster.local"
-        - name: RABBITMQ_HOST
-          value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5007
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 5007
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        volumeMounts:
-        - name: document-storage
-          mountPath: /app/documents
-        - name: temp-storage
-          mountPath: /app/temp
+        - name: document-service
+          image: nexafi/document-service:latest
+          ports:
+            - containerPort: 5007
+          env:
+            - name: FLASK_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: document-db-url
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: aws-access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: aws-secret-key
+            - name: S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: s3-bucket-name
+            - name: REDIS_HOST
+              value: "redis-service.nexafi-infra.svc.cluster.local"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5007
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5007
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: document-storage
+              mountPath: /app/documents
+            - name: temp-storage
+              mountPath: /app/temp
       volumes:
-      - name: document-storage
-        persistentVolumeClaim:
-          claimName: document-storage-pvc
-      - name: temp-storage
-        emptyDir: {}
+        - name: document-storage
+          persistentVolumeClaim:
+            claimName: document-storage-pvc
+        - name: temp-storage
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -91,7 +91,7 @@ spec:
   selector:
     app: document-service
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5007
+    - protocol: TCP
+      port: 80
+      targetPort: 5007
   type: ClusterIP

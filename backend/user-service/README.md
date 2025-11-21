@@ -5,6 +5,7 @@ This service handles user authentication, authorization, and profile management 
 ## Setup and Installation
 
 ### Prerequisites
+
 - Python 3.9+
 - PostgreSQL or SQLite (as configured in `.env`)
 
@@ -33,6 +34,7 @@ cp .env.example .env
 ```
 
 **Required Environment Variables in `.env`:**
+
 - `SECRET_KEY`: A long, random string for token signing.
 - `DATABASE_URL`: Connection string for your database (e.g., `sqlite:///./data/users.db`).
 - `DEBUG`: `True` or `False`.

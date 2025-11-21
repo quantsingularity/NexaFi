@@ -30,157 +30,157 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - name: compliance-monitor
-        image: nexafi/compliance-monitor:latest
-        imagePullPolicy: Always
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        env:
-        - name: PORT
-          value: "8080"
-        - name: METRICS_PORT
-          value: "9090"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: compliance-db-secret
-              key: url
-        - name: ELASTICSEARCH_URL
-          valueFrom:
-            secretKeyRef:
-              name: elasticsearch-secret
-              key: url
-        - name: VAULT_ADDR
-          value: "https://vault.security.svc.cluster.local:8200"
-        - name: VAULT_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: vault-token
-              key: token
-        - name: COMPLIANCE_FRAMEWORKS
-          value: "PCI-DSS,SOC2,GDPR,SOX,GLBA,FFIEC"
-        - name: AUDIT_RETENTION_DAYS
-          value: "2555"  # 7 years
-        - name: REAL_TIME_MONITORING
-          value: "true"
-        - name: ALERT_WEBHOOK_URL
-          valueFrom:
-            secretKeyRef:
-              name: compliance-alerts
-              key: webhook_url
-        - name: SLACK_WEBHOOK_URL
-          valueFrom:
-            secretKeyRef:
-              name: compliance-alerts
-              key: slack_webhook
-        - name: EMAIL_SMTP_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: compliance-config
-              key: smtp_host
-        - name: EMAIL_SMTP_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: compliance-config
-              key: smtp_port
-        - name: EMAIL_FROM
-          valueFrom:
-            configMapKeyRef:
-              name: compliance-config
-              key: email_from
-        - name: EMAIL_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: email-secret
-              key: username
-        - name: EMAIL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: email-secret
-              key: password
-        - name: SCAN_INTERVAL_MINUTES
-          value: "15"
-        - name: CRITICAL_ALERT_THRESHOLD
-          value: "1"
-        - name: HIGH_ALERT_THRESHOLD
-          value: "5"
-        - name: MEDIUM_ALERT_THRESHOLD
-          value: "10"
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        - containerPort: 9090
-          name: metrics
-          protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: cache
-          mountPath: /app/cache
-        - name: logs
-          mountPath: /app/logs
-        - name: compliance-rules
-          mountPath: /app/rules
-          readOnly: true
-        - name: tls-certs
-          mountPath: /app/certs
-          readOnly: true
+        - name: compliance-monitor
+          image: nexafi/compliance-monitor:latest
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: PORT
+              value: "8080"
+            - name: METRICS_PORT
+              value: "9090"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compliance-db-secret
+                  key: url
+            - name: ELASTICSEARCH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-secret
+                  key: url
+            - name: VAULT_ADDR
+              value: "https://vault.security.svc.cluster.local:8200"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-token
+                  key: token
+            - name: COMPLIANCE_FRAMEWORKS
+              value: "PCI-DSS,SOC2,GDPR,SOX,GLBA,FFIEC"
+            - name: AUDIT_RETENTION_DAYS
+              value: "2555" # 7 years
+            - name: REAL_TIME_MONITORING
+              value: "true"
+            - name: ALERT_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compliance-alerts
+                  key: webhook_url
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: compliance-alerts
+                  key: slack_webhook
+            - name: EMAIL_SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: compliance-config
+                  key: smtp_host
+            - name: EMAIL_SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: compliance-config
+                  key: smtp_port
+            - name: EMAIL_FROM
+              valueFrom:
+                configMapKeyRef:
+                  name: compliance-config
+                  key: email_from
+            - name: EMAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: email-secret
+                  key: username
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: email-secret
+                  key: password
+            - name: SCAN_INTERVAL_MINUTES
+              value: "15"
+            - name: CRITICAL_ALERT_THRESHOLD
+              value: "1"
+            - name: HIGH_ALERT_THRESHOLD
+              value: "5"
+            - name: MEDIUM_ALERT_THRESHOLD
+              value: "10"
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/cache
+            - name: logs
+              mountPath: /app/logs
+            - name: compliance-rules
+              mountPath: /app/rules
+              readOnly: true
+            - name: tls-certs
+              mountPath: /app/certs
+              readOnly: true
       volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: cache
-        emptyDir: {}
-      - name: logs
-        emptyDir: {}
-      - name: compliance-rules
-        configMap:
-          name: compliance-rules
-      - name: tls-certs
-        secret:
-          secretName: compliance-monitor-tls
-          defaultMode: 0400
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: compliance-rules
+          configMap:
+            name: compliance-rules
+        - name: tls-certs
+          secret:
+            secretName: compliance-monitor-tls
+            defaultMode: 0400
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - compliance-monitor
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - compliance-monitor
+                topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
@@ -193,14 +193,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-    protocol: TCP
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
   selector:
     app: compliance-monitor
 ---
@@ -219,7 +219,7 @@ data:
   log_level: "INFO"
   enable_real_time_alerts: "true"
   enable_scheduled_reports: "true"
-  report_schedule: "0 6 * * *"  # Daily at 6 AM
+  report_schedule: "0 6 * * *" # Daily at 6 AM
   dashboard_refresh_interval: "30"
 ---
 apiVersion: v1
@@ -313,7 +313,7 @@ metadata:
     app: compliance-scan
     component: compliance
 spec:
-  schedule: "0 2 * * *"  # Daily at 2 AM
+  schedule: "0 2 * * *" # Daily at 2 AM
   jobTemplate:
     spec:
       template:
@@ -329,55 +329,55 @@ spec:
             runAsGroup: 1000
             fsGroup: 1000
           containers:
-          - name: compliance-scanner
-            image: nexafi/compliance-scanner:latest
-            imagePullPolicy: Always
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                - ALL
-            env:
-            - name: SCAN_TYPE
-              value: "full"
-            - name: OUTPUT_FORMAT
-              value: "json"
-            - name: ELASTICSEARCH_URL
-              valueFrom:
-                secretKeyRef:
-                  name: elasticsearch-secret
-                  key: url
-            - name: VAULT_ADDR
-              value: "https://vault.security.svc.cluster.local:8200"
-            - name: VAULT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: vault-token
-                  key: token
-            volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: scan-results
-              mountPath: /app/results
-            - name: compliance-rules
-              mountPath: /app/rules
-              readOnly: true
-            resources:
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
-              limits:
-                memory: "512Mi"
-                cpu: "500m"
+            - name: compliance-scanner
+              image: nexafi/compliance-scanner:latest
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: SCAN_TYPE
+                  value: "full"
+                - name: OUTPUT_FORMAT
+                  value: "json"
+                - name: ELASTICSEARCH_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: elasticsearch-secret
+                      key: url
+                - name: VAULT_ADDR
+                  value: "https://vault.security.svc.cluster.local:8200"
+                - name: VAULT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: vault-token
+                      key: token
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: scan-results
+                  mountPath: /app/results
+                - name: compliance-rules
+                  mountPath: /app/rules
+                  readOnly: true
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
           volumes:
-          - name: tmp
-            emptyDir: {}
-          - name: scan-results
-            emptyDir: {}
-          - name: compliance-rules
-            configMap:
-              name: compliance-rules
+            - name: tmp
+              emptyDir: {}
+            - name: scan-results
+              emptyDir: {}
+            - name: compliance-rules
+              configMap:
+                name: compliance-rules
           restartPolicy: OnFailure
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1

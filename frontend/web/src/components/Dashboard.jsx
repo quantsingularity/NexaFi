@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   TrendingUp,
   TrendingDown,
@@ -12,15 +12,35 @@ import {
   Brain,
   AlertTriangle,
   CheckCircle,
-  Clock
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import apiClient from '../lib/api';
-import { useAuth, useApp } from '../contexts/AppContext';
+  Clock,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart as RechartsPieChart,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import apiClient from "../lib/api";
+import { useAuth, useApp } from "../contexts/AppContext";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -32,13 +52,13 @@ const Dashboard = () => {
       netIncome: 0,
       cashFlow: 0,
       accountsReceivable: 0,
-      accountsPayable: 0
+      accountsPayable: 0,
     },
     insights: [],
     recentTransactions: [],
     cashFlowData: [],
     expenseBreakdown: [],
-    loading: true
+    loading: true,
   });
 
   useEffect(() => {
@@ -55,65 +75,95 @@ const Dashboard = () => {
           netIncome: 37500,
           cashFlow: 15000,
           accountsReceivable: 25000,
-          accountsPayable: 12000
+          accountsPayable: 12000,
         },
         insights: [
           {
             id: 1,
-            title: 'Cash Flow Improving',
-            description: 'Your cash flow has increased by 15% this month',
-            type: 'positive',
-            severity: 'info'
+            title: "Cash Flow Improving",
+            description: "Your cash flow has increased by 15% this month",
+            type: "positive",
+            severity: "info",
           },
           {
             id: 2,
-            title: 'High Expense Alert',
-            description: 'Marketing expenses are 40% above average',
-            type: 'warning',
-            severity: 'warning'
+            title: "High Expense Alert",
+            description: "Marketing expenses are 40% above average",
+            type: "warning",
+            severity: "warning",
           },
           {
             id: 3,
-            title: 'Payment Due Soon',
-            description: '3 invoices totaling $8,500 due in 5 days',
-            type: 'reminder',
-            severity: 'info'
-          }
+            title: "Payment Due Soon",
+            description: "3 invoices totaling $8,500 due in 5 days",
+            type: "reminder",
+            severity: "info",
+          },
         ],
         recentTransactions: [
-          { id: 1, description: 'Client Payment - ABC Corp', amount: 5000, type: 'income', date: '2024-06-10' },
-          { id: 2, description: 'Office Rent', amount: -2500, type: 'expense', date: '2024-06-09' },
-          { id: 3, description: 'Software Subscription', amount: -299, type: 'expense', date: '2024-06-08' },
-          { id: 4, description: 'Consulting Revenue', amount: 3500, type: 'income', date: '2024-06-07' },
-          { id: 5, description: 'Marketing Campaign', amount: -1200, type: 'expense', date: '2024-06-06' }
+          {
+            id: 1,
+            description: "Client Payment - ABC Corp",
+            amount: 5000,
+            type: "income",
+            date: "2024-06-10",
+          },
+          {
+            id: 2,
+            description: "Office Rent",
+            amount: -2500,
+            type: "expense",
+            date: "2024-06-09",
+          },
+          {
+            id: 3,
+            description: "Software Subscription",
+            amount: -299,
+            type: "expense",
+            date: "2024-06-08",
+          },
+          {
+            id: 4,
+            description: "Consulting Revenue",
+            amount: 3500,
+            type: "income",
+            date: "2024-06-07",
+          },
+          {
+            id: 5,
+            description: "Marketing Campaign",
+            amount: -1200,
+            type: "expense",
+            date: "2024-06-06",
+          },
         ],
         cashFlowData: [
-          { month: 'Jan', income: 45000, expenses: 32000, net: 13000 },
-          { month: 'Feb', income: 52000, expenses: 35000, net: 17000 },
-          { month: 'Mar', income: 48000, expenses: 33000, net: 15000 },
-          { month: 'Apr', income: 61000, expenses: 38000, net: 23000 },
-          { month: 'May', income: 55000, expenses: 36000, net: 19000 },
-          { month: 'Jun', income: 58000, expenses: 39000, net: 19000 }
+          { month: "Jan", income: 45000, expenses: 32000, net: 13000 },
+          { month: "Feb", income: 52000, expenses: 35000, net: 17000 },
+          { month: "Mar", income: 48000, expenses: 33000, net: 15000 },
+          { month: "Apr", income: 61000, expenses: 38000, net: 23000 },
+          { month: "May", income: 55000, expenses: 36000, net: 19000 },
+          { month: "Jun", income: 58000, expenses: 39000, net: 19000 },
         ],
         expenseBreakdown: [
-          { name: 'Salaries', value: 35000, color: '#3b82f6' },
-          { name: 'Rent', value: 15000, color: '#8b5cf6' },
-          { name: 'Marketing', value: 12000, color: '#06b6d4' },
-          { name: 'Software', value: 8000, color: '#10b981' },
-          { name: 'Utilities', value: 5000, color: '#f59e0b' },
-          { name: 'Other', value: 12500, color: '#ef4444' }
-        ]
+          { name: "Salaries", value: 35000, color: "#3b82f6" },
+          { name: "Rent", value: 15000, color: "#8b5cf6" },
+          { name: "Marketing", value: 12000, color: "#06b6d4" },
+          { name: "Software", value: 8000, color: "#10b981" },
+          { name: "Utilities", value: 5000, color: "#f59e0b" },
+          { name: "Other", value: 12500, color: "#ef4444" },
+        ],
       };
 
       setDashboardData({ ...mockData, loading: false });
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
+      console.error("Failed to load dashboard data:", error);
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to load dashboard data'
+        type: "error",
+        title: "Error",
+        message: "Failed to load dashboard data",
       });
-      setDashboardData(prev => ({ ...prev, loading: false }));
+      setDashboardData((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -127,10 +177,12 @@ const Dashboard = () => {
               ${value.toLocaleString()}
             </p>
             {change && (
-              <div className={`flex items-center mt-2 text-sm ${
-                trend === 'up' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {trend === 'up' ? (
+              <div
+                className={`flex items-center mt-2 text-sm ${
+                  trend === "up" ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {trend === "up" ? (
                   <ArrowUpRight className="w-4 h-4 mr-1" />
                 ) : (
                   <ArrowDownRight className="w-4 h-4 mr-1" />
@@ -139,12 +191,24 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-          <div className={`p-3 rounded-full ${
-            trend === 'up' ? 'bg-green-100' : trend === 'down' ? 'bg-red-100' : 'bg-blue-100'
-          }`}>
-            <Icon className={`w-6 h-6 ${
-              trend === 'up' ? 'text-green-600' : trend === 'down' ? 'text-red-600' : 'text-blue-600'
-            }`} />
+          <div
+            className={`p-3 rounded-full ${
+              trend === "up"
+                ? "bg-green-100"
+                : trend === "down"
+                  ? "bg-red-100"
+                  : "bg-blue-100"
+            }`}
+          >
+            <Icon
+              className={`w-6 h-6 ${
+                trend === "up"
+                  ? "text-green-600"
+                  : trend === "down"
+                    ? "text-red-600"
+                    : "text-blue-600"
+              }`}
+            />
           </div>
         </div>
       </CardContent>
@@ -154,18 +218,25 @@ const Dashboard = () => {
   const InsightCard = ({ insight }) => {
     const getIcon = () => {
       switch (insight.type) {
-        case 'positive': return <CheckCircle className="w-5 h-5 text-green-600" />;
-        case 'warning': return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
-        case 'reminder': return <Clock className="w-5 h-5 text-blue-600" />;
-        default: return <Brain className="w-5 h-5 text-purple-600" />;
+        case "positive":
+          return <CheckCircle className="w-5 h-5 text-green-600" />;
+        case "warning":
+          return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
+        case "reminder":
+          return <Clock className="w-5 h-5 text-blue-600" />;
+        default:
+          return <Brain className="w-5 h-5 text-purple-600" />;
       }
     };
 
     const getBadgeColor = () => {
       switch (insight.severity) {
-        case 'warning': return 'bg-yellow-100 text-yellow-800';
-        case 'critical': return 'bg-red-100 text-red-800';
-        default: return 'bg-blue-100 text-blue-800';
+        case "warning":
+          return "bg-yellow-100 text-yellow-800";
+        case "critical":
+          return "bg-red-100 text-red-800";
+        default:
+          return "bg-blue-100 text-blue-800";
       }
     };
 
@@ -180,12 +251,12 @@ const Dashboard = () => {
             {getIcon()}
             <div>
               <h4 className="font-medium text-gray-900">{insight.title}</h4>
-              <p className="text-sm text-gray-600 mt-1">{insight.description}</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {insight.description}
+              </p>
             </div>
           </div>
-          <Badge className={getBadgeColor()}>
-            {insight.severity}
-          </Badge>
+          <Badge className={getBadgeColor()}>{insight.severity}</Badge>
         </div>
       </motion.div>
     );
@@ -283,7 +354,9 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
+                <Tooltip
+                  formatter={(value) => [`$${value.toLocaleString()}`, ""]}
+                />
                 <Area
                   type="monotone"
                   dataKey="income"
@@ -320,13 +393,20 @@ const Dashboard = () => {
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
                 >
                   {dashboardData.expenseBreakdown.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']} />
+                <Tooltip
+                  formatter={(value) => [
+                    `$${value.toLocaleString()}`,
+                    "Amount",
+                  ]}
+                />
               </RechartsPieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -342,7 +422,9 @@ const Dashboard = () => {
               <Brain className="w-5 h-5 text-purple-600" />
               <span>AI Insights</span>
             </CardTitle>
-            <CardDescription>Intelligent recommendations for your business</CardDescription>
+            <CardDescription>
+              Intelligent recommendations for your business
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {dashboardData.insights.map((insight) => (
@@ -363,15 +445,23 @@ const Dashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {dashboardData.recentTransactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-3 border border-gray-100 rounded-lg"
+                >
                   <div>
-                    <p className="font-medium text-gray-900">{transaction.description}</p>
+                    <p className="font-medium text-gray-900">
+                      {transaction.description}
+                    </p>
                     <p className="text-sm text-gray-500">{transaction.date}</p>
                   </div>
-                  <div className={`font-bold ${
-                    transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {transaction.amount > 0 ? '+' : ''}${Math.abs(transaction.amount).toLocaleString()}
+                  <div
+                    className={`font-bold ${
+                      transaction.amount > 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {transaction.amount > 0 ? "+" : ""}$
+                    {Math.abs(transaction.amount).toLocaleString()}
                   </div>
                 </div>
               ))}

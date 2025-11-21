@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Plus,
   FileText,
@@ -14,28 +14,64 @@ import {
   Trash2,
   CheckCircle,
   Clock,
-  AlertCircle
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import apiClient from '../lib/api';
-import { useApp } from '../contexts/AppContext';
+  AlertCircle,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import apiClient from "../lib/api";
+import { useApp } from "../contexts/AppContext";
 
 const AccountingModule = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { addNotification } = useApp();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [accounts, setAccounts] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
   const [reports, setReports] = useState({});
@@ -54,19 +90,20 @@ const AccountingModule = () => {
       setAccounts(accountsResponse.accounts || []);
 
       // Load journal entries
-      const entriesResponse = await apiClient.getJournalEntries({ per_page: 10 });
+      const entriesResponse = await apiClient.getJournalEntries({
+        per_page: 10,
+      });
       setJournalEntries(entriesResponse.journal_entries || []);
 
       // Load trial balance
       const trialBalanceResponse = await apiClient.getTrialBalance();
-      setReports(prev => ({ ...prev, trialBalance: trialBalanceResponse }));
-
+      setReports((prev) => ({ ...prev, trialBalance: trialBalanceResponse }));
     } catch (error) {
-      console.error('Failed to load accounting data:', error);
+      console.error("Failed to load accounting data:", error);
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to load accounting data'
+        type: "error",
+        title: "Error",
+        message: "Failed to load accounting data",
       });
     } finally {
       setLoading(false);
@@ -115,13 +152,20 @@ const AccountingModule = () => {
           {Object.entries(accountsByType).map(([type, typeAccounts]) => (
             <Card key={type}>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg capitalize">{type.replace('_', ' ')}</CardTitle>
-                <CardDescription>{typeAccounts.length} accounts</CardDescription>
+                <CardTitle className="text-lg capitalize">
+                  {type.replace("_", " ")}
+                </CardTitle>
+                <CardDescription>
+                  {typeAccounts.length} accounts
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {typeAccounts.slice(0, 3).map((account) => (
-                    <div key={account.id} className="flex justify-between text-sm">
+                    <div
+                      key={account.id}
+                      className="flex justify-between text-sm"
+                    >
                       <span className="truncate">{account.account_name}</span>
                       <span className="font-mono">{account.account_code}</span>
                     </div>
@@ -140,7 +184,9 @@ const AccountingModule = () => {
         <Card>
           <CardHeader>
             <CardTitle>All Accounts</CardTitle>
-            <CardDescription>Complete list of your chart of accounts</CardDescription>
+            <CardDescription>
+              Complete list of your chart of accounts
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -176,16 +222,22 @@ const AccountingModule = () => {
                 <TableBody>
                   {accounts.map((account) => (
                     <TableRow key={account.id}>
-                      <TableCell className="font-mono">{account.account_code}</TableCell>
-                      <TableCell className="font-medium">{account.account_name}</TableCell>
+                      <TableCell className="font-mono">
+                        {account.account_code}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {account.account_name}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="capitalize">
-                          {account.account_type.replace('_', ' ')}
+                          {account.account_type.replace("_", " ")}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-mono">$0.00</TableCell>
                       <TableCell>
-                        <Badge variant={account.is_active ? "default" : "secondary"}>
+                        <Badge
+                          variant={account.is_active ? "default" : "secondary"}
+                        >
                           {account.is_active ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
@@ -233,7 +285,10 @@ const AccountingModule = () => {
                   Record a new journal entry with debits and credits
                 </DialogDescription>
               </DialogHeader>
-              <CreateJournalEntryForm onSuccess={loadAccountingData} accounts={accounts} />
+              <CreateJournalEntryForm
+                onSuccess={loadAccountingData}
+                accounts={accounts}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -255,13 +310,21 @@ const AccountingModule = () => {
             <TableBody>
               {journalEntries.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell className="font-mono">{entry.entry_number}</TableCell>
+                  <TableCell className="font-mono">
+                    {entry.entry_number}
+                  </TableCell>
                   <TableCell>{entry.entry_date}</TableCell>
                   <TableCell>{entry.description}</TableCell>
-                  <TableCell className="font-mono">${entry.total_amount}</TableCell>
+                  <TableCell className="font-mono">
+                    ${entry.total_amount}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={entry.status === 'posted' ? "default" : "secondary"}>
-                      {entry.status === 'posted' ? (
+                    <Badge
+                      variant={
+                        entry.status === "posted" ? "default" : "secondary"
+                      }
+                    >
+                      {entry.status === "posted" ? (
                         <>
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Posted
@@ -304,9 +367,7 @@ const AccountingModule = () => {
               <BarChart3 className="w-5 h-5" />
               <span>Trial Balance</span>
             </CardTitle>
-            <CardDescription>
-              Verify that debits equal credits
-            </CardDescription>
+            <CardDescription>Verify that debits equal credits</CardDescription>
           </CardHeader>
           <CardContent>
             <Button className="w-full">Generate Report</Button>
@@ -319,9 +380,7 @@ const AccountingModule = () => {
               <FileText className="w-5 h-5" />
               <span>Balance Sheet</span>
             </CardTitle>
-            <CardDescription>
-              Assets, liabilities, and equity
-            </CardDescription>
+            <CardDescription>Assets, liabilities, and equity</CardDescription>
           </CardHeader>
           <CardContent>
             <Button className="w-full">Generate Report</Button>
@@ -334,9 +393,7 @@ const AccountingModule = () => {
               <Calculator className="w-5 h-5" />
               <span>Income Statement</span>
             </CardTitle>
-            <CardDescription>
-              Revenue and expenses over time
-            </CardDescription>
+            <CardDescription>Revenue and expenses over time</CardDescription>
           </CardHeader>
           <CardContent>
             <Button className="w-full">Generate Report</Button>
@@ -356,17 +413,27 @@ const AccountingModule = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                 <span className="font-medium">Total Debits:</span>
-                <span className="font-mono font-bold">${reports.trialBalance.total_debits}</span>
+                <span className="font-mono font-bold">
+                  ${reports.trialBalance.total_debits}
+                </span>
               </div>
               <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                 <span className="font-medium">Total Credits:</span>
-                <span className="font-mono font-bold">${reports.trialBalance.total_credits}</span>
+                <span className="font-mono font-bold">
+                  ${reports.trialBalance.total_credits}
+                </span>
               </div>
-              <div className={`flex justify-between items-center p-4 rounded-lg ${
-                reports.trialBalance.is_balanced ? 'bg-green-50' : 'bg-red-50'
-              }`}>
+              <div
+                className={`flex justify-between items-center p-4 rounded-lg ${
+                  reports.trialBalance.is_balanced ? "bg-green-50" : "bg-red-50"
+                }`}
+              >
                 <span className="font-medium">Status:</span>
-                <Badge variant={reports.trialBalance.is_balanced ? "default" : "destructive"}>
+                <Badge
+                  variant={
+                    reports.trialBalance.is_balanced ? "default" : "destructive"
+                  }
+                >
                   {reports.trialBalance.is_balanced ? (
                     <>
                       <CheckCircle className="w-3 h-3 mr-1" />
@@ -406,10 +473,16 @@ const AccountingModule = () => {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Accounting</h1>
-        <p className="text-gray-600 mt-1">Manage your chart of accounts, journal entries, and financial reports</p>
+        <p className="text-gray-600 mt-1">
+          Manage your chart of accounts, journal entries, and financial reports
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="accounts">Accounts</TabsTrigger>
@@ -440,12 +513,12 @@ const AccountingModule = () => {
 // Create Account Form Component
 const CreateAccountForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
-    account_code: '',
-    account_name: '',
-    account_type: '',
-    account_subtype: '',
-    normal_balance: 'debit',
-    description: ''
+    account_code: "",
+    account_name: "",
+    account_type: "",
+    account_subtype: "",
+    normal_balance: "debit",
+    description: "",
   });
 
   const handleSubmit = async (e) => {
@@ -454,7 +527,7 @@ const CreateAccountForm = ({ onSuccess }) => {
       await apiClient.createAccount(formData);
       onSuccess();
     } catch (error) {
-      console.error('Failed to create account:', error);
+      console.error("Failed to create account:", error);
     }
   };
 
@@ -466,7 +539,9 @@ const CreateAccountForm = ({ onSuccess }) => {
           <Input
             id="account_code"
             value={formData.account_code}
-            onChange={(e) => setFormData(prev => ({ ...prev, account_code: e.target.value }))}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, account_code: e.target.value }))
+            }
             placeholder="e.g., 1000"
             required
           />
@@ -476,7 +551,9 @@ const CreateAccountForm = ({ onSuccess }) => {
           <Input
             id="account_name"
             value={formData.account_name}
-            onChange={(e) => setFormData(prev => ({ ...prev, account_name: e.target.value }))}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, account_name: e.target.value }))
+            }
             placeholder="e.g., Cash"
             required
           />
@@ -486,7 +563,12 @@ const CreateAccountForm = ({ onSuccess }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="account_type">Account Type</Label>
-          <Select value={formData.account_type} onValueChange={(value) => setFormData(prev => ({ ...prev, account_type: value }))}>
+          <Select
+            value={formData.account_type}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, account_type: value }))
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
@@ -501,7 +583,12 @@ const CreateAccountForm = ({ onSuccess }) => {
         </div>
         <div>
           <Label htmlFor="normal_balance">Normal Balance</Label>
-          <Select value={formData.normal_balance} onValueChange={(value) => setFormData(prev => ({ ...prev, normal_balance: value }))}>
+          <Select
+            value={formData.normal_balance}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, normal_balance: value }))
+            }
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -518,12 +605,16 @@ const CreateAccountForm = ({ onSuccess }) => {
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, description: e.target.value }))
+          }
           placeholder="Optional description"
         />
       </div>
 
-      <Button type="submit" className="w-full">Create Account</Button>
+      <Button type="submit" className="w-full">
+        Create Account
+      </Button>
     </form>
   );
 };
@@ -531,34 +622,42 @@ const CreateAccountForm = ({ onSuccess }) => {
 // Create Journal Entry Form Component
 const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
   const [formData, setFormData] = useState({
-    description: '',
-    entry_date: new Date().toISOString().split('T')[0],
+    description: "",
+    entry_date: new Date().toISOString().split("T")[0],
     lines: [
-      { account_id: '', description: '', debit_amount: '', credit_amount: '' },
-      { account_id: '', description: '', debit_amount: '', credit_amount: '' }
-    ]
+      { account_id: "", description: "", debit_amount: "", credit_amount: "" },
+      { account_id: "", description: "", debit_amount: "", credit_amount: "" },
+    ],
   });
 
   const addLine = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      lines: [...prev.lines, { account_id: '', description: '', debit_amount: '', credit_amount: '' }]
+      lines: [
+        ...prev.lines,
+        {
+          account_id: "",
+          description: "",
+          debit_amount: "",
+          credit_amount: "",
+        },
+      ],
     }));
   };
 
   const removeLine = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      lines: prev.lines.filter((_, i) => i !== index)
+      lines: prev.lines.filter((_, i) => i !== index),
     }));
   };
 
   const updateLine = (index, field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       lines: prev.lines.map((line, i) =>
-        i === index ? { ...line, [field]: value } : line
-      )
+        i === index ? { ...line, [field]: value } : line,
+      ),
     }));
   };
 
@@ -567,11 +666,11 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
     try {
       await apiClient.createJournalEntry({
         ...formData,
-        auto_post: true
+        auto_post: true,
       });
       onSuccess();
     } catch (error) {
-      console.error('Failed to create journal entry:', error);
+      console.error("Failed to create journal entry:", error);
     }
   };
 
@@ -583,7 +682,9 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
           <Input
             id="description"
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, description: e.target.value }))
+            }
             placeholder="Journal entry description"
             required
           />
@@ -594,7 +695,9 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
             id="entry_date"
             type="date"
             value={formData.entry_date}
-            onChange={(e) => setFormData(prev => ({ ...prev, entry_date: e.target.value }))}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, entry_date: e.target.value }))
+            }
             required
           />
         </div>
@@ -610,10 +713,18 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
         </div>
 
         {formData.lines.map((line, index) => (
-          <div key={index} className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg">
+          <div
+            key={index}
+            className="grid grid-cols-12 gap-2 items-end p-4 border rounded-lg"
+          >
             <div className="col-span-4">
               <Label>Account</Label>
-              <Select value={line.account_id} onValueChange={(value) => updateLine(index, 'account_id', value)}>
+              <Select
+                value={line.account_id}
+                onValueChange={(value) =>
+                  updateLine(index, "account_id", value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
@@ -630,7 +741,9 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
               <Label>Description</Label>
               <Input
                 value={line.description}
-                onChange={(e) => updateLine(index, 'description', e.target.value)}
+                onChange={(e) =>
+                  updateLine(index, "description", e.target.value)
+                }
                 placeholder="Line description"
               />
             </div>
@@ -640,7 +753,9 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
                 type="number"
                 step="0.01"
                 value={line.debit_amount}
-                onChange={(e) => updateLine(index, 'debit_amount', e.target.value)}
+                onChange={(e) =>
+                  updateLine(index, "debit_amount", e.target.value)
+                }
                 placeholder="0.00"
               />
             </div>
@@ -650,13 +765,20 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
                 type="number"
                 step="0.01"
                 value={line.credit_amount}
-                onChange={(e) => updateLine(index, 'credit_amount', e.target.value)}
+                onChange={(e) =>
+                  updateLine(index, "credit_amount", e.target.value)
+                }
                 placeholder="0.00"
               />
             </div>
             <div className="col-span-1">
               {formData.lines.length > 2 && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => removeLine(index)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeLine(index)}
+                >
                   <Trash2 className="w-4 h-4" />
                 </Button>
               )}
@@ -665,7 +787,9 @@ const CreateJournalEntryForm = ({ onSuccess, accounts }) => {
         ))}
       </div>
 
-      <Button type="submit" className="w-full">Create Journal Entry</Button>
+      <Button type="submit" className="w-full">
+        Create Journal Entry
+      </Button>
     </form>
   );
 };

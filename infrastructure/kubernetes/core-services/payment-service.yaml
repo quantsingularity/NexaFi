@@ -18,58 +18,58 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: payment-service
-        image: nexafi/payment-service:latest
-        ports:
-        - containerPort: 5003
-        env:
-        - name: FLASK_ENV
-          value: "production"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: payment-db-url
-        - name: STRIPE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: stripe-secret
-        - name: PAYPAL_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: paypal-secret
-        - name: REDIS_HOST
-          value: "redis-service.nexafi-infra.svc.cluster.local"
-        - name: RABBITMQ_HOST
-          value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5003
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 5003
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        volumeMounts:
-        - name: payment-data
-          mountPath: /app/data
+        - name: payment-service
+          image: nexafi/payment-service:latest
+          ports:
+            - containerPort: 5003
+          env:
+            - name: FLASK_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: payment-db-url
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: stripe-secret
+            - name: PAYPAL_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: paypal-secret
+            - name: REDIS_HOST
+              value: "redis-service.nexafi-infra.svc.cluster.local"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5003
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: payment-data
+              mountPath: /app/data
       volumes:
-      - name: payment-data
-        persistentVolumeClaim:
-          claimName: payment-service-pvc
+        - name: payment-data
+          persistentVolumeClaim:
+            claimName: payment-service-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -82,7 +82,7 @@ spec:
   selector:
     app: payment-service
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5003
+    - protocol: TCP
+      port: 80
+      targetPort: 5003
   type: ClusterIP

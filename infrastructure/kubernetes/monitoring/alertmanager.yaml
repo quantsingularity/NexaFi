@@ -318,92 +318,92 @@ spec:
         runAsGroup: 65534
         fsGroup: 65534
       containers:
-      - name: alertmanager
-        image: prom/alertmanager:v0.25.0
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        args:
-        - '--config.file=/etc/alertmanager/alertmanager.yml'
-        - '--storage.path=/alertmanager'
-        - '--data.retention=120h'
-        - '--web.listen-address=:9093'
-        - '--web.external-url=https://alertmanager.nexafi.com'
-        - '--cluster.listen-address=0.0.0.0:9094'
-        - '--cluster.peer=alertmanager-0.alertmanager.monitoring.svc.cluster.local:9094'
-        - '--cluster.peer=alertmanager-1.alertmanager.monitoring.svc.cluster.local:9094'
-        - '--log.level=info'
-        - '--log.format=json'
-        ports:
-        - containerPort: 9093
-          name: web
-          protocol: TCP
-        - containerPort: 9094
-          name: cluster
-          protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /-/healthy
-            port: 9093
-          initialDelaySeconds: 30
-          periodSeconds: 15
-          timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /-/ready
-            port: 9093
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 4
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        volumeMounts:
-        - name: config
-          mountPath: /etc/alertmanager
-          readOnly: true
-        - name: secrets
-          mountPath: /etc/secrets
-          readOnly: true
-        - name: storage
-          mountPath: /alertmanager
-        - name: tmp
-          mountPath: /tmp
+        - name: alertmanager
+          image: prom/alertmanager:v0.25.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          args:
+            - "--config.file=/etc/alertmanager/alertmanager.yml"
+            - "--storage.path=/alertmanager"
+            - "--data.retention=120h"
+            - "--web.listen-address=:9093"
+            - "--web.external-url=https://alertmanager.nexafi.com"
+            - "--cluster.listen-address=0.0.0.0:9094"
+            - "--cluster.peer=alertmanager-0.alertmanager.monitoring.svc.cluster.local:9094"
+            - "--cluster.peer=alertmanager-1.alertmanager.monitoring.svc.cluster.local:9094"
+            - "--log.level=info"
+            - "--log.format=json"
+          ports:
+            - containerPort: 9093
+              name: web
+              protocol: TCP
+            - containerPort: 9094
+              name: cluster
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 4
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager
+              readOnly: true
+            - name: secrets
+              mountPath: /etc/secrets
+              readOnly: true
+            - name: storage
+              mountPath: /alertmanager
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: config
-        configMap:
-          name: alertmanager-config
-      - name: secrets
-        secret:
-          secretName: alertmanager-secrets
-          defaultMode: 0400
-      - name: tmp
-        emptyDir: {}
-      - name: storage
-        persistentVolumeClaim:
-          claimName: alertmanager-storage
+        - name: config
+          configMap:
+            name: alertmanager-config
+        - name: secrets
+          secret:
+            secretName: alertmanager-secrets
+            defaultMode: 0400
+        - name: tmp
+          emptyDir: {}
+        - name: storage
+          persistentVolumeClaim:
+            claimName: alertmanager-storage
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - alertmanager
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - alertmanager
+                topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
@@ -416,14 +416,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: web
-    port: 9093
-    targetPort: 9093
-    protocol: TCP
-  - name: cluster
-    port: 9094
-    targetPort: 9094
-    protocol: TCP
+    - name: web
+      port: 9093
+      targetPort: 9093
+      protocol: TCP
+    - name: cluster
+      port: 9094
+      targetPort: 9094
+      protocol: TCP
   selector:
     app: alertmanager
 ---
@@ -437,7 +437,7 @@ metadata:
     component: monitoring
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   storageClassName: gp3-encrypted
   resources:
     requests:

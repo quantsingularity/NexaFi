@@ -86,134 +86,134 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - name: vault
-        image: hashicorp/vault:1.15.2
-        imagePullPolicy: IfNotPresent
-        command:
-        - "/bin/sh"
-        - "-ec"
-        args:
-        - |
-          cp /vault/config/vault.hcl /tmp/vault.hcl
-          sed -E "s/HOST_IP/${HOST_IP?}/g" /tmp/vault.hcl > /tmp/vault-final.hcl
-          vault server -config=/tmp/vault-final.hcl
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-            add:
-            - IPC_LOCK
-        env:
-        - name: HOST_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: VAULT_K8S_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: VAULT_K8S_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: VAULT_ADDR
-          value: "https://127.0.0.1:8200"
-        - name: VAULT_API_ADDR
-          value: "https://$(POD_IP):8200"
-        - name: SKIP_CHOWN
-          value: "true"
-        - name: SKIP_SETCAP
-          value: "true"
-        - name: HOSTNAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: VAULT_CLUSTER_ADDR
-          value: "https://$(HOSTNAME).vault:8201"
-        - name: VAULT_LOG_LEVEL
-          value: "info"
-        - name: VAULT_LOG_FORMAT
-          value: "json"
-        volumeMounts:
+        - name: vault
+          image: hashicorp/vault:1.15.2
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/bin/sh"
+            - "-ec"
+          args:
+            - |
+              cp /vault/config/vault.hcl /tmp/vault.hcl
+              sed -E "s/HOST_IP/${HOST_IP?}/g" /tmp/vault.hcl > /tmp/vault-final.hcl
+              vault server -config=/tmp/vault-final.hcl
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - IPC_LOCK
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VAULT_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: VAULT_ADDR
+              value: "https://127.0.0.1:8200"
+            - name: VAULT_API_ADDR
+              value: "https://$(POD_IP):8200"
+            - name: SKIP_CHOWN
+              value: "true"
+            - name: SKIP_SETCAP
+              value: "true"
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_CLUSTER_ADDR
+              value: "https://$(HOSTNAME).vault:8201"
+            - name: VAULT_LOG_LEVEL
+              value: "info"
+            - name: VAULT_LOG_FORMAT
+              value: "json"
+          volumeMounts:
+            - name: config
+              mountPath: /vault/config
+            - name: tls
+              mountPath: /vault/tls
+              readOnly: true
+            - name: data
+              mountPath: /vault/data
+            - name: logs
+              mountPath: /vault/logs
+            - name: tmp
+              mountPath: /tmp
+          ports:
+            - containerPort: 8200
+              name: http
+              protocol: TCP
+            - containerPort: 8201
+              name: https-internal
+              protocol: TCP
+            - containerPort: 8202
+              name: http-rep
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+            failureThreshold: 2
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+            failureThreshold: 2
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
         - name: config
-          mountPath: /vault/config
+          configMap:
+            name: vault-config
         - name: tls
-          mountPath: /vault/tls
-          readOnly: true
-        - name: data
-          mountPath: /vault/data
-        - name: logs
-          mountPath: /vault/logs
+          secret:
+            secretName: vault-tls
+            defaultMode: 0400
         - name: tmp
-          mountPath: /tmp
-        ports:
-        - containerPort: 8200
-          name: http
-          protocol: TCP
-        - containerPort: 8201
-          name: https-internal
-          protocol: TCP
-        - containerPort: 8202
-          name: http-rep
-          protocol: TCP
-        readinessProbe:
-          exec:
-            command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
-          failureThreshold: 2
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          timeoutSeconds: 3
-        livenessProbe:
-          exec:
-            command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
-          failureThreshold: 2
-          initialDelaySeconds: 60
-          periodSeconds: 5
-          successThreshold: 1
-          timeoutSeconds: 3
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: gp3-encrypted
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-      volumes:
-      - name: config
-        configMap:
-          name: vault-config
-      - name: tls
-        secret:
-          secretName: vault-tls
-          defaultMode: 0400
-      - name: tmp
-        emptyDir: {}
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      storageClassName: gp3-encrypted
-      resources:
-        requests:
-          storage: 10Gi
-  - metadata:
-      name: logs
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      storageClassName: gp3-encrypted
-      resources:
-        requests:
-          storage: 5Gi
+            storage: 10Gi
+    - metadata:
+        name: logs
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: gp3-encrypted
+        resources:
+          requests:
+            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
@@ -226,14 +226,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8200
-    targetPort: 8200
-    protocol: TCP
-  - name: https-internal
-    port: 8201
-    targetPort: 8201
-    protocol: TCP
+    - name: http
+      port: 8200
+      targetPort: 8200
+      protocol: TCP
+    - name: https-internal
+      port: 8201
+      targetPort: 8201
+      protocol: TCP
   selector:
     app: vault
 ---
@@ -254,15 +254,15 @@ metadata:
     app: vault
     component: security
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["list"]
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["create", "get", "update", "delete"]
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "update", "delete"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -276,6 +276,6 @@ roleRef:
   kind: ClusterRole
   name: vault
 subjects:
-- kind: ServiceAccount
-  name: vault
-  namespace: security
+  - kind: ServiceAccount
+    name: vault
+    namespace: security

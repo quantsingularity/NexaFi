@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   User,
   Building,
@@ -11,42 +11,54 @@ import {
   Key,
   Save,
   Eye,
-  EyeOff
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth, useApp } from '../contexts/AppContext';
+  EyeOff,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth, useApp } from "../contexts/AppContext";
 
 const SettingsModule = () => {
   const { user, updateUser } = useAuth();
   const { theme, setTheme, addNotification } = useApp();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState("profile");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    business_name: user?.business_name || '',
-    business_address: user?.business_address || '',
-    business_phone: user?.business_phone || '',
-    business_website: user?.business_website || '',
-    business_description: user?.business_description || ''
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    business_name: user?.business_name || "",
+    business_address: user?.business_address || "",
+    business_phone: user?.business_phone || "",
+    business_website: user?.business_website || "",
+    business_description: user?.business_description || "",
   });
 
   const [securityData, setSecurityData] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: ''
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
   });
 
   const [notificationSettings, setNotificationSettings] = useState({
@@ -56,25 +68,25 @@ const SettingsModule = () => {
     marketing_emails: false,
     security_alerts: true,
     payment_notifications: true,
-    ai_insights: true
+    ai_insights: true,
   });
 
   const handleProfileSave = async () => {
     setLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       updateUser(profileData);
       addNotification({
-        type: 'success',
-        title: 'Success',
-        message: 'Profile updated successfully'
+        type: "success",
+        title: "Success",
+        message: "Profile updated successfully",
       });
     } catch (error) {
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to update profile'
+        type: "error",
+        title: "Error",
+        message: "Failed to update profile",
       });
     } finally {
       setLoading(false);
@@ -84,9 +96,9 @@ const SettingsModule = () => {
   const handlePasswordChange = async () => {
     if (securityData.new_password !== securityData.confirm_password) {
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Passwords do not match'
+        type: "error",
+        title: "Error",
+        message: "Passwords do not match",
       });
       return;
     }
@@ -94,22 +106,22 @@ const SettingsModule = () => {
     setLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       addNotification({
-        type: 'success',
-        title: 'Success',
-        message: 'Password updated successfully'
+        type: "success",
+        title: "Success",
+        message: "Password updated successfully",
       });
       setSecurityData({
-        current_password: '',
-        new_password: '',
-        confirm_password: ''
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
       });
     } catch (error) {
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to update password'
+        type: "error",
+        title: "Error",
+        message: "Failed to update password",
       });
     } finally {
       setLoading(false);
@@ -133,7 +145,8 @@ const SettingsModule = () => {
             <Avatar className="w-20 h-20">
               <AvatarImage src={user?.avatar} />
               <AvatarFallback className="text-lg">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
+                {user?.first_name?.[0]}
+                {user?.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -150,7 +163,12 @@ const SettingsModule = () => {
               <Input
                 id="first_name"
                 value={profileData.first_name}
-                onChange={(e) => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    first_name: e.target.value,
+                  }))
+                }
                 placeholder="Enter your first name"
               />
             </div>
@@ -159,7 +177,12 @@ const SettingsModule = () => {
               <Input
                 id="last_name"
                 value={profileData.last_name}
-                onChange={(e) => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    last_name: e.target.value,
+                  }))
+                }
                 placeholder="Enter your last name"
               />
             </div>
@@ -172,7 +195,9 @@ const SettingsModule = () => {
                 id="email"
                 type="email"
                 value={profileData.email}
-                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({ ...prev, email: e.target.value }))
+                }
                 placeholder="Enter your email"
               />
             </div>
@@ -181,14 +206,16 @@ const SettingsModule = () => {
               <Input
                 id="phone"
                 value={profileData.phone}
-                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({ ...prev, phone: e.target.value }))
+                }
                 placeholder="Enter your phone number"
               />
             </div>
           </div>
 
           <Button onClick={handleProfileSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </CardContent>
       </Card>
@@ -209,7 +236,12 @@ const SettingsModule = () => {
             <Input
               id="business_name"
               value={profileData.business_name}
-              onChange={(e) => setProfileData(prev => ({ ...prev, business_name: e.target.value }))}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  business_name: e.target.value,
+                }))
+              }
               placeholder="Enter your business name"
             />
           </div>
@@ -219,7 +251,12 @@ const SettingsModule = () => {
             <Textarea
               id="business_address"
               value={profileData.business_address}
-              onChange={(e) => setProfileData(prev => ({ ...prev, business_address: e.target.value }))}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  business_address: e.target.value,
+                }))
+              }
               placeholder="Enter your business address"
               rows={3}
             />
@@ -231,7 +268,12 @@ const SettingsModule = () => {
               <Input
                 id="business_phone"
                 value={profileData.business_phone}
-                onChange={(e) => setProfileData(prev => ({ ...prev, business_phone: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    business_phone: e.target.value,
+                  }))
+                }
                 placeholder="Enter business phone"
               />
             </div>
@@ -240,7 +282,12 @@ const SettingsModule = () => {
               <Input
                 id="business_website"
                 value={profileData.business_website}
-                onChange={(e) => setProfileData(prev => ({ ...prev, business_website: e.target.value }))}
+                onChange={(e) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    business_website: e.target.value,
+                  }))
+                }
                 placeholder="https://yourwebsite.com"
               />
             </div>
@@ -251,14 +298,19 @@ const SettingsModule = () => {
             <Textarea
               id="business_description"
               value={profileData.business_description}
-              onChange={(e) => setProfileData(prev => ({ ...prev, business_description: e.target.value }))}
+              onChange={(e) =>
+                setProfileData((prev) => ({
+                  ...prev,
+                  business_description: e.target.value,
+                }))
+              }
               placeholder="Describe your business"
               rows={4}
             />
           </div>
 
           <Button onClick={handleProfileSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Business Info'}
+            {loading ? "Saving..." : "Save Business Info"}
           </Button>
         </CardContent>
       </Card>
@@ -285,7 +337,12 @@ const SettingsModule = () => {
                 id="current_password"
                 type={showPassword ? "text" : "password"}
                 value={securityData.current_password}
-                onChange={(e) => setSecurityData(prev => ({ ...prev, current_password: e.target.value }))}
+                onChange={(e) =>
+                  setSecurityData((prev) => ({
+                    ...prev,
+                    current_password: e.target.value,
+                  }))
+                }
                 placeholder="Enter current password"
               />
               <button
@@ -293,7 +350,11 @@ const SettingsModule = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </button>
             </div>
           </div>
@@ -304,7 +365,12 @@ const SettingsModule = () => {
               id="new_password"
               type="password"
               value={securityData.new_password}
-              onChange={(e) => setSecurityData(prev => ({ ...prev, new_password: e.target.value }))}
+              onChange={(e) =>
+                setSecurityData((prev) => ({
+                  ...prev,
+                  new_password: e.target.value,
+                }))
+              }
               placeholder="Enter new password"
             />
           </div>
@@ -315,13 +381,18 @@ const SettingsModule = () => {
               id="confirm_password"
               type="password"
               value={securityData.confirm_password}
-              onChange={(e) => setSecurityData(prev => ({ ...prev, confirm_password: e.target.value }))}
+              onChange={(e) =>
+                setSecurityData((prev) => ({
+                  ...prev,
+                  confirm_password: e.target.value,
+                }))
+              }
               placeholder="Confirm new password"
             />
           </div>
 
           <Button onClick={handlePasswordChange} disabled={loading}>
-            {loading ? 'Updating...' : 'Update Password'}
+            {loading ? "Updating..." : "Update Password"}
           </Button>
         </CardContent>
       </Card>
@@ -348,7 +419,9 @@ const SettingsModule = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Authenticator App</p>
-              <p className="text-sm text-gray-500">Use Google Authenticator or similar</p>
+              <p className="text-sm text-gray-500">
+                Use Google Authenticator or similar
+              </p>
             </div>
             <Switch />
           </div>
@@ -356,7 +429,9 @@ const SettingsModule = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Email Verification</p>
-              <p className="text-sm text-gray-500">Verify login attempts via email</p>
+              <p className="text-sm text-gray-500">
+                Verify login attempts via email
+              </p>
             </div>
             <Switch defaultChecked />
           </div>
@@ -382,44 +457,72 @@ const SettingsModule = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Email Notifications</p>
-                <p className="text-sm text-gray-500">Receive notifications via email</p>
+                <p className="text-sm text-gray-500">
+                  Receive notifications via email
+                </p>
               </div>
               <Switch
                 checked={notificationSettings.email_notifications}
-                onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, email_notifications: checked }))}
+                onCheckedChange={(checked) =>
+                  setNotificationSettings((prev) => ({
+                    ...prev,
+                    email_notifications: checked,
+                  }))
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Push Notifications</p>
-                <p className="text-sm text-gray-500">Receive browser push notifications</p>
+                <p className="text-sm text-gray-500">
+                  Receive browser push notifications
+                </p>
               </div>
               <Switch
                 checked={notificationSettings.push_notifications}
-                onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, push_notifications: checked }))}
+                onCheckedChange={(checked) =>
+                  setNotificationSettings((prev) => ({
+                    ...prev,
+                    push_notifications: checked,
+                  }))
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">SMS Notifications</p>
-                <p className="text-sm text-gray-500">Receive notifications via SMS</p>
+                <p className="text-sm text-gray-500">
+                  Receive notifications via SMS
+                </p>
               </div>
               <Switch
                 checked={notificationSettings.sms_notifications}
-                onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, sms_notifications: checked }))}
+                onCheckedChange={(checked) =>
+                  setNotificationSettings((prev) => ({
+                    ...prev,
+                    sms_notifications: checked,
+                  }))
+                }
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Marketing Emails</p>
-                <p className="text-sm text-gray-500">Receive product updates and tips</p>
+                <p className="text-sm text-gray-500">
+                  Receive product updates and tips
+                </p>
               </div>
               <Switch
                 checked={notificationSettings.marketing_emails}
-                onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, marketing_emails: checked }))}
+                onCheckedChange={(checked) =>
+                  setNotificationSettings((prev) => ({
+                    ...prev,
+                    marketing_emails: checked,
+                  }))
+                }
               />
             </div>
           </div>
@@ -437,33 +540,54 @@ const SettingsModule = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Security Alerts</p>
-              <p className="text-sm text-gray-500">Login attempts and security events</p>
+              <p className="text-sm text-gray-500">
+                Login attempts and security events
+              </p>
             </div>
             <Switch
               checked={notificationSettings.security_alerts}
-              onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, security_alerts: checked }))}
+              onCheckedChange={(checked) =>
+                setNotificationSettings((prev) => ({
+                  ...prev,
+                  security_alerts: checked,
+                }))
+              }
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Payment Notifications</p>
-              <p className="text-sm text-gray-500">Transaction confirmations and alerts</p>
+              <p className="text-sm text-gray-500">
+                Transaction confirmations and alerts
+              </p>
             </div>
             <Switch
               checked={notificationSettings.payment_notifications}
-              onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, payment_notifications: checked }))}
+              onCheckedChange={(checked) =>
+                setNotificationSettings((prev) => ({
+                  ...prev,
+                  payment_notifications: checked,
+                }))
+              }
             />
           </div>
 
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">AI Insights</p>
-              <p className="text-sm text-gray-500">AI-generated financial insights and recommendations</p>
+              <p className="text-sm text-gray-500">
+                AI-generated financial insights and recommendations
+              </p>
             </div>
             <Switch
               checked={notificationSettings.ai_insights}
-              onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, ai_insights: checked }))}
+              onCheckedChange={(checked) =>
+                setNotificationSettings((prev) => ({
+                  ...prev,
+                  ai_insights: checked,
+                }))
+              }
             />
           </div>
         </CardContent>
@@ -488,22 +612,22 @@ const SettingsModule = () => {
             <Label>Theme</Label>
             <div className="grid grid-cols-3 gap-4 mt-2">
               <div
-                className={`p-4 border rounded-lg cursor-pointer ${theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setTheme('light')}
+                className={`p-4 border rounded-lg cursor-pointer ${theme === "light" ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                onClick={() => setTheme("light")}
               >
                 <div className="w-full h-8 bg-white border rounded mb-2"></div>
                 <p className="text-sm font-medium">Light</p>
               </div>
               <div
-                className={`p-4 border rounded-lg cursor-pointer ${theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setTheme('dark')}
+                className={`p-4 border rounded-lg cursor-pointer ${theme === "dark" ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                onClick={() => setTheme("dark")}
               >
                 <div className="w-full h-8 bg-gray-800 border rounded mb-2"></div>
                 <p className="text-sm font-medium">Dark</p>
               </div>
               <div
-                className={`p-4 border rounded-lg cursor-pointer ${theme === 'auto' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
-                onClick={() => setTheme('auto')}
+                className={`p-4 border rounded-lg cursor-pointer ${theme === "auto" ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                onClick={() => setTheme("auto")}
               >
                 <div className="w-full h-8 bg-gradient-to-r from-white to-gray-800 border rounded mb-2"></div>
                 <p className="text-sm font-medium">Auto</p>
@@ -620,10 +744,16 @@ const SettingsModule = () => {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+        <p className="text-gray-600 mt-1">
+          Manage your account settings and preferences
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>

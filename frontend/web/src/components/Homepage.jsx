@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Building,
@@ -12,11 +12,17 @@ import {
   TrendingUp,
   CheckCircle,
   Star,
-  Play
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+  Play,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -25,54 +31,63 @@ const Homepage = () => {
     {
       icon: Brain,
       title: "AI-Powered Insights",
-      description: "Get intelligent financial recommendations and predictions powered by advanced machine learning algorithms."
+      description:
+        "Get intelligent financial recommendations and predictions powered by advanced machine learning algorithms.",
     },
     {
       icon: BarChart3,
       title: "Advanced Analytics",
-      description: "Comprehensive financial reporting with real-time dashboards and customizable charts."
+      description:
+        "Comprehensive financial reporting with real-time dashboards and customizable charts.",
     },
     {
       icon: Shield,
       title: "Bank-Level Security",
-      description: "Enterprise-grade security with encryption, multi-factor authentication, and compliance standards."
+      description:
+        "Enterprise-grade security with encryption, multi-factor authentication, and compliance standards.",
     },
     {
       icon: Zap,
       title: "Automated Workflows",
-      description: "Streamline your financial processes with intelligent automation and smart integrations."
+      description:
+        "Streamline your financial processes with intelligent automation and smart integrations.",
     },
     {
       icon: Users,
       title: "Team Collaboration",
-      description: "Work together with role-based access controls and real-time collaboration features."
+      description:
+        "Work together with role-based access controls and real-time collaboration features.",
     },
     {
       icon: TrendingUp,
       title: "Growth Optimization",
-      description: "Identify opportunities for growth with predictive analytics and market insights."
-    }
+      description:
+        "Identify opportunities for growth with predictive analytics and market insights.",
+    },
   ];
 
   const testimonials = [
     {
       name: "Sarah Johnson",
       role: "CFO, TechStart Inc.",
-      content: "NexaFi transformed our financial management. The AI insights helped us optimize cash flow and increase profitability by 30%.",
-      rating: 5
+      content:
+        "NexaFi transformed our financial management. The AI insights helped us optimize cash flow and increase profitability by 30%.",
+      rating: 5,
     },
     {
       name: "Michael Chen",
       role: "Founder, GrowthCorp",
-      content: "The automated reporting and real-time analytics save us hours every week. Best financial platform we've ever used.",
-      rating: 5
+      content:
+        "The automated reporting and real-time analytics save us hours every week. Best financial platform we've ever used.",
+      rating: 5,
     },
     {
       name: "Emily Rodriguez",
       role: "Finance Director, ScaleUp",
-      content: "Outstanding platform with incredible AI capabilities. The predictions are remarkably accurate and actionable.",
-      rating: 5
-    }
+      content:
+        "Outstanding platform with incredible AI capabilities. The predictions are remarkably accurate and actionable.",
+      rating: 5,
+    },
   ];
 
   return (
@@ -91,15 +106,28 @@ const Homepage = () => {
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-              <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">Testimonials</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
-              <Button variant="outline" onClick={() => navigate('/auth')}>
+              <a
+                href="#features"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Features
+              </a>
+              <a
+                href="#testimonials"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Testimonials
+              </a>
+              <a
+                href="#pricing"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Pricing
+              </a>
+              <Button variant="outline" onClick={() => navigate("/auth")}>
                 Sign In
               </Button>
-              <Button onClick={() => navigate('/auth')}>
-                Get Started
-              </Button>
+              <Button onClick={() => navigate("/auth")}>Get Started</Button>
             </div>
           </div>
         </div>
@@ -121,26 +149,32 @@ const Homepage = () => {
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
                 The Future of
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  {" "}Financial Management
+                  {" "}
+                  Financial Management
                 </span>
               </h1>
 
               <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Transform your business with AI-powered insights, automated workflows, and comprehensive financial analytics.
-                Make smarter decisions with real-time data and predictive intelligence.
+                Transform your business with AI-powered insights, automated
+                workflows, and comprehensive financial analytics. Make smarter
+                decisions with real-time data and predictive intelligence.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg px-8 py-3"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate("/auth")}
                 >
                   Start Free Trial
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
 
-                <Button variant="outline" size="lg" className="text-lg px-8 py-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-lg px-8 py-3"
+                >
                   <Play className="mr-2 w-5 h-5" />
                   Watch Demo
                 </Button>
@@ -173,7 +207,8 @@ const Homepage = () => {
               Powerful Features for Modern Businesses
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Everything you need to manage, analyze, and optimize your financial operations in one comprehensive platform.
+              Everything you need to manage, analyze, and optimize your
+              financial operations in one comprehensive platform.
             </p>
           </div>
 
@@ -215,7 +250,8 @@ const Homepage = () => {
               Trusted by Finance Leaders
             </h2>
             <p className="text-xl text-gray-600">
-              See what our customers say about transforming their financial operations
+              See what our customers say about transforming their financial
+              operations
             </p>
           </div>
 
@@ -231,13 +267,22 @@ const Homepage = () => {
                   <CardContent className="p-6">
                     <div className="flex mb-4">
                       {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                        <Star
+                          key={i}
+                          className="w-5 h-5 text-yellow-400 fill-current"
+                        />
                       ))}
                     </div>
-                    <p className="text-gray-600 mb-6 italic">"{testimonial.content}"</p>
+                    <p className="text-gray-600 mb-6 italic">
+                      "{testimonial.content}"
+                    </p>
                     <div>
-                      <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                      <p className="text-sm text-gray-500">{testimonial.role}</p>
+                      <p className="font-semibold text-gray-900">
+                        {testimonial.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {testimonial.role}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -259,12 +304,13 @@ const Homepage = () => {
               Ready to Transform Your Financial Management?
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of businesses already using NexaFi to optimize their financial operations and drive growth.
+              Join thousands of businesses already using NexaFi to optimize
+              their financial operations and drive growth.
             </p>
             <Button
               size="lg"
               className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate("/auth")}
             >
               Start Your Free Trial
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -292,30 +338,78 @@ const Homepage = () => {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    API
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Integrations
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Status
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Security
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

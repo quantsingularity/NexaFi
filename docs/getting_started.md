@@ -6,10 +6,10 @@ This section provides a comprehensive guide to setting up your development envir
 
 Before you begin, ensure you have the following software installed on your system:
 
-*   **Git**: For cloning the repository.
-*   **Docker and Docker Compose**: For containerizing and orchestrating the microservices.
-*   **Python 3.9+**: For backend services development.
-*   **Node.js 18+ and npm/yarn**: For frontend development.
+- **Git**: For cloning the repository.
+- **Docker and Docker Compose**: For containerizing and orchestrating the microservices.
+- **Python 3.9+**: For backend services development.
+- **Node.js 18+ and npm/yarn**: For frontend development.
 
 ## 1. Clone the Repository
 
@@ -108,8 +108,8 @@ Some services might require initial data for proper functioning. Refer to indivi
 
 ## Troubleshooting
 
-*   **Port Conflicts**: If you encounter port conflicts, ensure no other applications are using the ports required by NexaFi services (e.g., 5000, 5001, 3000).
-*   **Dependency Issues**: Double-check that all `requirements.txt` and `package.json` dependencies are correctly installed.
-*   **Environment Variables**: Verify that all necessary environment variables are set correctly in the `.env` files.
+- **Port Conflicts**: If you encounter port conflicts, ensure no other applications are using the ports required by NexaFi services (e.g., 5000, 5001, 3000).
+- **Dependency Issues**: Double-check that all `requirements.txt` and `package.json` dependencies are correctly installed.
+- **Environment Variables**: Verify that all necessary environment variables are set correctly in the `.env` files.
 
 If you face any issues not covered here, please refer to the specific service documentation or open an issue on the GitHub repository.

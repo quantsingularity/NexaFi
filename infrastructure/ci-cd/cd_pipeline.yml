@@ -16,28 +16,28 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Download frontend build artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-build
-        path: frontend/build
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build
 
-    - name: Trigger Frontend Deployment
-      run: |
-        echo "Triggering frontend deployment using ci-cd/pipelines/frontend.yaml"
-        # In a real scenario, this would involve calling a deployment script or tool
-        # For demonstration, we'll just echo a message.
-        # Example: ./ci-cd/scripts/deploy_frontend.sh
+      - name: Trigger Frontend Deployment
+        run: |
+          echo "Triggering frontend deployment using ci-cd/pipelines/frontend.yaml"
+          # In a real scenario, this would involve calling a deployment script or tool
+          # For demonstration, we'll just echo a message.
+          # Example: ./ci-cd/scripts/deploy_frontend.sh
 
-    - name: Trigger Backend Deployment
-      run: |
-        echo "Triggering backend deployment using ci-cd/pipelines/backend.yaml"
-        # In a real scenario, this would involve calling a deployment script or tool
-        # For demonstration, we'll just echo a message.
-        # Example: ./ci-cd/scripts/deploy_backend.sh
+      - name: Trigger Backend Deployment
+        run: |
+          echo "Triggering backend deployment using ci-cd/pipelines/backend.yaml"
+          # In a real scenario, this would involve calling a deployment script or tool
+          # For demonstration, we'll just echo a message.
+          # Example: ./ci-cd/scripts/deploy_backend.sh
 
   frontend_deploy:
     runs-on: ubuntu-latest

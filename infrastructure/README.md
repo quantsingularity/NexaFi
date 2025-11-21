@@ -67,17 +67,20 @@ export SECONDARY_REGION=us-east-1
 ### Deployment
 
 1. **Deploy Infrastructure**
+
    ```bash
    cd scripts
    ./deploy-all.sh
    ```
 
 2. **Validate Deployment**
+
    ```bash
    ./test-infrastructure.sh
    ```
 
 3. **Validate Compliance**
+
    ```bash
    ./validate-compliance.sh
    ```

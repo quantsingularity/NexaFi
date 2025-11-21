@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   CreditCard,
   Wallet,
@@ -17,25 +17,61 @@ import {
   DollarSign,
   TrendingUp,
   Calendar,
-  Repeat
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import apiClient from '../lib/api';
-import { useApp } from '../contexts/AppContext';
+  Repeat,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import apiClient from "../lib/api";
+import { useApp } from "../contexts/AppContext";
 
 const PaymentsModule = () => {
   const { addNotification } = useApp();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [wallets, setWallets] = useState([]);
@@ -55,7 +91,9 @@ const PaymentsModule = () => {
       setPaymentMethods(methodsResponse.payment_methods || []);
 
       // Load transactions
-      const transactionsResponse = await apiClient.getTransactions({ per_page: 20 });
+      const transactionsResponse = await apiClient.getTransactions({
+        per_page: 20,
+      });
       setTransactions(transactionsResponse.transactions || []);
 
       // Load wallets
@@ -63,17 +101,21 @@ const PaymentsModule = () => {
       setWallets(walletsResponse.wallets || []);
 
       // Load analytics
-      const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const analyticsResponse = await apiClient.getPaymentAnalytics(startDate, endDate);
+      const endDate = new Date().toISOString().split("T")[0];
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0];
+      const analyticsResponse = await apiClient.getPaymentAnalytics(
+        startDate,
+        endDate,
+      );
       setAnalytics(analyticsResponse);
-
     } catch (error) {
-      console.error('Failed to load payment data:', error);
+      console.error("Failed to load payment data:", error);
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to load payment data'
+        type: "error",
+        title: "Error",
+        message: "Failed to load payment data",
       });
     } finally {
       setLoading(false);
@@ -82,12 +124,12 @@ const PaymentsModule = () => {
 
   const PaymentOverview = () => {
     const mockAnalyticsData = [
-      { month: 'Jan', income: 45000, expenses: 32000 },
-      { month: 'Feb', income: 52000, expenses: 35000 },
-      { month: 'Mar', income: 48000, expenses: 33000 },
-      { month: 'Apr', income: 61000, expenses: 38000 },
-      { month: 'May', income: 55000, expenses: 36000 },
-      { month: 'Jun', income: 58000, expenses: 39000 }
+      { month: "Jan", income: 45000, expenses: 32000 },
+      { month: "Feb", income: 52000, expenses: 35000 },
+      { month: "Mar", income: 48000, expenses: 33000 },
+      { month: "Apr", income: 61000, expenses: 38000 },
+      { month: "May", income: 55000, expenses: 36000 },
+      { month: "Jun", income: 58000, expenses: 39000 },
     ];
 
     return (
@@ -98,7 +140,9 @@ const PaymentsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Volume</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Volume
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">$125,430</p>
                   <div className="flex items-center mt-2 text-sm text-green-600">
                     <TrendingUp className="w-4 h-4 mr-1" />
@@ -116,7 +160,9 @@ const PaymentsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Transactions</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Transactions
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">1,247</p>
                   <div className="flex items-center mt-2 text-sm text-green-600">
                     <TrendingUp className="w-4 h-4 mr-1" />
@@ -134,7 +180,9 @@ const PaymentsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Success Rate
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">98.5%</p>
                   <div className="flex items-center mt-2 text-sm text-green-600">
                     <CheckCircle className="w-4 h-4 mr-1" />
@@ -152,7 +200,9 @@ const PaymentsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Avg. Transaction</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Avg. Transaction
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">$1,005</p>
                   <div className="flex items-center mt-2 text-sm text-blue-600">
                     <TrendingUp className="w-4 h-4 mr-1" />
@@ -172,7 +222,9 @@ const PaymentsModule = () => {
           <Card>
             <CardHeader>
               <CardTitle>Payment Volume Trend</CardTitle>
-              <CardDescription>Monthly payment volume over time</CardDescription>
+              <CardDescription>
+                Monthly payment volume over time
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -180,7 +232,9 @@ const PaymentsModule = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
+                  <Tooltip
+                    formatter={(value) => [`$${value.toLocaleString()}`, ""]}
+                  />
                   <Area
                     type="monotone"
                     dataKey="income"
@@ -196,7 +250,9 @@ const PaymentsModule = () => {
           <Card>
             <CardHeader>
               <CardTitle>Wallet Balances</CardTitle>
-              <CardDescription>Current balances across all wallets</CardDescription>
+              <CardDescription>
+                Current balances across all wallets
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -223,7 +279,9 @@ const PaymentsModule = () => {
                     </div>
                     <div>
                       <p className="font-medium">EUR Wallet</p>
-                      <p className="text-sm text-gray-500">Secondary currency</p>
+                      <p className="text-sm text-gray-500">
+                        Secondary currency
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -239,7 +297,9 @@ const PaymentsModule = () => {
                     </div>
                     <div>
                       <p className="font-medium">GBP Wallet</p>
-                      <p className="text-sm text-gray-500">Additional currency</p>
+                      <p className="text-sm text-gray-500">
+                        Additional currency
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -336,7 +396,9 @@ const PaymentsModule = () => {
           <CardContent className="p-6 flex flex-col items-center justify-center text-center">
             <Plus className="w-8 h-8 text-gray-400 mb-2" />
             <p className="font-medium text-gray-600">Add Payment Method</p>
-            <p className="text-sm text-gray-500">Credit card, bank account, or digital wallet</p>
+            <p className="text-sm text-gray-500">
+              Credit card, bank account, or digital wallet
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -402,7 +464,9 @@ const PaymentsModule = () => {
                     Income
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-green-600">+$5,000.00</TableCell>
+                <TableCell className="font-mono text-green-600">
+                  +$5,000.00
+                </TableCell>
                 <TableCell>
                   <Badge>
                     <CheckCircle className="w-3 h-3 mr-1" />
@@ -426,7 +490,9 @@ const PaymentsModule = () => {
                     Expense
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-red-600">-$2,500.00</TableCell>
+                <TableCell className="font-mono text-red-600">
+                  -$2,500.00
+                </TableCell>
                 <TableCell>
                   <Badge>
                     <CheckCircle className="w-3 h-3 mr-1" />
@@ -450,7 +516,9 @@ const PaymentsModule = () => {
                     Expense
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-red-600">-$299.00</TableCell>
+                <TableCell className="font-mono text-red-600">
+                  -$299.00
+                </TableCell>
                 <TableCell>
                   <Badge variant="secondary">
                     <Clock className="w-3 h-3 mr-1" />
@@ -489,10 +557,16 @@ const PaymentsModule = () => {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
-        <p className="text-gray-600 mt-1">Manage payment methods, transactions, and wallets</p>
+        <p className="text-gray-600 mt-1">
+          Manage payment methods, transactions, and wallets
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="methods">Payment Methods</TabsTrigger>
@@ -523,14 +597,14 @@ const PaymentsModule = () => {
 // Add Payment Method Form
 const AddPaymentMethodForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
-    type: 'card',
-    provider: 'stripe',
+    type: "card",
+    provider: "stripe",
     details: {
-      last_four: '',
-      brand: '',
-      exp_month: '',
-      exp_year: ''
-    }
+      last_four: "",
+      brand: "",
+      exp_month: "",
+      exp_year: "",
+    },
   });
 
   const handleSubmit = async (e) => {
@@ -539,7 +613,7 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
       await apiClient.createPaymentMethod(formData);
       onSuccess();
     } catch (error) {
-      console.error('Failed to add payment method:', error);
+      console.error("Failed to add payment method:", error);
     }
   };
 
@@ -547,7 +621,12 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="type">Payment Type</Label>
-        <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
+        <Select
+          value={formData.type}
+          onValueChange={(value) =>
+            setFormData((prev) => ({ ...prev, type: value }))
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -559,7 +638,7 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
         </Select>
       </div>
 
-      {formData.type === 'card' && (
+      {formData.type === "card" && (
         <>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -567,20 +646,27 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
               <Input
                 id="last_four"
                 value={formData.details.last_four}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  details: { ...prev.details, last_four: e.target.value }
-                }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    details: { ...prev.details, last_four: e.target.value },
+                  }))
+                }
                 placeholder="4242"
                 maxLength={4}
               />
             </div>
             <div>
               <Label htmlFor="brand">Card Brand</Label>
-              <Select value={formData.details.brand} onValueChange={(value) => setFormData(prev => ({
-                ...prev,
-                details: { ...prev.details, brand: value }
-              }))}>
+              <Select
+                value={formData.details.brand}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    details: { ...prev.details, brand: value },
+                  }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select brand" />
                 </SelectTrigger>
@@ -602,10 +688,12 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
                 min="1"
                 max="12"
                 value={formData.details.exp_month}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  details: { ...prev.details, exp_month: e.target.value }
-                }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    details: { ...prev.details, exp_month: e.target.value },
+                  }))
+                }
                 placeholder="12"
               />
             </div>
@@ -617,10 +705,12 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
                 min="2024"
                 max="2034"
                 value={formData.details.exp_year}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  details: { ...prev.details, exp_year: e.target.value }
-                }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    details: { ...prev.details, exp_year: e.target.value },
+                  }))
+                }
                 placeholder="2025"
               />
             </div>
@@ -628,7 +718,9 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
         </>
       )}
 
-      <Button type="submit" className="w-full">Add Payment Method</Button>
+      <Button type="submit" className="w-full">
+        Add Payment Method
+      </Button>
     </form>
   );
 };
@@ -636,10 +728,10 @@ const AddPaymentMethodForm = ({ onSuccess }) => {
 // Create Transaction Form
 const CreateTransactionForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
-    transaction_type: 'payment',
-    amount: '',
-    currency: 'USD',
-    description: ''
+    transaction_type: "payment",
+    amount: "",
+    currency: "USD",
+    description: "",
   });
 
   const handleSubmit = async (e) => {
@@ -648,7 +740,7 @@ const CreateTransactionForm = ({ onSuccess }) => {
       await apiClient.createTransaction(formData);
       onSuccess();
     } catch (error) {
-      console.error('Failed to create transaction:', error);
+      console.error("Failed to create transaction:", error);
     }
   };
 
@@ -656,7 +748,12 @@ const CreateTransactionForm = ({ onSuccess }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="transaction_type">Transaction Type</Label>
-        <Select value={formData.transaction_type} onValueChange={(value) => setFormData(prev => ({ ...prev, transaction_type: value }))}>
+        <Select
+          value={formData.transaction_type}
+          onValueChange={(value) =>
+            setFormData((prev) => ({ ...prev, transaction_type: value }))
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -676,14 +773,21 @@ const CreateTransactionForm = ({ onSuccess }) => {
             type="number"
             step="0.01"
             value={formData.amount}
-            onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, amount: e.target.value }))
+            }
             placeholder="0.00"
             required
           />
         </div>
         <div>
           <Label htmlFor="currency">Currency</Label>
-          <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
+          <Select
+            value={formData.currency}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, currency: value }))
+            }
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -701,13 +805,17 @@ const CreateTransactionForm = ({ onSuccess }) => {
         <Input
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, description: e.target.value }))
+          }
           placeholder="Transaction description"
           required
         />
       </div>
 
-      <Button type="submit" className="w-full">Create Transaction</Button>
+      <Button type="submit" className="w-full">
+        Create Transaction
+      </Button>
     </form>
   );
 };

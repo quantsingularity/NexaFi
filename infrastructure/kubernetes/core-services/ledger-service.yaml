@@ -18,48 +18,48 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: ledger-service
-        image: nexafi/ledger-service:latest
-        ports:
-        - containerPort: 5002
-        env:
-        - name: FLASK_ENV
-          value: "production"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: nexafi-secrets
-              key: ledger-db-url
-        - name: REDIS_HOST
-          value: "redis-service.nexafi-infra.svc.cluster.local"
-        - name: RABBITMQ_HOST
-          value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5002
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 5002
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        volumeMounts:
-        - name: ledger-data
-          mountPath: /app/data
+        - name: ledger-service
+          image: nexafi/ledger-service:latest
+          ports:
+            - containerPort: 5002
+          env:
+            - name: FLASK_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: nexafi-secrets
+                  key: ledger-db-url
+            - name: REDIS_HOST
+              value: "redis-service.nexafi-infra.svc.cluster.local"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq-service.nexafi-infra.svc.cluster.local"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5002
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5002
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: ledger-data
+              mountPath: /app/data
       volumes:
-      - name: ledger-data
-        persistentVolumeClaim:
-          claimName: ledger-service-pvc
+        - name: ledger-data
+          persistentVolumeClaim:
+            claimName: ledger-service-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -72,7 +72,7 @@ spec:
   selector:
     app: ledger-service
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5002
+    - protocol: TCP
+      port: 80
+      targetPort: 5002
   type: ClusterIP

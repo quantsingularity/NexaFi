@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye,
   EyeOff,
@@ -11,55 +11,61 @@ import {
   ArrowLeft,
   Smartphone,
   Shield,
-  CheckCircle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '../contexts/MobileContext';
-import { useNavigate } from 'react-router-dom';
-import '../App.css';
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "../contexts/MobileContext";
+import { useNavigate } from "react-router-dom";
+import "../App.css";
 
 const MobileAuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
+  const [activeTab, setActiveTab] = useState("login");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
   const [loginData, setLoginData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   const [registerData, setRegisterData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    confirm_password: '',
-    business_name: '',
-    phone: '',
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    confirm_password: "",
+    business_name: "",
+    phone: "",
   });
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const result = await login(loginData);
       if (result.success) {
-        navigate('/dashboard');
+        navigate("/dashboard");
       } else {
-        setError(result.error || 'Login failed');
+        setError(result.error || "Login failed");
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -68,10 +74,10 @@ const MobileAuthPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     if (registerData.password !== registerData.confirm_password) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
@@ -79,12 +85,12 @@ const MobileAuthPage = () => {
     try {
       const result = await register(registerData);
       if (result.success) {
-        navigate('/dashboard');
+        navigate("/dashboard");
       } else {
-        setError(result.error || 'Registration failed');
+        setError(result.error || "Registration failed");
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -94,18 +100,18 @@ const MobileAuthPage = () => {
     {
       icon: Smartphone,
       title: "Mobile Optimized",
-      description: "Designed specifically for mobile devices"
+      description: "Designed specifically for mobile devices",
     },
     {
       icon: Shield,
       title: "Secure Access",
-      description: "Bank-level security with biometric support"
+      description: "Bank-level security with biometric support",
     },
     {
       icon: CheckCircle,
       title: "Instant Sync",
-      description: "Real-time data synchronization"
-    }
+      description: "Real-time data synchronization",
+    },
   ];
 
   return (
@@ -115,13 +121,12 @@ const MobileAuthPage = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="flex items-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
         </Button>
-
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
             <Building className="w-5 h-5 text-white" />
@@ -130,7 +135,6 @@ const MobileAuthPage = () => {
             NexaFi Mobile
           </span>
         </div>
-
         <div className="w-16"></div> {/* Spacer for centering */}
       </div>
 
@@ -146,8 +150,12 @@ const MobileAuthPage = () => {
             <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Building className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to NexaFi Mobile</h1>
-            <p className="text-gray-600">Advanced Financial Management Platform</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome to NexaFi Mobile
+            </h1>
+            <p className="text-gray-600">
+              Advanced Financial Management Platform
+            </p>
           </div>
 
           {/* Auth Card */}
@@ -160,10 +168,18 @@ const MobileAuthPage = () => {
             </CardHeader>
 
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login" className="text-sm">Sign In</TabsTrigger>
-                  <TabsTrigger value="register" className="text-sm">Sign Up</TabsTrigger>
+                  <TabsTrigger value="login" className="text-sm">
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger value="register" className="text-sm">
+                    Sign Up
+                  </TabsTrigger>
                 </TabsList>
 
                 {error && (
@@ -177,7 +193,12 @@ const MobileAuthPage = () => {
                 <TabsContent value="login">
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
+                      <Label
+                        htmlFor="login-email"
+                        className="text-sm font-medium"
+                      >
+                        Email
+                      </Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
@@ -185,7 +206,12 @@ const MobileAuthPage = () => {
                           type="email"
                           placeholder="Enter your email"
                           value={loginData.email}
-                          onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                          onChange={(e) =>
+                            setLoginData((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
                           className="pl-10 h-12 text-base"
                           required
                         />
@@ -193,7 +219,12 @@ const MobileAuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                      <Label
+                        htmlFor="login-password"
+                        className="text-sm font-medium"
+                      >
+                        Password
+                      </Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
@@ -201,7 +232,12 @@ const MobileAuthPage = () => {
                           type={showPassword ? "text" : "password"}
                           placeholder="Enter your password"
                           value={loginData.password}
-                          onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                          onChange={(e) =>
+                            setLoginData((prev) => ({
+                              ...prev,
+                              password: e.target.value,
+                            }))
+                          }
                           className="pl-10 pr-10 h-12 text-base"
                           required
                         />
@@ -210,7 +246,11 @@ const MobileAuthPage = () => {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -226,7 +266,7 @@ const MobileAuthPage = () => {
                           Signing In...
                         </>
                       ) : (
-                        'Sign In'
+                        "Sign In"
                       )}
                     </Button>
 
@@ -242,26 +282,46 @@ const MobileAuthPage = () => {
                   <form onSubmit={handleRegister} className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label htmlFor="first-name" className="text-sm font-medium">First Name</Label>
+                        <Label
+                          htmlFor="first-name"
+                          className="text-sm font-medium"
+                        >
+                          First Name
+                        </Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
                             id="first-name"
                             placeholder="First name"
                             value={registerData.first_name}
-                            onChange={(e) => setRegisterData(prev => ({ ...prev, first_name: e.target.value }))}
+                            onChange={(e) =>
+                              setRegisterData((prev) => ({
+                                ...prev,
+                                first_name: e.target.value,
+                              }))
+                            }
                             className="pl-10 h-12 text-base"
                             required
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="last-name" className="text-sm font-medium">Last Name</Label>
+                        <Label
+                          htmlFor="last-name"
+                          className="text-sm font-medium"
+                        >
+                          Last Name
+                        </Label>
                         <Input
                           id="last-name"
                           placeholder="Last name"
                           value={registerData.last_name}
-                          onChange={(e) => setRegisterData(prev => ({ ...prev, last_name: e.target.value }))}
+                          onChange={(e) =>
+                            setRegisterData((prev) => ({
+                              ...prev,
+                              last_name: e.target.value,
+                            }))
+                          }
                           className="h-12 text-base"
                           required
                         />
@@ -269,7 +329,12 @@ const MobileAuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-email" className="text-sm font-medium">Email</Label>
+                      <Label
+                        htmlFor="register-email"
+                        className="text-sm font-medium"
+                      >
+                        Email
+                      </Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
@@ -277,7 +342,12 @@ const MobileAuthPage = () => {
                           type="email"
                           placeholder="Enter your email"
                           value={registerData.email}
-                          onChange={(e) => setRegisterData(prev => ({ ...prev, email: e.target.value }))}
+                          onChange={(e) =>
+                            setRegisterData((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
                           className="pl-10 h-12 text-base"
                           required
                         />
@@ -285,21 +355,36 @@ const MobileAuthPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="business-name" className="text-sm font-medium">Business Name</Label>
+                      <Label
+                        htmlFor="business-name"
+                        className="text-sm font-medium"
+                      >
+                        Business Name
+                      </Label>
                       <div className="relative">
                         <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
                           id="business-name"
                           placeholder="Your business name"
                           value={registerData.business_name}
-                          onChange={(e) => setRegisterData(prev => ({ ...prev, business_name: e.target.value }))}
+                          onChange={(e) =>
+                            setRegisterData((prev) => ({
+                              ...prev,
+                              business_name: e.target.value,
+                            }))
+                          }
                           className="pl-10 h-12 text-base"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-password" className="text-sm font-medium">Password</Label>
+                      <Label
+                        htmlFor="register-password"
+                        className="text-sm font-medium"
+                      >
+                        Password
+                      </Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
@@ -307,7 +392,12 @@ const MobileAuthPage = () => {
                           type={showPassword ? "text" : "password"}
                           placeholder="Create a password"
                           value={registerData.password}
-                          onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
+                          onChange={(e) =>
+                            setRegisterData((prev) => ({
+                              ...prev,
+                              password: e.target.value,
+                            }))
+                          }
                           className="pl-10 pr-10 h-12 text-base"
                           required
                         />
@@ -316,13 +406,22 @@ const MobileAuthPage = () => {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</Label>
+                      <Label
+                        htmlFor="confirm-password"
+                        className="text-sm font-medium"
+                      >
+                        Confirm Password
+                      </Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
@@ -330,7 +429,12 @@ const MobileAuthPage = () => {
                           type="password"
                           placeholder="Confirm your password"
                           value={registerData.confirm_password}
-                          onChange={(e) => setRegisterData(prev => ({ ...prev, confirm_password: e.target.value }))}
+                          onChange={(e) =>
+                            setRegisterData((prev) => ({
+                              ...prev,
+                              confirm_password: e.target.value,
+                            }))
+                          }
                           className="pl-10 h-12 text-base"
                           required
                         />
@@ -348,7 +452,7 @@ const MobileAuthPage = () => {
                           Creating Account...
                         </>
                       ) : (
-                        'Create Account'
+                        "Create Account"
                       )}
                     </Button>
                   </form>
@@ -372,8 +476,12 @@ const MobileAuthPage = () => {
                   <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
                     <Icon className="w-6 h-6 text-blue-600" />
                   </div>
-                  <h3 className="text-xs font-medium text-gray-900 mb-1">{feature.title}</h3>
-                  <p className="text-xs text-gray-600 leading-tight">{feature.description}</p>
+                  <h3 className="text-xs font-medium text-gray-900 mb-1">
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-tight">
+                    {feature.description}
+                  </p>
                 </motion.div>
               );
             })}

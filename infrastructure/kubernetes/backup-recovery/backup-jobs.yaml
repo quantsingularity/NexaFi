@@ -156,122 +156,122 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - name: backup-controller
-        image: nexafi/backup-controller:latest
-        imagePullPolicy: Always
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        env:
-        - name: PORT
-          value: "8080"
-        - name: METRICS_PORT
-          value: "9090"
-        - name: AWS_REGION
-          value: "us-west-2"
-        - name: S3_BUCKET_PRIMARY
-          value: "nexafi-backups-primary"
-        - name: S3_BUCKET_SECONDARY
-          value: "nexafi-backups-secondary"
-        - name: ENCRYPTION_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backup-encryption
-              key: key
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: backup-db-secret
-              key: url
-        - name: VAULT_ADDR
-          value: "https://vault.security.svc.cluster.local:8200"
-        - name: VAULT_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: vault-token
-              key: token
-        - name: SLACK_WEBHOOK_URL
-          valueFrom:
-            secretKeyRef:
-              name: backup-alerts
-              key: slack_webhook
-        - name: EMAIL_SMTP_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: backup-config
-              key: smtp_host
-        - name: EMAIL_FROM
-          value: "backups@nexafi.com"
-        - name: BACKUP_VERIFICATION_ENABLED
-          value: "true"
-        - name: CROSS_REGION_REPLICATION
-          value: "true"
-        - name: BACKUP_RETENTION_CHECK_INTERVAL
-          value: "24h"
-        - name: LOG_LEVEL
-          value: "INFO"
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        - containerPort: 9090
-          name: metrics
-          protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: config
-          mountPath: /app/config
-          readOnly: true
-        - name: backup-cache
-          mountPath: /app/cache
+        - name: backup-controller
+          image: nexafi/backup-controller:latest
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: PORT
+              value: "8080"
+            - name: METRICS_PORT
+              value: "9090"
+            - name: AWS_REGION
+              value: "us-west-2"
+            - name: S3_BUCKET_PRIMARY
+              value: "nexafi-backups-primary"
+            - name: S3_BUCKET_SECONDARY
+              value: "nexafi-backups-secondary"
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backup-encryption
+                  key: key
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backup-db-secret
+                  key: url
+            - name: VAULT_ADDR
+              value: "https://vault.security.svc.cluster.local:8200"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-token
+                  key: token
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: backup-alerts
+                  key: slack_webhook
+            - name: EMAIL_SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: backup-config
+                  key: smtp_host
+            - name: EMAIL_FROM
+              value: "backups@nexafi.com"
+            - name: BACKUP_VERIFICATION_ENABLED
+              value: "true"
+            - name: CROSS_REGION_REPLICATION
+              value: "true"
+            - name: BACKUP_RETENTION_CHECK_INTERVAL
+              value: "24h"
+            - name: LOG_LEVEL
+              value: "INFO"
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: backup-cache
+              mountPath: /app/cache
       volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: config
-        configMap:
-          name: backup-config
-      - name: backup-cache
-        emptyDir:
-          sizeLimit: 10Gi
+        - name: tmp
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: backup-config
+        - name: backup-cache
+          emptyDir:
+            sizeLimit: 10Gi
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - backup-controller
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - backup-controller
+                topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
@@ -284,14 +284,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-    protocol: TCP
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
   selector:
     app: backup-controller
 ---
@@ -306,7 +306,7 @@ metadata:
     component: data-protection
     backup-type: database
 spec:
-  schedule: "0 */4 * * *"  # Every 4 hours
+  schedule: "0 */4 * * *" # Every 4 hours
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -325,84 +325,84 @@ spec:
             runAsGroup: 1000
             fsGroup: 1000
           containers:
-          - name: pg-backup
-            image: postgres:15-alpine
-            imagePullPolicy: IfNotPresent
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                - ALL
-            env:
-            - name: PGHOST
-              value: "financial-db.database.svc.cluster.local"
-            - name: PGPORT
-              value: "5432"
-            - name: PGDATABASE
-              value: "financial"
-            - name: PGUSER
-              valueFrom:
-                secretKeyRef:
-                  name: financial-db-backup-secret
-                  key: username
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: financial-db-backup-secret
-                  key: password
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: backup-s3-secret
-                  key: access_key_id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: backup-s3-secret
-                  key: secret_access_key
-            - name: AWS_DEFAULT_REGION
-              value: "us-west-2"
-            - name: S3_BUCKET
-              value: "nexafi-backups-primary"
-            - name: BACKUP_NAME
-              value: "financial-db-$(date +%Y%m%d-%H%M%S)"
-            command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              echo "Starting financial database backup..."
+            - name: pg-backup
+              image: postgres:15-alpine
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: PGHOST
+                  value: "financial-db.database.svc.cluster.local"
+                - name: PGPORT
+                  value: "5432"
+                - name: PGDATABASE
+                  value: "financial"
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: financial-db-backup-secret
+                      key: username
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: financial-db-backup-secret
+                      key: password
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-s3-secret
+                      key: access_key_id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-s3-secret
+                      key: secret_access_key
+                - name: AWS_DEFAULT_REGION
+                  value: "us-west-2"
+                - name: S3_BUCKET
+                  value: "nexafi-backups-primary"
+                - name: BACKUP_NAME
+                  value: "financial-db-$(date +%Y%m%d-%H%M%S)"
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "Starting financial database backup..."
 
-              # Create backup
-              pg_dump --verbose --no-password --format=custom --compress=9 \
-                --file=/tmp/backup.dump
+                  # Create backup
+                  pg_dump --verbose --no-password --format=custom --compress=9 \
+                    --file=/tmp/backup.dump
 
-              # Encrypt backup
-              openssl enc -aes-256-cbc -salt -in /tmp/backup.dump \
-                -out /tmp/backup.dump.enc -k "$ENCRYPTION_KEY"
+                  # Encrypt backup
+                  openssl enc -aes-256-cbc -salt -in /tmp/backup.dump \
+                    -out /tmp/backup.dump.enc -k "$ENCRYPTION_KEY"
 
-              # Upload to S3
-              aws s3 cp /tmp/backup.dump.enc \
-                s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
+                  # Upload to S3
+                  aws s3 cp /tmp/backup.dump.enc \
+                    s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
 
-              # Verify backup
-              aws s3 ls s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
+                  # Verify backup
+                  aws s3 ls s3://$S3_BUCKET/financial-db/$BACKUP_NAME.dump.enc
 
-              echo "Financial database backup completed successfully"
-            volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            resources:
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
-              limits:
-                memory: "1Gi"
-                cpu: "500m"
+                  echo "Financial database backup completed successfully"
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "500m"
           volumes:
-          - name: tmp
-            emptyDir: {}
+            - name: tmp
+              emptyDir: {}
           restartPolicy: OnFailure
 ---
 # Vault Backup CronJob
@@ -416,7 +416,7 @@ metadata:
     component: data-protection
     backup-type: vault
 spec:
-  schedule: "0 1 * * *"  # Daily at 1 AM
+  schedule: "0 1 * * *" # Daily at 1 AM
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -435,74 +435,74 @@ spec:
             runAsGroup: 1000
             fsGroup: 1000
           containers:
-          - name: vault-backup
-            image: hashicorp/vault:1.15.2
-            imagePullPolicy: IfNotPresent
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                - ALL
-            env:
-            - name: VAULT_ADDR
-              value: "https://vault.security.svc.cluster.local:8200"
-            - name: VAULT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: vault-backup-token
-                  key: token
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: backup-s3-secret
-                  key: access_key_id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: backup-s3-secret
-                  key: secret_access_key
-            - name: AWS_DEFAULT_REGION
-              value: "us-west-2"
-            - name: S3_BUCKET
-              value: "nexafi-backups-primary"
-            - name: BACKUP_NAME
-              value: "vault-$(date +%Y%m%d-%H%M%S)"
-            command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              echo "Starting Vault backup..."
+            - name: vault-backup
+              image: hashicorp/vault:1.15.2
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: VAULT_ADDR
+                  value: "https://vault.security.svc.cluster.local:8200"
+                - name: VAULT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: vault-backup-token
+                      key: token
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-s3-secret
+                      key: access_key_id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-s3-secret
+                      key: secret_access_key
+                - name: AWS_DEFAULT_REGION
+                  value: "us-west-2"
+                - name: S3_BUCKET
+                  value: "nexafi-backups-primary"
+                - name: BACKUP_NAME
+                  value: "vault-$(date +%Y%m%d-%H%M%S)"
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "Starting Vault backup..."
 
-              # Create Vault snapshot
-              vault operator raft snapshot save /tmp/vault-snapshot.snap
+                  # Create Vault snapshot
+                  vault operator raft snapshot save /tmp/vault-snapshot.snap
 
-              # Encrypt snapshot
-              openssl enc -aes-256-cbc -salt -in /tmp/vault-snapshot.snap \
-                -out /tmp/vault-snapshot.snap.enc -k "$ENCRYPTION_KEY"
+                  # Encrypt snapshot
+                  openssl enc -aes-256-cbc -salt -in /tmp/vault-snapshot.snap \
+                    -out /tmp/vault-snapshot.snap.enc -k "$ENCRYPTION_KEY"
 
-              # Upload to S3
-              aws s3 cp /tmp/vault-snapshot.snap.enc \
-                s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
+                  # Upload to S3
+                  aws s3 cp /tmp/vault-snapshot.snap.enc \
+                    s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
 
-              # Verify backup
-              aws s3 ls s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
+                  # Verify backup
+                  aws s3 ls s3://$S3_BUCKET/vault/$BACKUP_NAME.snap.enc
 
-              echo "Vault backup completed successfully"
-            volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            resources:
-              requests:
-                memory: "128Mi"
-                cpu: "100m"
-              limits:
-                memory: "256Mi"
-                cpu: "200m"
+                  echo "Vault backup completed successfully"
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
           volumes:
-          - name: tmp
-            emptyDir: {}
+            - name: tmp
+              emptyDir: {}
           restartPolicy: OnFailure
 ---
 # Backup Verification Job
@@ -515,7 +515,7 @@ metadata:
     app: backup-verification
     component: data-protection
 spec:
-  schedule: "0 6 * * *"  # Daily at 6 AM
+  schedule: "0 6 * * *" # Daily at 6 AM
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -534,66 +534,66 @@ spec:
             runAsGroup: 1000
             fsGroup: 1000
           containers:
-          - name: backup-verifier
-            image: nexafi/backup-verifier:latest
-            imagePullPolicy: Always
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                - ALL
-            env:
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: backup-s3-secret
-                  key: access_key_id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: backup-s3-secret
-                  key: secret_access_key
-            - name: AWS_DEFAULT_REGION
-              value: "us-west-2"
-            - name: S3_BUCKET_PRIMARY
-              value: "nexafi-backups-primary"
-            - name: S3_BUCKET_SECONDARY
-              value: "nexafi-backups-secondary"
-            - name: ENCRYPTION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: backup-encryption
-                  key: key
-            - name: VERIFICATION_SAMPLE_SIZE
-              value: "10"  # Verify 10 random backups
-            - name: SLACK_WEBHOOK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: backup-alerts
-                  key: slack_webhook
-            command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              echo "Starting backup verification..."
+            - name: backup-verifier
+              image: nexafi/backup-verifier:latest
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-s3-secret
+                      key: access_key_id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-s3-secret
+                      key: secret_access_key
+                - name: AWS_DEFAULT_REGION
+                  value: "us-west-2"
+                - name: S3_BUCKET_PRIMARY
+                  value: "nexafi-backups-primary"
+                - name: S3_BUCKET_SECONDARY
+                  value: "nexafi-backups-secondary"
+                - name: ENCRYPTION_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-encryption
+                      key: key
+                - name: VERIFICATION_SAMPLE_SIZE
+                  value: "10" # Verify 10 random backups
+                - name: SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-alerts
+                      key: slack_webhook
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "Starting backup verification..."
 
-              # Run backup verification script
-              /app/verify-backups.sh
+                  # Run backup verification script
+                  /app/verify-backups.sh
 
-              echo "Backup verification completed"
-            volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            resources:
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
-              limits:
-                memory: "512Mi"
-                cpu: "500m"
+                  echo "Backup verification completed"
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
           volumes:
-          - name: tmp
-            emptyDir: {}
+            - name: tmp
+              emptyDir: {}
           restartPolicy: OnFailure

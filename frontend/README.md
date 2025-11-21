@@ -1,12 +1,15 @@
 # NexaFi Frontend
 
 ## Overview
+
 This directory contains the frontend applications for the NexaFi project, supporting both web and mobile platforms. The goal is to provide a consistent, secure, and responsive user experience across different devices, built with modern web technologies and adhering to financial industry best practices.
 
 ## Architecture
+
 The frontend is structured into two main applications: `web` for browser-based access and `mobile` for native-like experiences. Both applications share a common technology stack to ensure consistency in development, maintainability, and adherence to security standards.
 
 ## Directory Structure
+
 ```
 frontend/
 ├── web/                  # Web application for desktop and mobile browsers
@@ -39,6 +42,7 @@ frontend/
 ```
 
 ## Technologies Used
+
 - **React**: A JavaScript library for building user interfaces, chosen for its component-based architecture that facilitates modular and testable code.
 - **Vite**: A fast build tool that provides a lightning-fast development experience and optimized production builds, contributing to application performance and responsiveness.
 - **pnpm**: A fast, disk space efficient package manager, ensuring consistent dependency management across development environments.
@@ -52,6 +56,7 @@ frontend/
 - **Framer Motion**: A production-ready motion library for React, used for smooth and engaging UI animations.
 
 ## Getting Started
+
 Each sub-directory (`web` and `mobile`) contains its own `package.json` with specific scripts for development and building. To get started with either application:
 
 1. Navigate to the respective directory:
@@ -70,6 +75,7 @@ Each sub-directory (`web` and `mobile`) contains its own `package.json` with spe
    ```
 
 ## Best Practices and Standards
+
 - **Component-Based Architecture**: The applications are built using a modular, component-based approach, promoting reusability, maintainability, and easier security auditing of individual components.
 - **Accessibility (A11y)**: Leveraging Radix UI components ensures a strong foundation for accessible user interfaces, complying with relevant accessibility guidelines (e.g., WCAG) crucial for financial services.
 - **Form Validation and Data Integrity**: Utilizing React Hook Form with Zod for schema validation ensures robust and reliable form handling, with both client-side and implicit server-side validation considerations to prevent invalid or malicious data submission.
@@ -82,7 +88,9 @@ Each sub-directory (`web` and `mobile`) contains its own `package.json` with spe
 - **Error Handling and Logging**: Comprehensive error handling is implemented to gracefully manage unexpected issues, and relevant errors are logged for monitoring and auditing purposes, without exposing sensitive information to the end-user.
 
 ## Security and Compliance Considerations
+
 Given the nature of financial applications, the frontend development adheres to the following security and compliance principles:
+
 - **Data Minimization**: Only necessary user data is collected and processed.
 - **Privacy by Design**: User privacy is considered throughout the design and development process.
 - **Regulatory Compliance**: Development practices are aligned with relevant financial regulations (e.g., GDPR, CCPA, PCI DSS where applicable) regarding data handling, security, and user consent.

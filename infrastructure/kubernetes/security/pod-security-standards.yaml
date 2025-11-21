@@ -94,11 +94,11 @@ defaultAddCapabilities: null
 fsGroup:
   type: MustRunAs
   ranges:
-  - min: 1000
-    max: 65535
+    - min: 1000
+      max: 65535
 readOnlyRootFilesystem: true
 requiredDropCapabilities:
-- ALL
+  - ALL
 runAsUser:
   type: MustRunAsNonRoot
 seLinuxContext:
@@ -106,23 +106,23 @@ seLinuxContext:
 supplementalGroups:
   type: MustRunAs
   ranges:
-  - min: 1000
-    max: 65535
+    - min: 1000
+      max: 65535
 volumes:
-- configMap
-- downwardAPI
-- emptyDir
-- persistentVolumeClaim
-- projected
-- secret
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
 users: []
 groups:
-- system:serviceaccounts:financial-services
-- system:serviceaccounts:security
-- system:serviceaccounts:api-gateway
-- system:serviceaccounts:database
-- system:serviceaccounts:backup-recovery
-- system:serviceaccounts:compliance
+  - system:serviceaccounts:financial-services
+  - system:serviceaccounts:security
+  - system:serviceaccounts:api-gateway
+  - system:serviceaccounts:database
+  - system:serviceaccounts:backup-recovery
+  - system:serviceaccounts:compliance
 ---
 # Pod Security Policy (deprecated but included for legacy clusters)
 apiVersion: policy/v1beta1
@@ -135,24 +135,24 @@ spec:
   requiredDropCapabilities:
     - ALL
   volumes:
-    - 'configMap'
-    - 'emptyDir'
-    - 'projected'
-    - 'secret'
-    - 'downwardAPI'
-    - 'persistentVolumeClaim'
+    - "configMap"
+    - "emptyDir"
+    - "projected"
+    - "secret"
+    - "downwardAPI"
+    - "persistentVolumeClaim"
   hostNetwork: false
   hostIPC: false
   hostPID: false
   runAsUser:
-    rule: 'MustRunAsNonRoot'
+    rule: "MustRunAsNonRoot"
   supplementalGroups:
-    rule: 'MustRunAs'
+    rule: "MustRunAs"
     ranges:
       - min: 1000
         max: 65535
   fsGroup:
-    rule: 'MustRunAs'
+    rule: "MustRunAs"
     ranges:
       - min: 1000
         max: 65535
@@ -165,11 +165,11 @@ kind: ClusterRole
 metadata:
   name: nexafi-restricted-psp-user
 rules:
-- apiGroups: ['policy']
-  resources: ['podsecuritypolicies']
-  verbs: ['use']
-  resourceNames:
-  - nexafi-restricted-psp
+  - apiGroups: ["policy"]
+    resources: ["podsecuritypolicies"]
+    verbs: ["use"]
+    resourceNames:
+      - nexafi-restricted-psp
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -180,21 +180,21 @@ roleRef:
   name: nexafi-restricted-psp-user
   apiGroup: rbac.authorization.k8s.io
 subjects:
-- kind: Group
-  name: system:serviceaccounts:financial-services
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:serviceaccounts:security
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:serviceaccounts:api-gateway
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:serviceaccounts:database
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:serviceaccounts:backup-recovery
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:serviceaccounts:compliance
-  apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:financial-services
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:security
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:api-gateway
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:database
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:backup-recovery
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: system:serviceaccounts:compliance
+    apiGroup: rbac.authorization.k8s.io

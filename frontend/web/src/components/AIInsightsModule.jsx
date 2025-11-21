@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Brain,
   TrendingUp,
@@ -20,26 +20,48 @@ import {
   Star,
   Eye,
   ThumbsUp,
-  ThumbsDown
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { LineChart as RechartsLineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import apiClient from '../lib/api';
-import { useApp, useAuth } from '../contexts/AppContext';
+  ThumbsDown,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import apiClient from "../lib/api";
+import { useApp, useAuth } from "../contexts/AppContext";
 
 const AIInsightsModule = () => {
   const { addNotification } = useApp();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('insights');
+  const [activeTab, setActiveTab] = useState("insights");
   const [insights, setInsights] = useState([]);
   const [predictions, setPredictions] = useState({});
   const [chatSessions, setChatSessions] = useState([]);
@@ -68,23 +90,30 @@ const AIInsightsModule = () => {
         cashFlow: {
           prediction: 15000,
           confidence: 0.85,
-          trend: 'positive',
-          factors: ['Seasonal increase', 'New client contracts', 'Reduced expenses']
+          trend: "positive",
+          factors: [
+            "Seasonal increase",
+            "New client contracts",
+            "Reduced expenses",
+          ],
         },
         creditScore: {
           score: 750,
           change: +15,
-          factors: ['Improved payment history', 'Lower credit utilization', 'Account age']
-        }
+          factors: [
+            "Improved payment history",
+            "Lower credit utilization",
+            "Account age",
+          ],
+        },
       };
       setPredictions(mockPredictions);
-
     } catch (error) {
-      console.error('Failed to load AI data:', error);
+      console.error("Failed to load AI data:", error);
       addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to load AI insights'
+        type: "error",
+        title: "Error",
+        message: "Failed to load AI insights",
       });
     } finally {
       setLoading(false);
@@ -95,66 +124,79 @@ const AIInsightsModule = () => {
     const mockInsights = [
       {
         id: 1,
-        title: 'Cash Flow Optimization',
-        description: 'Your cash flow could improve by 15% by adjusting payment terms with 3 key clients.',
-        type: 'opportunity',
-        severity: 'medium',
-        impact: 'high',
+        title: "Cash Flow Optimization",
+        description:
+          "Your cash flow could improve by 15% by adjusting payment terms with 3 key clients.",
+        type: "opportunity",
+        severity: "medium",
+        impact: "high",
         confidence: 0.87,
-        created_at: '2024-06-10T10:00:00Z',
-        is_read: false
+        created_at: "2024-06-10T10:00:00Z",
+        is_read: false,
       },
       {
         id: 2,
-        title: 'Expense Anomaly Detected',
-        description: 'Marketing expenses are 40% higher than usual this month. Review recent campaigns.',
-        type: 'alert',
-        severity: 'high',
-        impact: 'medium',
+        title: "Expense Anomaly Detected",
+        description:
+          "Marketing expenses are 40% higher than usual this month. Review recent campaigns.",
+        type: "alert",
+        severity: "high",
+        impact: "medium",
         confidence: 0.92,
-        created_at: '2024-06-09T15:30:00Z',
-        is_read: false
+        created_at: "2024-06-09T15:30:00Z",
+        is_read: false,
       },
       {
         id: 3,
-        title: 'Revenue Growth Opportunity',
-        description: 'Based on seasonal patterns, consider launching a promotion in the next 2 weeks.',
-        type: 'recommendation',
-        severity: 'low',
-        impact: 'high',
+        title: "Revenue Growth Opportunity",
+        description:
+          "Based on seasonal patterns, consider launching a promotion in the next 2 weeks.",
+        type: "recommendation",
+        severity: "low",
+        impact: "high",
         confidence: 0.78,
-        created_at: '2024-06-08T09:15:00Z',
-        is_read: true
+        created_at: "2024-06-08T09:15:00Z",
+        is_read: true,
       },
       {
         id: 4,
-        title: 'Payment Risk Assessment',
-        description: 'Client ABC Corp has delayed payments. Consider adjusting credit terms.',
-        type: 'risk',
-        severity: 'medium',
-        impact: 'medium',
+        title: "Payment Risk Assessment",
+        description:
+          "Client ABC Corp has delayed payments. Consider adjusting credit terms.",
+        type: "risk",
+        severity: "medium",
+        impact: "medium",
         confidence: 0.83,
-        created_at: '2024-06-07T14:20:00Z',
-        is_read: true
-      }
+        created_at: "2024-06-07T14:20:00Z",
+        is_read: true,
+      },
     ];
 
     const getInsightIcon = (type) => {
       switch (type) {
-        case 'opportunity': return <Target className="w-5 h-5 text-green-600" />;
-        case 'alert': return <AlertTriangle className="w-5 h-5 text-red-600" />;
-        case 'recommendation': return <Lightbulb className="w-5 h-5 text-blue-600" />;
-        case 'risk': return <AlertTriangle className="w-5 h-5 text-orange-600" />;
-        default: return <Brain className="w-5 h-5 text-purple-600" />;
+        case "opportunity":
+          return <Target className="w-5 h-5 text-green-600" />;
+        case "alert":
+          return <AlertTriangle className="w-5 h-5 text-red-600" />;
+        case "recommendation":
+          return <Lightbulb className="w-5 h-5 text-blue-600" />;
+        case "risk":
+          return <AlertTriangle className="w-5 h-5 text-orange-600" />;
+        default:
+          return <Brain className="w-5 h-5 text-purple-600" />;
       }
     };
 
     const getSeverityColor = (severity) => {
       switch (severity) {
-        case 'high': return 'bg-red-100 text-red-800';
-        case 'medium': return 'bg-yellow-100 text-yellow-800';
-        case 'low': return 'bg-green-100 text-green-800';
-        default: return 'bg-gray-100 text-gray-800';
+        case "high":
+          return "bg-red-100 text-red-800";
+        case "medium":
+          return "bg-yellow-100 text-yellow-800";
+        case "low":
+          return "bg-green-100 text-green-800";
+        default:
+          return "bg-gray-100 text-gray-800";
       }
     };
 
@@ -166,7 +208,9 @@ const AIInsightsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Insights Generated</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Insights Generated
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">247</p>
                   <div className="flex items-center mt-2 text-sm text-green-600">
                     <TrendingUp className="w-4 h-4 mr-1" />
@@ -184,7 +228,9 @@ const AIInsightsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Prediction Accuracy</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Prediction Accuracy
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">87.5%</p>
                   <div className="flex items-center mt-2 text-sm text-green-600">
                     <TrendingUp className="w-4 h-4 mr-1" />
@@ -202,7 +248,9 @@ const AIInsightsModule = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Actions Taken</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Actions Taken
+                  </p>
                   <p className="text-2xl font-bold text-gray-900">156</p>
                   <div className="flex items-center mt-2 text-sm text-blue-600">
                     <CheckCircle className="w-4 h-4 mr-1" />
@@ -236,7 +284,7 @@ const AIInsightsModule = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`p-4 border rounded-lg hover:shadow-md transition-shadow ${
-                    !insight.is_read ? 'bg-blue-50 border-blue-200' : 'bg-white'
+                    !insight.is_read ? "bg-blue-50 border-blue-200" : "bg-white"
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -244,18 +292,28 @@ const AIInsightsModule = () => {
                       {getInsightIcon(insight.type)}
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-medium text-gray-900">{insight.title}</h4>
+                          <h4 className="font-medium text-gray-900">
+                            {insight.title}
+                          </h4>
                           {!insight.is_read && (
-                            <Badge className="bg-blue-100 text-blue-800">New</Badge>
+                            <Badge className="bg-blue-100 text-blue-800">
+                              New
+                            </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">{insight.description}</p>
+                        <p className="text-sm text-gray-600 mb-3">
+                          {insight.description}
+                        </p>
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
-                          <span>Confidence: {(insight.confidence * 100).toFixed(0)}%</span>
+                          <span>
+                            Confidence: {(insight.confidence * 100).toFixed(0)}%
+                          </span>
                           <Badge className={getSeverityColor(insight.severity)}>
                             {insight.severity} priority
                           </Badge>
-                          <span>{new Date(insight.created_at).toLocaleDateString()}</span>
+                          <span>
+                            {new Date(insight.created_at).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -282,12 +340,12 @@ const AIInsightsModule = () => {
 
   const PredictionsTab = () => {
     const mockCashFlowData = [
-      { month: 'Jul', predicted: 18000, actual: null },
-      { month: 'Aug', predicted: 22000, actual: null },
-      { month: 'Sep', predicted: 19000, actual: null },
-      { month: 'Oct', predicted: 25000, actual: null },
-      { month: 'Nov', predicted: 21000, actual: null },
-      { month: 'Dec', predicted: 28000, actual: null }
+      { month: "Jul", predicted: 18000, actual: null },
+      { month: "Aug", predicted: 22000, actual: null },
+      { month: "Sep", predicted: 19000, actual: null },
+      { month: "Oct", predicted: 25000, actual: null },
+      { month: "Nov", predicted: 21000, actual: null },
+      { month: "Dec", predicted: 28000, actual: null },
     ];
 
     return (
@@ -308,15 +366,22 @@ const AIInsightsModule = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Next Month Prediction</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      Next Month Prediction
+                    </p>
                     <p className="text-2xl font-bold text-blue-600">
-                      ${predictions.cashFlow?.prediction?.toLocaleString() || '15,000'}
+                      $
+                      {predictions.cashFlow?.prediction?.toLocaleString() ||
+                        "15,000"}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Confidence</p>
                     <p className="text-lg font-bold text-green-600">
-                      {((predictions.cashFlow?.confidence || 0.85) * 100).toFixed(0)}%
+                      {(
+                        (predictions.cashFlow?.confidence || 0.85) * 100
+                      ).toFixed(0)}
+                      %
                     </p>
                   </div>
                 </div>
@@ -326,7 +391,12 @@ const AIInsightsModule = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Predicted']} />
+                    <Tooltip
+                      formatter={(value) => [
+                        `$${value.toLocaleString()}`,
+                        "Predicted",
+                      ]}
+                    />
                     <Line
                       type="monotone"
                       dataKey="predicted"
@@ -338,13 +408,20 @@ const AIInsightsModule = () => {
                 </ResponsiveContainer>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Key Factors:</p>
-                  {(predictions.cashFlow?.factors || []).map((factor, index) => (
-                    <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                      <CheckCircle className="w-3 h-3 text-green-500" />
-                      <span>{factor}</span>
-                    </div>
-                  ))}
+                  <p className="text-sm font-medium text-gray-700">
+                    Key Factors:
+                  </p>
+                  {(predictions.cashFlow?.factors || []).map(
+                    (factor, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center space-x-2 text-sm text-gray-600"
+                      >
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        <span>{factor}</span>
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -365,7 +442,10 @@ const AIInsightsModule = () => {
               <div className="space-y-4">
                 <div className="text-center">
                   <div className="relative w-32 h-32 mx-auto">
-                    <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
+                    <svg
+                      className="w-32 h-32 transform -rotate-90"
+                      viewBox="0 0 36 36"
+                    >
                       <path
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         fill="none"
@@ -377,7 +457,7 @@ const AIInsightsModule = () => {
                         fill="none"
                         stroke="#3b82f6"
                         strokeWidth="2"
-                        strokeDasharray={`${(predictions.creditScore?.score || 750) / 850 * 100}, 100`}
+                        strokeDasharray={`${((predictions.creditScore?.score || 750) / 850) * 100}, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -385,32 +465,39 @@ const AIInsightsModule = () => {
                         <div className="text-2xl font-bold text-gray-900">
                           {predictions.creditScore?.score || 750}
                         </div>
-                        <div className="text-xs text-gray-500">Credit Score</div>
+                        <div className="text-xs text-gray-500">
+                          Credit Score
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-4">
                     <Badge className="bg-green-100 text-green-800">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      +{predictions.creditScore?.change || 15} this month
+                      <TrendingUp className="w-3 h-3 mr-1" />+
+                      {predictions.creditScore?.change || 15} this month
                     </Badge>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Improvement Factors:</p>
-                  {(predictions.creditScore?.factors || []).map((factor, index) => (
-                    <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                      <CheckCircle className="w-3 h-3 text-green-500" />
-                      <span>{factor}</span>
-                    </div>
-                  ))}
+                  <p className="text-sm font-medium text-gray-700">
+                    Improvement Factors:
+                  </p>
+                  {(predictions.creditScore?.factors || []).map(
+                    (factor, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center space-x-2 text-sm text-gray-600"
+                      >
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        <span>{factor}</span>
+                      </div>
+                    ),
+                  )}
                 </div>
 
-                <Button className="w-full">
-                  Generate Detailed Report
-                </Button>
+                <Button className="w-full">Generate Detailed Report</Button>
               </div>
             </CardContent>
           </Card>
@@ -459,9 +546,15 @@ const AIInsightsModule = () => {
                         <SelectValue placeholder="Select scenario" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="current">Current Trajectory</SelectItem>
-                        <SelectItem value="optimistic">Optimistic Scenario</SelectItem>
-                        <SelectItem value="conservative">Conservative Scenario</SelectItem>
+                        <SelectItem value="current">
+                          Current Trajectory
+                        </SelectItem>
+                        <SelectItem value="optimistic">
+                          Optimistic Scenario
+                        </SelectItem>
+                        <SelectItem value="conservative">
+                          Conservative Scenario
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -479,34 +572,38 @@ const AIInsightsModule = () => {
   };
 
   const ChatTab = () => {
-    const [newMessage, setNewMessage] = useState('');
+    const [newMessage, setNewMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
 
     const mockMessages = [
       {
         id: 1,
-        content: "Hello! I'm your AI financial advisor. How can I help you today?",
-        sender: 'ai',
-        timestamp: '2024-06-10T10:00:00Z'
+        content:
+          "Hello! I'm your AI financial advisor. How can I help you today?",
+        sender: "ai",
+        timestamp: "2024-06-10T10:00:00Z",
       },
       {
         id: 2,
-        content: "I'd like to understand my cash flow trends for the past quarter.",
-        sender: 'user',
-        timestamp: '2024-06-10T10:01:00Z'
+        content:
+          "I'd like to understand my cash flow trends for the past quarter.",
+        sender: "user",
+        timestamp: "2024-06-10T10:01:00Z",
       },
       {
         id: 3,
-        content: "Based on your financial data, your cash flow has shown a positive trend over the past quarter. Your average monthly cash flow increased by 15%, primarily driven by improved collection times and new client acquisitions. Would you like me to break down the specific factors contributing to this improvement?",
-        sender: 'ai',
-        timestamp: '2024-06-10T10:02:00Z'
+        content:
+          "Based on your financial data, your cash flow has shown a positive trend over the past quarter. Your average monthly cash flow increased by 15%, primarily driven by improved collection times and new client acquisitions. Would you like me to break down the specific factors contributing to this improvement?",
+        sender: "ai",
+        timestamp: "2024-06-10T10:02:00Z",
       },
       {
         id: 4,
-        content: "Yes, please provide more details about the collection times improvement.",
-        sender: 'user',
-        timestamp: '2024-06-10T10:03:00Z'
-      }
+        content:
+          "Yes, please provide more details about the collection times improvement.",
+        sender: "user",
+        timestamp: "2024-06-10T10:03:00Z",
+      },
     ];
 
     const sendMessage = async () => {
@@ -515,24 +612,25 @@ const AIInsightsModule = () => {
       const userMessage = {
         id: Date.now(),
         content: newMessage,
-        sender: 'user',
-        timestamp: new Date().toISOString()
+        sender: "user",
+        timestamp: new Date().toISOString(),
       };
 
       // Add user message
-      setChatMessages(prev => [...prev, userMessage]);
-      setNewMessage('');
+      setChatMessages((prev) => [...prev, userMessage]);
+      setNewMessage("");
       setIsTyping(true);
 
       // Simulate AI response
       setTimeout(() => {
         const aiResponse = {
           id: Date.now() + 1,
-          content: "I understand your question. Let me analyze your data and provide you with detailed insights...",
-          sender: 'ai',
-          timestamp: new Date().toISOString()
+          content:
+            "I understand your question. Let me analyze your data and provide you with detailed insights...",
+          sender: "ai",
+          timestamp: new Date().toISOString(),
         };
-        setChatMessages(prev => [...prev, aiResponse]);
+        setChatMessages((prev) => [...prev, aiResponse]);
         setIsTyping(false);
       }, 2000);
     };
@@ -555,27 +653,31 @@ const AIInsightsModule = () => {
                 {mockMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.sender === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-900'
+                        message.sender === "user"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-900"
                       }`}
                     >
                       <div className="flex items-start space-x-2">
-                        {message.sender === 'ai' && (
+                        {message.sender === "ai" && (
                           <Bot className="w-4 h-4 mt-1 text-blue-600" />
                         )}
-                        {message.sender === 'user' && (
+                        {message.sender === "user" && (
                           <User className="w-4 h-4 mt-1 text-white" />
                         )}
                         <div>
                           <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-                          }`}>
+                          <p
+                            className={`text-xs mt-1 ${
+                              message.sender === "user"
+                                ? "text-blue-100"
+                                : "text-gray-500"
+                            }`}
+                          >
                             {new Date(message.timestamp).toLocaleTimeString()}
                           </p>
                         </div>
@@ -591,8 +693,14 @@ const AIInsightsModule = () => {
                         <Bot className="w-4 h-4 text-blue-600" />
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.1s" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                          ></div>
                         </div>
                       </div>
                     </div>
@@ -606,10 +714,13 @@ const AIInsightsModule = () => {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Ask me about your finances..."
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 className="flex-1"
               />
-              <Button onClick={sendMessage} disabled={!newMessage.trim() || isTyping}>
+              <Button
+                onClick={sendMessage}
+                disabled={!newMessage.trim() || isTyping}
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
@@ -632,7 +743,7 @@ const AIInsightsModule = () => {
                 "Which expenses should I prioritize cutting?",
                 "What are my best performing revenue streams?",
                 "How does my business compare to industry benchmarks?",
-                "What tax optimization strategies do you recommend?"
+                "What tax optimization strategies do you recommend?",
               ].map((question, index) => (
                 <Button
                   key={index}
@@ -670,10 +781,16 @@ const AIInsightsModule = () => {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">AI Insights</h1>
-        <p className="text-gray-600 mt-1">AI-powered financial analysis, predictions, and advisory</p>
+        <p className="text-gray-600 mt-1">
+          AI-powered financial analysis, predictions, and advisory
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="predictions">Predictions</TabsTrigger>

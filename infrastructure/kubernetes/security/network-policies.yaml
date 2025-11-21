@@ -7,8 +7,8 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
 ---
 # Allow DNS resolution for all pods
 apiVersion: networking.k8s.io/v1
@@ -19,14 +19,14 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Egress
+    - Egress
   egress:
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 ---
 # Financial services network policy
 apiVersion: networking.k8s.io/v1
@@ -39,75 +39,75 @@ spec:
     matchLabels:
       tier: financial
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow traffic from API Gateway
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: api-gateway
-    - podSelector:
-        matchLabels:
-          app: api-gateway
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow traffic from monitoring namespace
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: monitoring
-    ports:
-    - protocol: TCP
-      port: 9090
+    # Allow traffic from API Gateway
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: api-gateway
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow traffic from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
   egress:
-  # Allow DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow HTTPS to external services
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
-  # Allow database connections
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: database
-    ports:
-    - protocol: TCP
-      port: 5432
-    - protocol: TCP
-      port: 3306
-  # Allow Redis connections
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: infrastructure-components
-    - podSelector:
-        matchLabels:
-          app: redis
-    ports:
-    - protocol: TCP
-      port: 6379
-  # Allow RabbitMQ connections
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: infrastructure-components
-    - podSelector:
-        matchLabels:
-          app: rabbitmq
-    ports:
-    - protocol: TCP
-      port: 5672
-    - protocol: TCP
-      port: 15672
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow HTTPS to external services
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow database connections
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 3306
+    # Allow Redis connections
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: infrastructure-components
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow RabbitMQ connections
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: infrastructure-components
+        - podSelector:
+            matchLabels:
+              app: rabbitmq
+      ports:
+        - protocol: TCP
+          port: 5672
+        - protocol: TCP
+          port: 15672
 ---
 # API Gateway network policy
 apiVersion: networking.k8s.io/v1
@@ -120,54 +120,54 @@ spec:
     matchLabels:
       app: api-gateway
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow traffic from ingress controller
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow traffic from load balancer
-  - from: []
-    ports:
-    - protocol: TCP
-      port: 8080
+    # Allow traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow traffic from load balancer
+    - from: []
+      ports:
+        - protocol: TCP
+          port: 8080
   egress:
-  # Allow DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow connections to financial services
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: financial-services
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow connections to authentication services
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: security
-    - podSelector:
-        matchLabels:
-          app: auth-service
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow HTTPS to external services
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow connections to financial services
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: financial-services
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow connections to authentication services
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: security
+        - podSelector:
+            matchLabels:
+              app: auth-service
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow HTTPS to external services
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
 ---
 # Security namespace network policy
 apiVersion: networking.k8s.io/v1
@@ -178,76 +178,76 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow traffic from API Gateway for authentication
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: api-gateway
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow traffic from financial services for authorization
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: financial-services
-    ports:
-    - protocol: TCP
-      port: 8080
-  # Allow monitoring
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: monitoring
-    ports:
-    - protocol: TCP
-      port: 9090
-  # Allow Vault cluster communication
-  - from:
-    - podSelector:
-        matchLabels:
-          app: vault
-    ports:
-    - protocol: TCP
-      port: 8200
-    - protocol: TCP
-      port: 8201
+    # Allow traffic from API Gateway for authentication
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow traffic from financial services for authorization
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: financial-services
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+    # Allow Vault cluster communication
+    - from:
+        - podSelector:
+            matchLabels:
+              app: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+        - protocol: TCP
+          port: 8201
   egress:
-  # Allow DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow HTTPS to external services (for OIDC, LDAP, etc.)
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
-    - protocol: TCP
-      port: 636  # LDAPS
-  # Allow database connections
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: database
-    ports:
-    - protocol: TCP
-      port: 5432
-  # Allow Vault cluster communication
-  - to:
-    - podSelector:
-        matchLabels:
-          app: vault
-    ports:
-    - protocol: TCP
-      port: 8200
-    - protocol: TCP
-      port: 8201
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow HTTPS to external services (for OIDC, LDAP, etc.)
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 636 # LDAPS
+    # Allow database connections
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: database
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow Vault cluster communication
+    - to:
+        - podSelector:
+            matchLabels:
+              app: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+        - protocol: TCP
+          port: 8201
 ---
 # Monitoring namespace network policy
 apiVersion: networking.k8s.io/v1
@@ -258,48 +258,48 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow traffic from ingress for dashboards
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 3000  # Grafana
-    - protocol: TCP
-      port: 9090  # Prometheus
-  # Allow scraping from all namespaces
-  - from: []
-    ports:
-    - protocol: TCP
-      port: 9090
+    # Allow traffic from ingress for dashboards
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000 # Grafana
+        - protocol: TCP
+          port: 9090 # Prometheus
+    # Allow scraping from all namespaces
+    - from: []
+      ports:
+        - protocol: TCP
+          port: 9090
   egress:
-  # Allow DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow scraping metrics from all namespaces
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 9090
-    - protocol: TCP
-      port: 8080
-    - protocol: TCP
-      port: 8081
-    - protocol: TCP
-      port: 8082
-  # Allow HTTPS to external services
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow scraping metrics from all namespaces
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 8082
+    # Allow HTTPS to external services
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
 ---
 # Database namespace network policy
 apiVersion: networking.k8s.io/v1
@@ -310,65 +310,65 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow connections from financial services
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: financial-services
-    ports:
-    - protocol: TCP
-      port: 5432
-    - protocol: TCP
-      port: 3306
-  # Allow connections from security services
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: security
-    ports:
-    - protocol: TCP
-      port: 5432
-    - protocol: TCP
-      port: 3306
-  # Allow monitoring
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: monitoring
-    ports:
-    - protocol: TCP
-      port: 9090
-  # Allow backup services
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: backup-recovery
-    ports:
-    - protocol: TCP
-      port: 5432
-    - protocol: TCP
-      port: 3306
+    # Allow connections from financial services
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: financial-services
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 3306
+    # Allow connections from security services
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: security
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 3306
+    # Allow monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+    # Allow backup services
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: backup-recovery
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 3306
   egress:
-  # Allow DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow database replication
-  - to:
-    - podSelector:
-        matchLabels:
-          tier: database
-    ports:
-    - protocol: TCP
-      port: 5432
-    - protocol: TCP
-      port: 3306
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow database replication
+    - to:
+        - podSelector:
+            matchLabels:
+              tier: database
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 3306
 ---
 # Infrastructure components network policy
 apiVersion: networking.k8s.io/v1
@@ -379,48 +379,48 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  # Allow connections from financial services
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: financial-services
-    ports:
-    - protocol: TCP
-      port: 6379  # Redis
-    - protocol: TCP
-      port: 5672  # RabbitMQ
-    - protocol: TCP
-      port: 15672 # RabbitMQ Management
-    - protocol: TCP
-      port: 9200  # Elasticsearch
-  # Allow monitoring
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: monitoring
-    ports:
-    - protocol: TCP
-      port: 9090
+    # Allow connections from financial services
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: financial-services
+      ports:
+        - protocol: TCP
+          port: 6379 # Redis
+        - protocol: TCP
+          port: 5672 # RabbitMQ
+        - protocol: TCP
+          port: 15672 # RabbitMQ Management
+        - protocol: TCP
+          port: 9200 # Elasticsearch
+    # Allow monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
   egress:
-  # Allow DNS
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Allow cluster communication
-  - to:
-    - podSelector: {}
-    ports:
-    - protocol: TCP
-      port: 6379
-    - protocol: TCP
-      port: 5672
-    - protocol: TCP
-      port: 9200
-    - protocol: TCP
-      port: 9300
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow cluster communication
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 5672
+        - protocol: TCP
+          port: 9200
+        - protocol: TCP
+          port: 9300

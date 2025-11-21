@@ -456,88 +456,88 @@ spec:
         runAsGroup: 65534
         fsGroup: 65534
       containers:
-      - name: prometheus
-        image: prom/prometheus:v2.45.0
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        args:
-        - '--config.file=/etc/prometheus/prometheus.yml'
-        - '--storage.tsdb.path=/prometheus/'
-        - '--web.console.libraries=/etc/prometheus/console_libraries'
-        - '--web.console.templates=/etc/prometheus/consoles'
-        - '--storage.tsdb.retention.time=30d'
-        - '--storage.tsdb.retention.size=50GB'
-        - '--web.enable-lifecycle'
-        - '--web.enable-admin-api'
-        - '--log.level=info'
-        - '--log.format=json'
-        ports:
-        - containerPort: 9090
-          name: web
-          protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /-/healthy
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 15
-          timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /-/ready
-            port: 9090
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 4
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "2Gi"
-            cpu: "1000m"
-          limits:
-            memory: "4Gi"
-            cpu: "2000m"
-        volumeMounts:
-        - name: config
-          mountPath: /etc/prometheus
-          readOnly: true
-        - name: rules
-          mountPath: /etc/prometheus/rules
-          readOnly: true
-        - name: storage
-          mountPath: /prometheus
-        - name: tmp
-          mountPath: /tmp
+        - name: prometheus
+          image: prom/prometheus:v2.45.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+            - "--web.console.libraries=/etc/prometheus/console_libraries"
+            - "--web.console.templates=/etc/prometheus/consoles"
+            - "--storage.tsdb.retention.time=30d"
+            - "--storage.tsdb.retention.size=50GB"
+            - "--web.enable-lifecycle"
+            - "--web.enable-admin-api"
+            - "--log.level=info"
+            - "--log.format=json"
+          ports:
+            - containerPort: 9090
+              name: web
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 4
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+              readOnly: true
+            - name: rules
+              mountPath: /etc/prometheus/rules
+              readOnly: true
+            - name: storage
+              mountPath: /prometheus
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: config
-        configMap:
-          name: prometheus-config
-      - name: rules
-        configMap:
-          name: prometheus-config
-      - name: tmp
-        emptyDir: {}
-      - name: storage
-        persistentVolumeClaim:
-          claimName: prometheus-storage
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: rules
+          configMap:
+            name: prometheus-config
+        - name: tmp
+          emptyDir: {}
+        - name: storage
+          persistentVolumeClaim:
+            claimName: prometheus-storage
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - prometheus
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - prometheus
+                topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
@@ -550,10 +550,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: web
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
+    - name: web
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
   selector:
     app: prometheus
 ---
@@ -567,7 +567,7 @@ metadata:
     component: monitoring
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   storageClassName: gp3-encrypted
   resources:
     requests:

@@ -157,134 +157,134 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - name: dr-controller
-        image: nexafi/disaster-recovery-controller:latest
-        imagePullPolicy: Always
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        env:
-        - name: PORT
-          value: "8080"
-        - name: METRICS_PORT
-          value: "9090"
-        - name: PRIMARY_REGION
-          value: "us-west-2"
-        - name: SECONDARY_REGION
-          value: "us-east-1"
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: dr-aws-secret
-              key: access_key_id
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: dr-aws-secret
-              key: secret_access_key
-        - name: ROUTE53_HOSTED_ZONE_ID
-          valueFrom:
-            secretKeyRef:
-              name: dr-aws-secret
-              key: hosted_zone_id
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: dr-db-secret
-              key: url
-        - name: VAULT_ADDR
-          value: "https://vault.security.svc.cluster.local:8200"
-        - name: VAULT_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: vault-token
-              key: token
-        - name: SLACK_WEBHOOK_URL
-          valueFrom:
-            secretKeyRef:
-              name: dr-alerts
-              key: slack_webhook
-        - name: PAGERDUTY_INTEGRATION_KEY
-          valueFrom:
-            secretKeyRef:
-              name: dr-alerts
-              key: pagerduty_key
-        - name: EMAIL_SMTP_HOST
-          value: "smtp.nexafi.com"
-        - name: EMAIL_FROM
-          value: "dr@nexafi.com"
-        - name: AUTOMATED_FAILOVER_ENABLED
-          value: "true"
-        - name: HEALTH_CHECK_INTERVAL
-          value: "30s"
-        - name: FAILOVER_THRESHOLD
-          value: "3"
-        - name: LOG_LEVEL
-          value: "INFO"
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        - containerPort: 9090
-          name: metrics
-          protocol: TCP
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: config
-          mountPath: /app/config
-          readOnly: true
-        - name: scripts
-          mountPath: /app/scripts
-          readOnly: true
+        - name: dr-controller
+          image: nexafi/disaster-recovery-controller:latest
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: PORT
+              value: "8080"
+            - name: METRICS_PORT
+              value: "9090"
+            - name: PRIMARY_REGION
+              value: "us-west-2"
+            - name: SECONDARY_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: dr-aws-secret
+                  key: access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dr-aws-secret
+                  key: secret_access_key
+            - name: ROUTE53_HOSTED_ZONE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: dr-aws-secret
+                  key: hosted_zone_id
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: dr-db-secret
+                  key: url
+            - name: VAULT_ADDR
+              value: "https://vault.security.svc.cluster.local:8200"
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-token
+                  key: token
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: dr-alerts
+                  key: slack_webhook
+            - name: PAGERDUTY_INTEGRATION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: dr-alerts
+                  key: pagerduty_key
+            - name: EMAIL_SMTP_HOST
+              value: "smtp.nexafi.com"
+            - name: EMAIL_FROM
+              value: "dr@nexafi.com"
+            - name: AUTOMATED_FAILOVER_ENABLED
+              value: "true"
+            - name: HEALTH_CHECK_INTERVAL
+              value: "30s"
+            - name: FAILOVER_THRESHOLD
+              value: "3"
+            - name: LOG_LEVEL
+              value: "INFO"
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9090
+              name: metrics
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: scripts
+              mountPath: /app/scripts
+              readOnly: true
       volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: config
-        configMap:
-          name: disaster-recovery-config
-      - name: scripts
-        configMap:
-          name: dr-scripts
-          defaultMode: 0755
+        - name: tmp
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: disaster-recovery-config
+        - name: scripts
+          configMap:
+            name: dr-scripts
+            defaultMode: 0755
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - disaster-recovery-controller
-              topologyKey: kubernetes.io/hostname
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - disaster-recovery-controller
+                topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1
 kind: Service
@@ -297,14 +297,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8080
-    targetPort: 8080
-    protocol: TCP
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
   selector:
     app: disaster-recovery-controller
 ---
@@ -507,7 +507,7 @@ metadata:
     app: dr-test
     component: data-protection
 spec:
-  schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM
+  schedule: "0 2 * * 0" # Weekly on Sunday at 2 AM
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
@@ -526,73 +526,73 @@ spec:
             runAsGroup: 1000
             fsGroup: 1000
           containers:
-          - name: dr-tester
-            image: nexafi/dr-tester:latest
-            imagePullPolicy: Always
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop:
-                - ALL
-            env:
-            - name: TEST_TYPE
-              value: "automated"
-            - name: SECONDARY_REGION
-              value: "us-east-1"
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: dr-aws-secret
-                  key: access_key_id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: dr-aws-secret
-                  key: secret_access_key
-            - name: SLACK_WEBHOOK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: dr-alerts
-                  key: slack_webhook
-            command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              echo "Starting DR test..."
+            - name: dr-tester
+              image: nexafi/dr-tester:latest
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              env:
+                - name: TEST_TYPE
+                  value: "automated"
+                - name: SECONDARY_REGION
+                  value: "us-east-1"
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: dr-aws-secret
+                      key: access_key_id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: dr-aws-secret
+                      key: secret_access_key
+                - name: SLACK_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: dr-alerts
+                      key: slack_webhook
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "Starting DR test..."
 
-              # Test backup restoration
-              /app/scripts/test-backup-restore.sh
+                  # Test backup restoration
+                  /app/scripts/test-backup-restore.sh
 
-              # Test secondary region readiness
-              /app/scripts/test-secondary-region.sh
+                  # Test secondary region readiness
+                  /app/scripts/test-secondary-region.sh
 
-              # Test failover procedures (simulation)
-              /app/scripts/test-failover-simulation.sh
+                  # Test failover procedures (simulation)
+                  /app/scripts/test-failover-simulation.sh
 
-              # Generate test report
-              /app/scripts/generate-dr-report.sh
+                  # Generate test report
+                  /app/scripts/generate-dr-report.sh
 
-              echo "DR test completed successfully"
-            volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-            - name: test-scripts
-              mountPath: /app/scripts
-              readOnly: true
-            resources:
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
-              limits:
-                memory: "512Mi"
-                cpu: "500m"
+                  echo "DR test completed successfully"
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: test-scripts
+                  mountPath: /app/scripts
+                  readOnly: true
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
           volumes:
-          - name: tmp
-            emptyDir: {}
-          - name: test-scripts
-            configMap:
-              name: dr-scripts
-              defaultMode: 0755
+            - name: tmp
+              emptyDir: {}
+            - name: test-scripts
+              configMap:
+                name: dr-scripts
+                defaultMode: 0755
           restartPolicy: OnFailure

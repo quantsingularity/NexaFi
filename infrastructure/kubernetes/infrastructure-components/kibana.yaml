@@ -18,47 +18,47 @@ spec:
         tier: logging
     spec:
       containers:
-      - name: kibana
-        image: docker.elastic.co/kibana/kibana:8.11.0
-        ports:
-        - containerPort: 5601
-        env:
-        - name: ELASTICSEARCH_HOSTS
-          value: "http://elasticsearch-service.nexafi-infra.svc.cluster.local:9200"
-        - name: SERVER_NAME
-          value: "nexafi-kibana"
-        - name: SERVER_HOST
-          value: "0.0.0.0"
-        - name: XPACK_SECURITY_ENABLED
-          value: "false"
-        - name: XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY
-          value: "nexafi-kibana-encryption-key-32-chars"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /api/status
-            port: 5601
-          initialDelaySeconds: 120
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /api/status
-            port: 5601
-          initialDelaySeconds: 60
-          periodSeconds: 10
-        volumeMounts:
-        - name: kibana-config
-          mountPath: /usr/share/kibana/config
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.11.0
+          ports:
+            - containerPort: 5601
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch-service.nexafi-infra.svc.cluster.local:9200"
+            - name: SERVER_NAME
+              value: "nexafi-kibana"
+            - name: SERVER_HOST
+              value: "0.0.0.0"
+            - name: XPACK_SECURITY_ENABLED
+              value: "false"
+            - name: XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY
+              value: "nexafi-kibana-encryption-key-32-chars"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          volumeMounts:
+            - name: kibana-config
+              mountPath: /usr/share/kibana/config
       volumes:
-      - name: kibana-config
-        configMap:
-          name: kibana-config
+        - name: kibana-config
+          configMap:
+            name: kibana-config
 ---
 apiVersion: v1
 kind: Service
@@ -71,9 +71,9 @@ spec:
   selector:
     app: kibana
   ports:
-  - protocol: TCP
-    port: 5601
-    targetPort: 5601
+    - protocol: TCP
+      port: 5601
+      targetPort: 5601
   type: ClusterIP
 ---
 apiVersion: v1
