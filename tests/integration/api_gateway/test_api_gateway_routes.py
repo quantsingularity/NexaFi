@@ -15,10 +15,10 @@ def client():
 
 @pytest.fixture(autouse=True)
 def mock_requests():
-    with patch(\'requests.get\') as mock_get, \
-         patch(\'requests.post\') as mock_post, \
-         patch(\'requests.put\') as mock_put, \
-         patch(\'requests.delete\') as mock_delete:
+    with patch("requests.get") as mock_get, \
+         patch("requests.post") as mock_post, \
+         patch("requests.put") as mock_put, \
+         patch("requests.delete") as mock_delete:
         yield mock_get, mock_post, mock_put, mock_delete
 
 class TestAPIGatewayRoutes:

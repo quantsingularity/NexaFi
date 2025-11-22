@@ -88,9 +88,9 @@ def test_sql_injection_vulnerability():
     # For Flask-SQLAlchemy, direct SQLi is often mitigated, but input validation is still key.
     vulnerable_endpoints = [
         ("user-service", "/api/v1/users/profile", "PUT", {\"email\": \"test@example.com\", \"first_name\": \"admin\"},
-         {\"last_name\": \"\"\" OR 1=1--\"\"}),
+         {\"last_name\": "\" OR 1=1--\""}),
         ("user-service", "/api/v1/users/profile", "PUT", {\"email\": \"test@example.com\", \"first_name\": \"admin\"},
-         {\"last_name\": \""); DROP TABLE users;--\"}),
+         {\"last_name\": ""); DROP TABLE users;--"}),
     ]
 
     for service, endpoint, method, base_data, sqli_payload in vulnerable_endpoints:

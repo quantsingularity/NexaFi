@@ -16,11 +16,11 @@ from NexaFi.backend.user_service.src.models.user import (AuditLog,
                                                          UserSession, db)
 
 
-@pytest.fixture(scope=\'module\')
+@pytest.fixture(scope="module")
 def client():
-    app.config[\'TESTING\'] = True
-    app.config[\'SQLALCHEMY_DATABASE_URI\'] = \'sqlite:///:memory:\'
-    app.config[\'SECRET_KEY\'] = \'test-secret-key\'
+    app.config["TESTING"] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SECRET_KEY"] = "test-secret-key"
     with app.test_client() as client:
         with app.app_context():
             db.create_all()

@@ -12,7 +12,7 @@ from NexaFi.backend.shared.utils.cache import (CacheManager,
 
 @pytest.fixture
 def mock_redis_client():
-    with patch(\'redis.Redis\') as mock_redis:
+    with patch("redis.Redis") as mock_redis:
         mock_instance = MagicMock()
         mock_redis.return_value = mock_instance
         yield mock_instance

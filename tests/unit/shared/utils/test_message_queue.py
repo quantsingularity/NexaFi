@@ -12,10 +12,10 @@ from NexaFi.backend.shared.utils.message_queue import (MessageQueue, Queues,
 
 @pytest.fixture
 def mock_pika():
-    with patch(\'pika.BlockingConnection\') as mock_conn_class,
-         patch(\'pika.PlainCredentials\') as mock_credentials_class,
-         patch(\'pika.ConnectionParameters\') as mock_params_class,
-         patch(\'pika.BasicProperties\') as mock_properties_class:
+    with patch("pika.BlockingConnection") as mock_conn_class,
+         patch("pika.PlainCredentials") as mock_credentials_class,
+         patch("pika.ConnectionParameters") as mock_params_class,
+         patch("pika.BasicProperties") as mock_properties_class:
 
         mock_connection = MagicMock()
         mock_channel = MagicMock()
@@ -134,21 +134,21 @@ class TestMessageQueue:
 
 class TestGlobalFunctions:
 
-    @patch(\'NexaFi.backend.shared.utils.message_queue.mq\')
+    @patch("NexaFi.backend.shared.utils.message_queue.mq")
     def test_publish_task_success(self, mock_mq):
         mock_mq.publish_message.return_value = True
         result = publish_task(\'test_queue\', {\'task\': \'data\'})
         assert result == True
         mock_mq.publish_message.assert_called_once_with(\'test_queue\', {\'task\': \'data\'})
 
-    @patch(\'NexaFi.backend.shared.utils.message_queue.mq\')
+    @patch("NexaFi.backend.shared.utils.message_queue.mq")
     def test_publish_task_failure(self, mock_mq):
         mock_mq.publish_message.side_effect = Exception(\'Publish Error\')
         result = publish_task(\'test_queue\', {\'task\': \'data\'})
         assert result == False
         mock_mq.publish_message.assert_called_once_with(\'test_queue\', {\'task\': \'data\'})
 
-    @patch(\'NexaFi.backend.shared.utils.message_queue.mq\')
+    @patch("NexaFi.backend.shared.utils.message_queue.mq")
     def test_setup_queues_success(self, mock_mq):
         mock_mq.connect.return_value = None
         mock_mq.declare_queue.return_value = None
@@ -170,7 +170,7 @@ class TestGlobalFunctions:
         assert mock_mq.declare_queue.call_count == len(expected_calls)
         mock_mq.disconnect.assert_called_once()
 
-    @patch(\'NexaFi.backend.shared.utils.message_queue.mq\')
+    @patch("NexaFi.backend.shared.utils.message_queue.mq")
     def test_setup_queues_failure(self, mock_mq):
         mock_mq.connect.side_effect = Exception(\'Connection Error\')
         mock_mq.disconnect.return_value = None
