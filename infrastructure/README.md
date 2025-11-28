@@ -257,19 +257,6 @@ export SECONDARY_REGION=us-east-1
 - **Best Practices**: Continuous adoption of industry best practices
 - **Community Contributions**: Open to community feedback and contributions
 
-## 📞 Contact Information
-
-- **DevOps Team**: devops@nexafi.com
-- **Security Team**: security@nexafi.com
-- **Compliance Team**: compliance@nexafi.com
-- **Emergency Contact**: emergency@nexafi.com
-
 ## 📄 License
 
-This infrastructure code is proprietary to NexaFi and is subject to the terms and conditions outlined in the NexaFi Software License Agreement.
-
----
-
-**Last Updated**: $(date)
-**Version**: 1.0.0
-**Maintained By**: NexaFi DevOps Team
+## This infrastructure code is proprietary to NexaFi and is subject to the terms and conditions outlined in the NexaFi Software License Agreement.
