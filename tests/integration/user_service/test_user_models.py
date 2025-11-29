@@ -1,4 +1,3 @@
-
 import json
 from datetime import datetime, timedelta
 
@@ -6,45 +5,65 @@ import pyotp
 import pytest
 
 from NexaFi.backend.user_service.src.main import app
-from NexaFi.backend.user_service.src.models.user import (AuditLog,
-                                                         EmailVerification,
-                                                         PasswordReset,
-                                                         Permission, Role,
-                                                         RolePermission, User,
-                                                         UserCustomField,
-                                                         UserProfile, UserRole,
-                                                         UserSession, db)
+from NexaFi.backend.user_service.src.models.user import (
+    AuditLog,
+    EmailVerification,
+    PasswordReset,
+    Permission,
+    Role,
+    RolePermission,
+    User,
+    UserCustomField,
+    UserProfile,
+    UserRole,
+    UserSession,
+    db,
+)
 
 
 @pytest.fixture(scope="module")
 def client():
+    # 1. Configuration for testing
     app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
     app.config["SECRET_KEY"] = "test-secret-key"
     with app.test_client() as client:
         with app.app_context():
+            # 2. Setup: Create all tables
             db.create_all()
+
+            # 3. Fix: Use consistent quotes (f-strings or double quotes)
+            # to avoid mixing quotes when defining strings.
             # Create default roles and permissions for testing
-            admin_role = Role(name=\'admin\', display_name=\'Administrator\')
-            business_owner_role = Role(name=\'business_owner\', display_name=\'Business Owner\')
+            admin_role = Role(name="admin", display_name="Administrator")
+            business_owner_role = Role(
+                name="business_owner", display_name="Business Owner"
+            )
             db.session.add_all([admin_role, business_owner_role])
             db.session.commit()
 
-            manage_users_perm = Permission(name=\'manage_users\', display_name=\'Manage Users\')
-            view_users_perm = Permission(name=\'view_users\', display_name=\'View Users\')
+            manage_users_perm = Permission(
+                name="manage_users", display_name="Manage Users"
+            )
+            view_users_perm = Permission(name="view_users", display_name="View Users")
             db.session.add_all([manage_users_perm, view_users_perm])
             db.session.commit()
 
-            admin_role_perm = RolePermission(role_id=admin_role.id, permission_id=manage_users_perm.id)
+            admin_role_perm = RolePermission(
+                role_id=admin_role.id, permission_id=manage_users_perm.id
+            )
             db.session.add(admin_role_perm)
             db.session.commit()
 
         yield client
         with app.app_context():
+            # 4. Teardown: Drop all tables after the module tests
             db.drop_all()
+
 
 @pytest.fixture(autouse=True)
 def run_around_tests(client):
+    # This fixture ensures a clean slate (empty tables) before each test
     with app.app_context():
         User.query.delete()
         UserProfile.query.delete()
@@ -56,51 +75,53 @@ def run_around_tests(client):
         db.session.commit()
     yield
 
-def create_test_user(email, password, first_name, last_name, is_active=True, mfa_enabled=False):
+
+def create_test_user(
+    email, password, first_name, last_name, is_active=True, mfa_enabled=False
+):
+    # Helper function to create and commit a test user
     user = User(
         email=email,
         first_name=first_name,
         last_name=last_name,
         is_active=is_active,
-        mfa_enabled=mfa_enabled
+        mfa_enabled=mfa_enabled,
     )
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
     return user
 
+
 class TestUserModel:
 
     def test_user_creation(self):
         user = User(
-            email=\'test@example.com\',
-            password_hash=\'hashed_password\',
-            first_name=\'John\',
-            last_name=\'Doe\'
+            # Fix: Use double quotes for the inner string or escape the single quotes
+            email="test@example.com",
+            password_hash="hashed_password",
+            first_name="John",
+            last_name="Doe",
         )
         db.session.add(user)
         db.session.commit()
 
-        retrieved_user = User.query.filter_by(email=\'test@example.com\').first()
+        retrieved_user = User.query.filter_by(email="test@example.com").first()
         assert retrieved_user is not None
-        assert retrieved_user.first_name == \'John\'
+        assert retrieved_user.first_name == "John"
 
     def test_set_and_check_password(self):
-        user = User(
-            email=\'password@example.com\',
-            first_name=\'Pass\',
-            last_name=\'Word\'
-        )
-        user.set_password(\'secure_password\')
+        user = User(email="password@example.com", first_name="Pass", last_name="Word")
+        user.set_password("secure_password")
         db.session.add(user)
         db.session.commit()
 
-        retrieved_user = User.query.filter_by(email=\'password@example.com\').first()
-        assert retrieved_user.check_password(\'secure_password\') == True
-        assert retrieved_user.check_password(\'wrong_password\') == False
+        retrieved_user = User.query.filter_by(email="password@example.com").first()
+        assert retrieved_user.check_password("secure_password") == True
+        assert retrieved_user.check_password("wrong_password") == False
 
     def test_account_locking(self):
-        user = create_test_user(\'lock@example.com\', \'password\', \'Lock\', \'User\')
+        user = create_test_user("lock@example.com", "password", "Lock", "User")
         assert user.is_locked() == False
 
         user.lock_account(duration_minutes=1)
@@ -113,7 +134,7 @@ class TestUserModel:
         assert user.is_locked() == False
 
     def test_failed_login_attempts(self):
-        user = create_test_user(\'failed@example.com\', \'password\', \'Failed\', \'Login\')
+        user = create_test_user("failed@example.com", "password", "Failed", "Login")
         assert user.failed_login_attempts == 0
         assert user.is_locked() == False
 
@@ -123,13 +144,17 @@ class TestUserModel:
         assert user.failed_login_attempts == 4
         assert user.is_locked() == False
 
-        user.increment_failed_login() # 5th attempt, should lock
+        user.increment_failed_login()  # 5th attempt, should lock
         db.session.commit()
-        assert user.failed_login_attempts == 0 # Reset after locking
+        # Assumption: The model's increment_failed_login method resets the count on lock
+        # If the model logic is different, this assertion might fail.
+        # This is a test for the expected *side effect* of locking.
+        # It's kept as-is, assuming the model resets the count.
+        assert user.failed_login_attempts == 0
         assert user.is_locked() == True
 
     def test_mfa_setup_and_verification(self):
-        user = create_test_user(\'mfa@example.com\', \'password\', \'MFA\', \'User\')
+        user = create_test_user("mfa@example.com", "password", "MFA", "User")
         assert user.mfa_enabled == False
         assert user.mfa_secret is None
 
@@ -151,81 +176,105 @@ class TestUserModel:
         assert first_backup_code not in json.loads(user.backup_codes)
 
     def test_has_permission(self):
-        user = create_test_user(\'perm@example.com\', \'password\', \'Perm\', \'User\')
+        user = create_test_user("perm@example.com", "password", "Perm", "User")
         with app.app_context():
-            admin_role = Role.query.filter_by(name=\'admin\').first()
+            admin_role = Role.query.filter_by(name="admin").first()
             user_role_obj = UserRole(user_id=user.id, role_id=admin_role.id)
             db.session.add(user_role_obj)
             db.session.commit()
 
-        assert user.has_permission(\'manage_users\') == True
-        assert user.has_permission(\'non_existent_permission\') == False
+        # The test logic seems correct, assuming the User model method is working
+        assert user.has_permission("manage_users") == True
+        assert user.has_permission("non_existent_permission") == False
 
     def test_get_permissions(self):
-        user = create_test_user(\'getperm@example.com\', \'password\', \'Get\', \'Perm\')
+        user = create_test_user("getperm@example.com", "password", "Get", "Perm")
         with app.app_context():
-            admin_role = Role.query.filter_by(name=\'admin\').first()
-            user_role_obj = UserRole(user_id=user.id, role_id=admin_role.id)
+            # Get the 'view_users' permission object to assign it to a role
+            view_users_perm = Permission.query.filter_by(name="view_users").first()
+
+            # Create a new role with only 'view_users'
+            viewer_role = Role(name="viewer", display_name="Viewer")
+            db.session.add(viewer_role)
+            db.session.commit()
+
+            viewer_role_perm = RolePermission(
+                role_id=viewer_role.id, permission_id=view_users_perm.id
+            )
+            db.session.add(viewer_role_perm)
+
+            # Assign the viewer role to the user
+            user_role_obj = UserRole(user_id=user.id, role_id=viewer_role.id)
             db.session.add(user_role_obj)
             db.session.commit()
 
         permissions = user.get_permissions()
-        assert \'manage_users\' in permissions
-        assert \'view_users\' not in permissions # Only manage_users is assigned to admin role in fixture
+        # Asserts are based on the new setup
+        assert "manage_users" not in permissions  # The user has the 'viewer' role now
+        assert "view_users" in permissions
+
 
 class TestUserProfileModel:
 
     def test_user_profile_creation(self):
-        user = create_test_user(\'profile@example.com\', \'password\', \'Profile\', \'User\')
+        user = create_test_user("profile@example.com", "password", "Profile", "User")
         profile = UserProfile(
-            user_id=user.id,
-            company_name=\'Test Co.\',
-            timezone=\'America/New_York\'
+            user_id=user.id, company_name="Test Co.", timezone="America/New_York"
         )
         db.session.add(profile)
         db.session.commit()
 
         retrieved_profile = UserProfile.query.filter_by(user_id=user.id).first()
         assert retrieved_profile is not None
-        assert retrieved_profile.company_name == \'Test Co.\'
+        assert retrieved_profile.company_name == "Test Co."
+
 
 class TestRoleModel:
 
     def test_role_creation(self):
-        role = Role(name=\'new_role\', display_name=\'New Role\', description=\'A new test role\')
+        role = Role(
+            name="new_role", display_name="New Role", description="A new test role"
+        )
         db.session.add(role)
         db.session.commit()
 
-        retrieved_role = Role.query.filter_by(name=\'new_role\').first()
+        retrieved_role = Role.query.filter_by(name="new_role").first()
         assert retrieved_role is not None
-        assert retrieved_role.display_name == \'New Role\'
+        assert retrieved_role.display_name == "New Role"
 
     def test_role_has_permission(self):
         with app.app_context():
-            admin_role = Role.query.filter_by(name=\'admin\').first()
-            assert admin_role.has_permission(\'manage_users\') == True
-            assert admin_role.has_permission(\'non_existent_permission\') == False
+            admin_role = Role.query.filter_by(name="admin").first()
+            assert admin_role.has_permission("manage_users") == True
+            assert admin_role.has_permission("non_existent_permission") == False
+
 
 class TestPermissionModel:
 
     def test_permission_creation(self):
-        permission = Permission(name=\'test_perm\', display_name=\'Test Permission\', resource=\'test\', action=\'do\')
+        permission = Permission(
+            name="test_perm",
+            display_name="Test Permission",
+            resource="test",
+            action="do",
+        )
         db.session.add(permission)
         db.session.commit()
 
-        retrieved_permission = Permission.query.filter_by(name=\'test_perm\').first()
+        retrieved_permission = Permission.query.filter_by(name="test_perm").first()
         assert retrieved_permission is not None
-        assert retrieved_permission.resource == \'test\'
+        assert retrieved_permission.resource == "test"
+
 
 class TestUserSessionModel:
 
     def test_user_session_creation_and_expiration(self):
-        user = create_test_user(\'session@example.com\', \'password\', \'Session\', \'User\')
+        user = create_test_user("session@example.com", "password", "Session", "User")
         session = UserSession(
             user_id=user.id,
-            session_token=\'test_session_token\',
-            refresh_token=\'test_refresh_token\',
-            expires_at=datetime.utcnow() + timedelta(hours=1)
+            session_token="test_session_token",
+            refresh_token="test_refresh_token",
+            expires_at=datetime.utcnow() + timedelta(hours=1),
         )
         db.session.add(session)
         db.session.commit()
@@ -240,12 +289,12 @@ class TestUserSessionModel:
         assert retrieved_session.is_expired() == True
 
     def test_extend_session(self):
-        user = create_test_user(\'extend@example.com\', \'password\', \'Extend\', \'User\')
+        user = create_test_user("extend@example.com", "password", "Extend", "User")
         session = UserSession(
             user_id=user.id,
-            session_token=\'extend_session_token\',
-            refresh_token=\'extend_refresh_token\',
-            expires_at=datetime.utcnow() + timedelta(minutes=10)
+            session_token="extend_session_token",
+            refresh_token="extend_refresh_token",
+            expires_at=datetime.utcnow() + timedelta(minutes=10),
         )
         db.session.add(session)
         db.session.commit()
@@ -255,52 +304,59 @@ class TestUserSessionModel:
         db.session.commit()
 
         assert session.expires_at > old_expires_at
-        assert session.expires_at.hour == (datetime.utcnow() + timedelta(hours=2)).hour
+        # Check that the new expiration time is approximately 2 hours from now
+        # Check against a small delta to account for execution time
+        expected_expiration = datetime.utcnow() + timedelta(hours=2)
+        time_difference = abs(session.expires_at - expected_expiration)
+        assert time_difference < timedelta(seconds=5)
+
 
 class TestAuditLogModel:
 
     def test_audit_log_creation(self):
-        user = create_test_user(\'audit@example.com\', \'password\', \'Audit\', \'User\')
+        user = create_test_user("audit@example.com", "password", "Audit", "User")
         log = AuditLog(
             user_id=user.id,
-            action=\'user_login\',
-            resource_type=\'user\',
+            action="user_login",
+            resource_type="user",
             resource_id=user.id,
-            status=\'success\'
+            status="success",
         )
         db.session.add(log)
         db.session.commit()
 
         retrieved_log = AuditLog.query.filter_by(user_id=user.id).first()
         assert retrieved_log is not None
-        assert retrieved_log.action == \'user_login\'
+        assert retrieved_log.action == "user_login"
+
 
 class TestUserCustomFieldModel:
 
     def test_user_custom_field_creation(self):
-        user = create_test_user(\'custom@example.com\', \'password\', \'Custom\', \'User\')
+        user = create_test_user("custom@example.com", "password", "Custom", "User")
         custom_field = UserCustomField(
             user_id=user.id,
-            field_name=\'favorite_color\',
-            field_value=\'blue\',
-            field_type=\'text\'
+            field_name="favorite_color",
+            field_value="blue",
+            field_type="text",
         )
         db.session.add(custom_field)
         db.session.commit()
 
         retrieved_field = UserCustomField.query.filter_by(user_id=user.id).first()
         assert retrieved_field is not None
-        assert retrieved_field.field_name == \'favorite_color\'
-        assert retrieved_field.field_value == \'blue\'
+        assert retrieved_field.field_name == "favorite_color"
+        assert retrieved_field.field_value == "blue"
+
 
 class TestPasswordResetModel:
 
     def test_password_reset_creation_and_expiration(self):
-        user = create_test_user(\'reset_model@example.com\', \'password\', \'Reset\', \'Model\')
+        user = create_test_user("reset_model@example.com", "password", "Reset", "Model")
         reset = PasswordReset(
             user_id=user.id,
-            token=\'reset_token_123\',
-            expires_at=datetime.utcnow() + timedelta(minutes=30)
+            token="reset_token_123",
+            expires_at=datetime.utcnow() + timedelta(minutes=30),
         )
         db.session.add(reset)
         db.session.commit()
@@ -314,19 +370,24 @@ class TestPasswordResetModel:
         db.session.commit()
         assert retrieved_reset.is_expired() == True
 
+
 class TestEmailVerificationModel:
 
     def test_email_verification_creation_and_expiration(self):
-        user = create_test_user(\'verify_model@example.com\', \'password\', \'Verify\', \'Model\')
+        user = create_test_user(
+            "verify_model@example.com", "password", "Verify", "Model"
+        )
         verification = EmailVerification(
             user_id=user.id,
-            token=\'verify_token_123\',
-            expires_at=datetime.utcnow() + timedelta(minutes=30)
+            token="verify_token_123",
+            expires_at=datetime.utcnow() + timedelta(minutes=30),
         )
         db.session.add(verification)
         db.session.commit()
 
-        retrieved_verification = EmailVerification.query.filter_by(user_id=user.id).first()
+        retrieved_verification = EmailVerification.query.filter_by(
+            user_id=user.id
+        ).first()
         assert retrieved_verification is not None
         assert retrieved_verification.is_expired() == False
 
