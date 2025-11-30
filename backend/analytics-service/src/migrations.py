@@ -1,4 +1,3 @@
-from datetime import datetime
 
 ANALYTICS_MIGRATIONS = {
     "001_create_dashboards_table": {

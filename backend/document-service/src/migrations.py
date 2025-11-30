@@ -1,4 +1,3 @@
-from datetime import datetime
 
 DOCUMENT_MIGRATIONS = {
     "001_create_documents_table": {

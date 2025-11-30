@@ -1,13 +1,12 @@
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from functools import wraps
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 from flask import Blueprint, jsonify, request
 
 from .models.user import (
-    ExchangeRate,
     PaymentMethod,
     RecurringPayment,
     Transaction,

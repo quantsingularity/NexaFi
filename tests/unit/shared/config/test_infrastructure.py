@@ -1,6 +1,5 @@
 import os
 from unittest.mock import patch
-import pytest
 
 
 # Assuming this is the path to your actual configuration class

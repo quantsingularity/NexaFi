@@ -1,7 +1,5 @@
-import json
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -266,7 +264,7 @@ class TestTransactionRoutes:
 
     def test_create_withdrawal_insufficient_balance(self, client):
         headers = {"X-User-ID": "test_user_8"}
-        wallet = create_test_wallet("test_user_8", "USD", Decimal("10.00"))
+        create_test_wallet("test_user_8", "USD", Decimal("10.00"))
 
         data = {
             "amount": 50.00,
@@ -317,7 +315,7 @@ class TestWalletRoutes:
 
     def test_get_wallet_by_currency_success(self, client):
         headers = {"X-User-ID": "test_user_11"}
-        wallet = create_test_wallet("test_user_11", "EUR", Decimal("1000.00"))
+        create_test_wallet("test_user_11", "EUR", Decimal("1000.00"))
 
         response = client.get("/api/v1/wallets/EUR", headers=headers)
         assert response.status_code == 200

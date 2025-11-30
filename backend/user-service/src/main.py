@@ -1,8 +1,7 @@
 import os
 import re
 import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from datetime import datetime
 
 from dotenv import load_dotenv
 from flask import Flask, g, jsonify, request
@@ -15,7 +14,7 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
-from .models.user import User, UserSession
+from .models.user import User
 
 from middleware.auth import (
     auth_manager,

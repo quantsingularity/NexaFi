@@ -207,7 +207,7 @@ class TestGlobalFunctions:
         # It's better to iterate over the imported Queues enum members
         # and get their values (which are typically the string queue names).
         # Assuming Queues is a proper enum where value is the queue name string.
-        expected_calls = [call(q.value) for q in Queues]
+        [call(q.value) for q in Queues]
 
         # Note: If Queues.REPORT_GENERATION is already the string, use:
         # expected_calls = [call(Queues.REPORT_GENERATION), call(Queues.EMAIL_NOTIFICATIONS), ...]

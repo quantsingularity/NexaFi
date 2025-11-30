@@ -55,7 +55,7 @@ class TestStructuredLogger:
         with patch.object(InfrastructureConfig, "LOG_LEVEL", "DEBUG"), patch.object(
             InfrastructureConfig, "LOG_FORMAT", "%(asctime)s - %(message)s"
         ):
-            logger = StructuredLogger("another_service")
+            StructuredLogger("another_service")
 
             # Assert standard logger was retrieved for the correct name
             mock_logger.assert_called_once_with("another_service")

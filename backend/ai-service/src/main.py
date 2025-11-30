@@ -7,15 +7,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from database.manager import BaseModel, initialize_database
-from .models.user import (
-    AIModel,
-    AIPrediction,
-    FinancialInsight,
-    ConversationSession,
-    ConversationMessage,
-    FeatureStore,
-    ModelTrainingJob,
-)
 from .routes.user import user_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))

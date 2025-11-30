@@ -1,4 +1,3 @@
-from datetime import datetime
 
 AI_MIGRATIONS = {
     "001_create_ai_models_table": {

@@ -1,6 +1,5 @@
-import json
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import jwt
 import pytest
@@ -136,7 +135,7 @@ class TestAuthRoutes:
         assert response.get_json()["error"] == "Email already registered"
 
     def test_login_success(self, client):
-        user = create_test_user("login@example.com", "password123", "Login", "User")
+        create_test_user("login@example.com", "password123", "Login", "User")
         data = {"email": "login@example.com", "password": "password123"}
         response = client.post("/api/v1/auth/login", json=data)
         assert response.status_code == 200

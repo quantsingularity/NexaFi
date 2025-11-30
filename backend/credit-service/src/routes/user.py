@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any, Dict, List
 
 from flask import Blueprint, jsonify, request
 
@@ -10,9 +9,7 @@ from .models.user import (
     CreditScore,
     LoanApplication,
     Loan,
-    LoanPayment,
     RiskAssessment,
-    LoanDocument,
     LoanApplicationHistory,
 )
 
@@ -264,7 +261,6 @@ def update_loan_application_status(application_id):
 
             # In a real system, this would trigger loan creation
             # For now, we'll just update the application
-            pass
 
         application.save()
         log_application_history(

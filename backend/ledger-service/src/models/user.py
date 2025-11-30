@@ -1,7 +1,6 @@
-import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 # Placeholder for BaseModel. The actual BaseModel is set in main.py

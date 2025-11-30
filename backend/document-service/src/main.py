@@ -6,7 +6,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from database.manager import BaseModel, initialize_database
-from .models.user import Document, DocumentTemplate, DocumentShare, DocumentVersion
 from .routes.user import document_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))

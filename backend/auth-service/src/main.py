@@ -17,7 +17,7 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
-from .models.user import OAuthClient, AuthorizationCode, AccessToken, RegisteredDevice
+from .models.user import OAuthClient, AuthorizationCode, AccessToken
 from enhanced_security import (
     AdvancedEncryption,
     FraudDetectionEngine,

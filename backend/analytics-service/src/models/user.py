@@ -1,7 +1,6 @@
-import uuid
 import json
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 # Placeholder for BaseModel. The actual BaseModel is set in main.py

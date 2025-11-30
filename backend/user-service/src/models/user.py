@@ -23,7 +23,6 @@ class BaseModel:
     """Placeholder for BaseModel to avoid import errors in this file.
     The actual BaseModel is imported and set in main.py."""
 
-    pass
 
 
 # We need to import the actual BaseModel from the shared directory.

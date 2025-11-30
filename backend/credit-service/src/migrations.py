@@ -1,4 +1,3 @@
-from datetime import datetime
 
 CREDIT_MIGRATIONS = {
     "001_create_credit_score_models_table": {

@@ -11,7 +11,6 @@ from NexaFi.backend.shared.config.infrastructure import InfrastructureConfig
 class CircuitBreakerOpenException(Exception):
     """Custom exception raised when attempting a call on an open circuit."""
 
-    pass
 
 
 # Mock definitions for CircuitBreaker and its components to ensure the tests run
