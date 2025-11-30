@@ -24,7 +24,6 @@ class BaseModel:
     The actual BaseModel is imported and set in main.py."""
 
 
-
 # We need to import the actual BaseModel from the shared directory.
 # Since the original code was structured to have the models defined in main.py
 # and rely on imports there, moving them requires careful dependency management.

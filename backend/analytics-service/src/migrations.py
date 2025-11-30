@@ -1,4 +1,3 @@
-
 ANALYTICS_MIGRATIONS = {
     "001_create_dashboards_table": {
         "description": "Create dashboards table",

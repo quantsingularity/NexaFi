@@ -1,4 +1,3 @@
-
 DOCUMENT_MIGRATIONS = {
     "001_create_documents_table": {
         "description": "Create documents table",

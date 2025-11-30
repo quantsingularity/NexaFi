@@ -12,7 +12,6 @@ class CircuitBreakerOpenException(Exception):
     """Custom exception raised when attempting a call on an open circuit."""
 
 
-
 # Mock definitions for CircuitBreaker and its components to ensure the tests run
 # The actual CircuitBreaker class is complex, but these tests validate its public interface.
 # We assume the CircuitBreaker class uses this exception when open.

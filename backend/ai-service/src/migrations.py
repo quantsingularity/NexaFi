@@ -1,4 +1,3 @@
-
 AI_MIGRATIONS = {
     "001_create_ai_models_table": {
         "description": "Create AI models table",
