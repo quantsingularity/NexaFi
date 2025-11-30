@@ -19,6 +19,7 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
+from .models.user import KYCVerification, AMLCheck, SanctionsScreening, ComplianceReport
 from middleware.auth import require_auth, require_permission
 from validators.schemas import (
     SanitizationMixin,
@@ -41,7 +42,7 @@ setup_request_logging(app)
 logger = get_logger("compliance_service")
 
 # Initialize database
-db_path = "/home/ubuntu/nexafi_backend_refactored/compliance-service/data/compliance.db"
+db_path = os.path.join(os.path.dirname(__file__), "database", "compliance.db")
 db_manager, migration_manager = initialize_database(db_path)
 
 # Apply compliance-specific migrations
@@ -138,22 +139,6 @@ for version, migration in COMPLIANCE_MIGRATIONS.items():
 
 # Set database manager for models
 BaseModel.set_db_manager(db_manager)
-
-
-class KYCVerification(BaseModel):
-    table_name = "kyc_verifications"
-
-
-class AMLCheck(BaseModel):
-    table_name = "aml_checks"
-
-
-class SanctionsScreening(BaseModel):
-    table_name = "sanctions_screening"
-
-
-class ComplianceReport(BaseModel):
-    table_name = "compliance_reports"
 
 
 # Validation schemas
@@ -697,9 +682,7 @@ def compliance_dashboard():
 
 if __name__ == "__main__":
     # Ensure data directory exists
-    os.makedirs(
-        "/home/ubuntu/nexafi_backend_refactored/compliance-service/data", exist_ok=True
-    )
+    os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
 
     # Development server
-    app.run(host="0.0.0.0", port=5005, debug=False)
+    app.run(host="0.0.0.0", port=5005, debug=True)

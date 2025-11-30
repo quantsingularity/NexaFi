@@ -15,6 +15,8 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
+from .models.user import User, UserSession
+
 from middleware.auth import (
     auth_manager,
     get_user_permissions,
@@ -107,101 +109,8 @@ db_manager, migration_manager = initialize_database(db_path)
 # Set database manager for models
 BaseModel.set_db_manager(db_manager)
 
-
-class User(BaseModel):
-    table_name = "users"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        if not hasattr(self, "created_at"):
-            self.created_at = datetime.utcnow()
-        if not hasattr(self, "updated_at"):
-            self.updated_at = datetime.utcnow()
-        if not hasattr(self, "is_active"):
-            self.is_active = True
-        if not hasattr(self, "email_verified"):
-            self.email_verified = False
-        if not hasattr(self, "failed_login_attempts"):
-            self.failed_login_attempts = 0
-
-    def set_password(self, password: str):
-        """Set hashed password"""
-        self.password_hash = auth_manager.hash_password(password)
-
-    def check_password(self, password: str) -> bool:
-        """Check password against hash"""
-        return auth_manager.verify_password(password, self.password_hash)
-
-    def is_locked(self) -> bool:
-        """Check if account is locked"""
-        if self.locked_until:
-            locked_until = datetime.fromisoformat(
-                self.locked_until.replace("Z", "+00:00")
-            )
-            return datetime.utcnow() < locked_until
-        return False
-
-    def lock_account(self, duration_minutes: int = 30):
-        """Lock account for specified duration"""
-        self.locked_until = (
-            datetime.utcnow() + timedelta(minutes=duration_minutes)
-        ).isoformat()
-        self.save()
-
-    def unlock_account(self):
-        """Unlock account"""
-        self.locked_until = None
-        self.failed_login_attempts = 0
-        self.save()
-
-    def increment_failed_attempts(self):
-        """Increment failed login attempts"""
-        self.failed_login_attempts += 1
-        if self.failed_login_attempts >= 5:
-            self.lock_account()
-        self.save()
-
-    def reset_failed_attempts(self):
-        """Reset failed login attempts"""
-        self.failed_login_attempts = 0
-        self.save()
-
-    def get_roles(self) -> list:
-        """Get user roles"""
-        query = "SELECT role_name FROM user_roles WHERE user_id = ?"
-        rows = db_manager.execute_query(query, (self.id,))
-        return [row["role_name"] for row in rows]
-
-    def add_role(self, role_name: str, granted_by: Optional[int] = None):
-        """Add role to user"""
-        query = (
-            "INSERT INTO user_roles (user_id, role_name, granted_by) VALUES (?, ?, ?)"
-        )
-        db_manager.execute_insert(query, (self.id, role_name, granted_by))
-
-    def remove_role(self, role_name: str):
-        """Remove role from user"""
-        query = "DELETE FROM user_roles WHERE user_id = ? AND role_name = ?"
-        db_manager.execute_update(query, (self.id, role_name))
-
-    def to_dict(self, include_sensitive=False) -> Dict[str, Any]:
-        """Convert user to dictionary"""
-        data = super().to_dict()
-
-        # Remove sensitive fields
-        if not include_sensitive:
-            data.pop("password_hash", None)
-            data.pop("failed_login_attempts", None)
-            data.pop("locked_until", None)
-
-        # Add roles
-        data["roles"] = self.get_roles()
-
-        return data
-
-
-class UserSession(BaseModel):
-    table_name = "user_sessions"
+# The User model is now defined in .models.user and imported.
+# The UserSession model is also defined in .models.user and imported.
 
 
 # Password strength validation
@@ -277,7 +186,7 @@ def register():
         phone=data.get("phone"),
         company_name=data.get("company_name"),
     )
-    user.set_password(data["password"])
+    user.set_password(data["password"], auth_manager)
     user.save()
 
     # Add default role
@@ -340,7 +249,7 @@ def login():
         return jsonify({"error": "Account is inactive"}), 401
 
     # Verify password
-    if not user.check_password(data["password"]):
+    if not user.check_password(data["password"], auth_manager):
         user.increment_failed_attempts()
 
         audit_logger.log_security_event(
@@ -376,8 +285,10 @@ def login():
 
 
 if __name__ == "__main__":
-    # Issue: Missing if __name__ == "__main__" guard.
-    # Only run the server when executed directly
+    # Ensure data directory exists
+    os.makedirs("/home/ubuntu/NexaFi/backend/user-service/src/database", exist_ok=True)
+
+    # Development server
     app.run(host=HOST, port=PORT, debug=DEBUG)
 
     return jsonify(

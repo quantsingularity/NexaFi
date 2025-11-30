@@ -6,8 +6,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from src.models.user import db
-from src.routes.user import user_bp
+from database.manager import BaseModel, initialize_database
+from .models.user import (
+    AIModel,
+    AIPrediction,
+    FinancialInsight,
+    ConversationSession,
+    ConversationMessage,
+    FeatureStore,
+    ModelTrainingJob,
+)
+from .routes.user import user_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 app.config["SECRET_KEY"] = "nexafi-ai-service-secret-key-2024"
@@ -18,14 +27,21 @@ CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-I
 app.register_blueprint(user_bp, url_prefix="/api/v1")
 
 # Database configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db.init_app(app)
+# Initialize database
+db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
+db_manager, migration_manager = initialize_database(db_path)
 
-with app.app_context():
-    db.create_all()
+# Set database manager for models
+BaseModel.set_db_manager(db_manager)
+
+# Apply AI-specific migrations
+from .migrations import AI_MIGRATIONS
+
+for version, migration in AI_MIGRATIONS.items():
+    migration_manager.apply_migration(
+        version, migration["description"], migration["sql"]
+    )
 
 
 @app.route("/", defaults={"path": ""})
@@ -56,4 +72,8 @@ def internal_error(error):
 
 
 if __name__ == "__main__":
+    # Ensure data directory exists
+    os.makedirs("/home/ubuntu/NexaFi/backend/ai-service/src/database", exist_ok=True)
+
+    # Development server
     app.run(host="0.0.0.0", port=5004, debug=True)

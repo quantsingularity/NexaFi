@@ -17,6 +17,7 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
+from .models.user import OAuthClient, AuthorizationCode, AccessToken, RegisteredDevice
 from enhanced_security import (
     AdvancedEncryption,
     FraudDetectionEngine,
@@ -63,7 +64,7 @@ setup_request_logging(app)
 logger = get_logger("enhanced_auth_service")
 
 # Initialize database
-db_path = "/home/ubuntu/NexaFi/backend/enhanced-auth-service/data/auth.db"
+db_path = os.path.join(os.path.dirname(__file__), "database", "auth.db")
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
 
@@ -170,22 +171,6 @@ for version, migration in AUTH_MIGRATIONS.items():
 
 # Set database manager for models
 BaseModel.set_db_manager(db_manager)
-
-
-class OAuthClient(BaseModel):
-    table_name = "oauth_clients"
-
-
-class AuthorizationCode(BaseModel):
-    table_name = "oauth_authorization_codes"
-
-
-class AccessToken(BaseModel):
-    table_name = "oauth_access_tokens"
-
-
-class RegisteredDevice(BaseModel):
-    table_name = "registered_devices"
 
 
 # Validation schemas
@@ -862,7 +847,7 @@ def logout():
 
 if __name__ == "__main__":
     # Create necessary directories
-    os.makedirs("/home/ubuntu/NexaFi/backend/enhanced-auth-service/keys", exist_ok=True)
-    os.makedirs("/home/ubuntu/NexaFi/backend/enhanced-auth-service/data", exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(__file__), "keys"), exist_ok=True)
 
-    app.run(host="0.0.0.0", port=5011, debug=False)
+    app.run(host="0.0.0.0", port=5011, debug=True)

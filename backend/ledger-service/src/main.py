@@ -15,7 +15,15 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
+from .models.user import (
+    Account,
+    JournalEntry,
+    JournalEntryLine,
+    ExchangeRate,
+    Reconciliation,
+)
 from middleware.auth import require_auth, require_permission
+from .routes.user import ledger_bp
 from validators.schemas import (
     AccountSchema,
     FinancialValidators,
@@ -32,6 +40,9 @@ app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "nexafi-ledger-service-secret-key-2024"
 )
 
+# Register blueprint
+app.register_blueprint(ledger_bp, url_prefix="/api/v1/ledger")
+
 # Enable CORS
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
 
@@ -40,10 +51,12 @@ setup_request_logging(app)
 logger = get_logger("ledger_service")
 
 # Initialize database
-db_path = "/home/ubuntu/nexafi_backend_refactored/ledger-service/data/ledger.db"
+db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
 
 # Apply ledger-specific migrations
+# The migrations are already defined in this file, so we don't need to import them.
 LEDGER_MIGRATIONS = {
     "011_create_enhanced_accounts_table": {
         "description": "Create enhanced accounts table with multi-currency support",
@@ -1067,12 +1080,10 @@ def balance_sheet():
 
 if __name__ == "__main__":
     # Ensure data directory exists
-    os.makedirs(
-        "/home/ubuntu/nexafi_backend_refactored/ledger-service/data", exist_ok=True
-    )
+    os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
 
     # Initialize chart of accounts
     initialize_chart_of_accounts()
 
     # Development server
-    app.run(host="0.0.0.0", port=5002, debug=False)
+    app.run(host="0.0.0.0", port=5007, debug=True)

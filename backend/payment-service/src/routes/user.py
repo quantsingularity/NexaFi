@@ -2,19 +2,20 @@ import uuid
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from functools import wraps
+from typing import Any, Dict, List, Optional
 
 from flask import Blueprint, jsonify, request
-from src.models.user import (
+
+from .models.user import (
     ExchangeRate,
     PaymentMethod,
     RecurringPayment,
     Transaction,
     Wallet,
     WalletBalanceHistory,
-    db,
 )
 
-user_bp = Blueprint("payment", __name__)
+payment_bp = Blueprint("payment", __name__)
 
 
 def require_user_id(f):
@@ -31,8 +32,10 @@ def require_user_id(f):
     return decorated_function
 
 
-def calculate_fees(amount, payment_method_type, processor_name="default"):
-    """Calculate transaction fees based on payment method and processor"""
+def calculate_fees(
+    amount: Decimal, payment_method_type: str, processor_name="default"
+) -> Decimal:
+    """Calculate transaction fees based on payment method and processor (simulated)"""
     # Default fee structure (can be made configurable)
     fee_structures = {
         "card": {
@@ -53,73 +56,84 @@ def calculate_fees(amount, payment_method_type, processor_name="default"):
     percentage_fee = amount * fee_structure["percentage"]
     total_fee = percentage_fee + fee_structure["fixed"]
 
-    return total_fee
+    return total_fee.quantize(Decimal("0.01"))
 
 
-def create_or_update_wallet(user_id, currency="USD"):
-    """Create or get existing wallet for user and currency"""
-    wallet = Wallet.query.filter_by(user_id=user_id, currency=currency).first()
+def create_or_update_wallet(user_id, currency="USD") -> Wallet:
+    """Create or get existing wallet for user and currency (simulated with custom ORM)"""
+    wallet = Wallet.find_one("user_id = ? AND currency = ?", (user_id, currency))
 
     if not wallet:
         wallet = Wallet(
+            id=str(uuid.uuid4()),
             user_id=user_id,
             currency=currency,
-            balance=Decimal("0"),
-            available_balance=Decimal("0"),
-            pending_balance=Decimal("0"),
-            reserved_balance=Decimal("0"),
+            balance=0.0,
+            available_balance=0.0,
+            pending_balance=0.0,
+            reserved_balance=0.0,
+            is_active=True,
+            created_at=datetime.utcnow().isoformat(),
+            updated_at=datetime.utcnow().isoformat(),
         )
-        db.session.add(wallet)
-        db.session.flush()
+        wallet.save()
 
     return wallet
 
 
 def update_wallet_balance(
-    wallet, amount, change_type, description, transaction_id=None
+    wallet: Wallet,
+    amount: Decimal,
+    change_type: str,
+    description: str,
+    transaction_id: Optional[str] = None,
 ):
-    """Update wallet balance and create history record"""
+    """Update wallet balance and create history record (simulated with custom ORM)"""
+    amount_float = float(amount)
     balance_before = wallet.balance
 
     if change_type == "credit":
-        wallet.balance += amount
-        wallet.available_balance += amount
+        wallet.balance += amount_float
+        wallet.available_balance += amount_float
     elif change_type == "debit":
-        wallet.balance -= amount
-        wallet.available_balance -= amount
+        wallet.balance -= amount_float
+        wallet.available_balance -= amount_float
     elif change_type == "hold":
-        wallet.available_balance -= amount
-        wallet.reserved_balance += amount
+        wallet.available_balance -= amount_float
+        wallet.reserved_balance += amount_float
     elif change_type == "release":
-        wallet.available_balance += amount
-        wallet.reserved_balance -= amount
+        wallet.available_balance += amount_float
+        wallet.reserved_balance -= amount_float
 
-    wallet.updated_at = datetime.utcnow()
+    wallet.updated_at = datetime.utcnow().isoformat()
+    wallet.save()
 
     # Create balance history record
     history = WalletBalanceHistory(
+        id=str(uuid.uuid4()),
         wallet_id=wallet.id,
         transaction_id=transaction_id,
         change_type=change_type,
-        amount=amount,
+        amount=amount_float,
         balance_before=balance_before,
         balance_after=wallet.balance,
         description=description,
+        created_at=datetime.utcnow().isoformat(),
     )
+    history.save()
 
-    db.session.add(history)
+
+# --- Payment Method Routes ---
 
 
-# Payment Method Routes
-@user_bp.route("/payment-methods", methods=["GET"])
+@payment_bp.route("/payment-methods", methods=["GET"])
 @require_user_id
 def get_payment_methods():
     """Get all payment methods for user"""
     try:
-        payment_methods = (
-            PaymentMethod.query.filter_by(user_id=request.user_id, is_active=True)
-            .order_by(PaymentMethod.is_default.desc(), PaymentMethod.created_at.desc())
-            .all()
+        payment_methods = PaymentMethod.find_all(
+            "user_id = ? AND is_active = 1 ORDER BY is_default DESC, created_at DESC",
+            (request.user_id,),
         )
 
         return (
@@ -139,7 +153,7 @@ def get_payment_methods():
         )
 
 
-@user_bp.route("/payment-methods", methods=["POST"])
+@payment_bp.route("/payment-methods", methods=["POST"])
 @require_user_id
 def create_payment_method():
     """Create new payment method"""
@@ -164,29 +178,33 @@ def create_payment_method():
                 400,
             )
 
+        # If this is set as default, unset other defaults
+        if data.get("is_default"):
+            existing_defaults = PaymentMethod.find_all(
+                "user_id = ? AND is_default = 1", (request.user_id,)
+            )
+            for method in existing_defaults:
+                method.is_default = False
+                method.save()
+
         # Create payment method
         payment_method = PaymentMethod(
+            id=str(uuid.uuid4()),
             user_id=request.user_id,
             type=data["type"],
             provider=data["provider"],
             external_id=data.get("external_id"),
             details=data["details"],
             is_default=data.get("is_default", False),
-            expires_at=(
-                datetime.strptime(data["expires_at"], "%Y-%m-%d")
-                if data.get("expires_at")
-                else None
-            ),
+            is_active=True,
+            is_verified=data.get("is_verified", False),
+            verification_status=data.get("verification_status", "pending"),
+            expires_at=data.get("expires_at"),
+            created_at=datetime.utcnow().isoformat(),
+            updated_at=datetime.utcnow().isoformat(),
         )
 
-        # If this is set as default, unset other defaults
-        if payment_method.is_default:
-            PaymentMethod.query.filter_by(
-                user_id=request.user_id, is_default=True
-            ).update({"is_default": False})
-
-        db.session.add(payment_method)
-        db.session.commit()
+        payment_method.save()
 
         return (
             jsonify(
@@ -199,21 +217,20 @@ def create_payment_method():
         )
 
     except Exception as e:
-        db.session.rollback()
         return (
             jsonify({"error": "Failed to create payment method", "details": str(e)}),
             500,
         )
 
 
-@user_bp.route("/payment-methods/<method_id>", methods=["GET"])
+@payment_bp.route("/payment-methods/<method_id>", methods=["GET"])
 @require_user_id
 def get_payment_method(method_id):
     """Get specific payment method"""
     try:
-        payment_method = PaymentMethod.query.filter_by(
-            id=method_id, user_id=request.user_id
-        ).first()
+        payment_method = PaymentMethod.find_one(
+            "id = ? AND user_id = ?", (method_id, request.user_id)
+        )
 
         if not payment_method:
             return jsonify({"error": "Payment method not found"}), 404
@@ -227,14 +244,14 @@ def get_payment_method(method_id):
         )
 
 
-@user_bp.route("/payment-methods/<method_id>", methods=["PUT"])
+@payment_bp.route("/payment-methods/<method_id>", methods=["PUT"])
 @require_user_id
 def update_payment_method(method_id):
     """Update payment method"""
     try:
-        payment_method = PaymentMethod.query.filter_by(
-            id=method_id, user_id=request.user_id
-        ).first()
+        payment_method = PaymentMethod.find_one(
+            "id = ? AND user_id = ?", (method_id, request.user_id)
+        )
 
         if not payment_method:
             return jsonify({"error": "Payment method not found"}), 404
@@ -245,23 +262,20 @@ def update_payment_method(method_id):
         updatable_fields = ["details", "is_default", "is_active", "expires_at"]
         for field in updatable_fields:
             if field in data:
-                if field == "expires_at" and data[field]:
-                    setattr(
-                        payment_method,
-                        field,
-                        datetime.strptime(data[field], "%Y-%m-%d"),
-                    )
-                else:
-                    setattr(payment_method, field, data[field])
+                setattr(payment_method, field, data[field])
 
         # If this is set as default, unset other defaults
         if data.get("is_default"):
-            PaymentMethod.query.filter_by(
-                user_id=request.user_id, is_default=True
-            ).filter(PaymentMethod.id != method_id).update({"is_default": False})
+            existing_defaults = PaymentMethod.find_all(
+                "user_id = ? AND is_default = 1 AND id != ?",
+                (request.user_id, method_id),
+            )
+            for method in existing_defaults:
+                method.is_default = False
+                method.save()
 
-        payment_method.updated_at = datetime.utcnow()
-        db.session.commit()
+        payment_method.updated_at = datetime.utcnow().isoformat()
+        payment_method.save()
 
         return (
             jsonify(
@@ -274,90 +288,81 @@ def update_payment_method(method_id):
         )
 
     except Exception as e:
-        db.session.rollback()
         return (
             jsonify({"error": "Failed to update payment method", "details": str(e)}),
             500,
         )
 
 
-@user_bp.route("/payment-methods/<method_id>", methods=["DELETE"])
+@payment_bp.route("/payment-methods/<method_id>", methods=["DELETE"])
 @require_user_id
 def delete_payment_method(method_id):
-    """Delete payment method"""
+    """Delete payment method (soft delete)"""
     try:
-        payment_method = PaymentMethod.query.filter_by(
-            id=method_id, user_id=request.user_id
-        ).first()
+        payment_method = PaymentMethod.find_one(
+            "id = ? AND user_id = ?", (method_id, request.user_id)
+        )
 
         if not payment_method:
             return jsonify({"error": "Payment method not found"}), 404
 
         # Soft delete by setting is_active to False
         payment_method.is_active = False
-        payment_method.updated_at = datetime.utcnow()
-
-        db.session.commit()
+        payment_method.updated_at = datetime.utcnow().isoformat()
+        payment_method.save()
 
         return jsonify({"message": "Payment method deleted successfully"}), 200
 
     except Exception as e:
-        db.session.rollback()
         return (
             jsonify({"error": "Failed to delete payment method", "details": str(e)}),
             500,
         )
 
 
-# Transaction Routes
-@user_bp.route("/transactions", methods=["GET"])
+# --- Transaction Routes ---
+
+
+@payment_bp.route("/transactions", methods=["GET"])
 @require_user_id
 def get_transactions():
     """Get transactions for user"""
     try:
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 20, type=int)
         status = request.args.get("status")
         transaction_type = request.args.get("type")
         start_date = request.args.get("start_date")
         end_date = request.args.get("end_date")
 
-        query = Transaction.query.filter_by(user_id=request.user_id)
+        where_clause = "user_id = ?"
+        params = [request.user_id]
 
         if status:
-            query = query.filter_by(status=status)
+            where_clause += " AND status = ?"
+            params.append(status)
 
         if transaction_type:
-            query = query.filter_by(transaction_type=transaction_type)
+            where_clause += " AND transaction_type = ?"
+            params.append(transaction_type)
 
         if start_date:
-            query = query.filter(
-                Transaction.created_at >= datetime.strptime(start_date, "%Y-%m-%d")
-            )
+            where_clause += " AND created_at >= ?"
+            params.append(start_date)
 
         if end_date:
-            query = query.filter(
-                Transaction.created_at <= datetime.strptime(end_date, "%Y-%m-%d")
-            )
+            where_clause += " AND created_at <= ?"
+            params.append(end_date)
 
-        transactions = query.order_by(Transaction.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
+        transactions = Transaction.find_all(
+            where_clause + " ORDER BY created_at DESC", tuple(params)
         )
 
         return (
             jsonify(
                 {
                     "transactions": [
-                        transaction.to_dict() for transaction in transactions.items
+                        transaction.to_dict() for transaction in transactions
                     ],
-                    "pagination": {
-                        "page": page,
-                        "per_page": per_page,
-                        "total": transactions.total,
-                        "pages": transactions.pages,
-                        "has_next": transactions.has_next,
-                        "has_prev": transactions.has_prev,
-                    },
+                    "total": len(transactions),
                 }
             ),
             200,
@@ -367,7 +372,7 @@ def get_transactions():
         return jsonify({"error": "Failed to get transactions", "details": str(e)}), 500
 
 
-@user_bp.route("/transactions", methods=["POST"])
+@payment_bp.route("/transactions", methods=["POST"])
 @require_user_id
 def create_transaction():
     """Create new transaction"""
@@ -387,9 +392,10 @@ def create_transaction():
         # Get payment method if provided
         payment_method = None
         if data.get("payment_method_id"):
-            payment_method = PaymentMethod.query.filter_by(
-                id=data["payment_method_id"], user_id=request.user_id, is_active=True
-            ).first()
+            payment_method = PaymentMethod.find_one(
+                "id = ? AND user_id = ? AND is_active = 1",
+                (data["payment_method_id"], request.user_id),
+            )
 
             if not payment_method:
                 return jsonify({"error": "Invalid payment method"}), 400
@@ -403,32 +409,28 @@ def create_transaction():
 
         # Create transaction
         transaction = Transaction(
+            id=str(uuid.uuid4()),
             user_id=request.user_id,
             payment_method_id=data.get("payment_method_id"),
             transaction_type=data["transaction_type"],
-            amount=amount,
+            amount=float(amount),
             currency=data.get("currency", "USD"),
             description=data.get("description"),
             reference=data.get("reference"),
             status="pending",
-            fees=fees,
-            net_amount=net_amount,
+            fees=float(fees),
+            net_amount=float(net_amount),
             metadata=data.get("metadata"),
+            created_at=datetime.utcnow().isoformat(),
+            updated_at=datetime.utcnow().isoformat(),
         )
 
-        db.session.add(transaction)
-        db.session.flush()
-
-        # Process transaction based on type
+        # Process transaction based on type (Simulated)
         if data["transaction_type"] == "payment":
-            # For demo purposes, simulate payment processing
-            transaction.status = "processing"
-            transaction.external_transaction_id = f"ext_{uuid.uuid4().hex[:12]}"
-
-            # Simulate processing delay and success
             transaction.status = "completed"
-            transaction.processed_at = datetime.utcnow()
-            transaction.settled_at = datetime.utcnow()
+            transaction.external_transaction_id = f"ext_{uuid.uuid4().hex[:12]}"
+            transaction.processed_at = datetime.utcnow().isoformat()
+            transaction.settled_at = datetime.utcnow().isoformat()
 
             # Update wallet balance
             wallet = create_or_update_wallet(request.user_id, transaction.currency)
@@ -443,11 +445,13 @@ def create_transaction():
         elif data["transaction_type"] == "withdrawal":
             # Check wallet balance
             wallet = create_or_update_wallet(request.user_id, transaction.currency)
-            if wallet.available_balance < amount:
+            if wallet.available_balance < float(amount):
                 return jsonify({"error": "Insufficient balance"}), 400
 
-            transaction.status = "processing"
+            transaction.status = "completed"
             transaction.external_transaction_id = f"ext_{uuid.uuid4().hex[:12]}"
+            transaction.processed_at = datetime.utcnow().isoformat()
+            transaction.settled_at = datetime.utcnow().isoformat()
 
             # Update wallet balance
             update_wallet_balance(
@@ -458,15 +462,16 @@ def create_transaction():
                 transaction.id,
             )
 
-            transaction.status = "completed"
-            transaction.processed_at = datetime.utcnow()
-            transaction.settled_at = datetime.utcnow()
+        else:
+            # Other types remain pending or are handled by external systems
+            pass
 
         # Update payment method last used
         if payment_method:
-            payment_method.last_used_at = datetime.utcnow()
+            payment_method.last_used_at = datetime.utcnow().isoformat()
+            payment_method.save()
 
-        db.session.commit()
+        transaction.save()
 
         return (
             jsonify(
@@ -479,21 +484,20 @@ def create_transaction():
         )
 
     except Exception as e:
-        db.session.rollback()
         return (
             jsonify({"error": "Failed to create transaction", "details": str(e)}),
             500,
         )
 
 
-@user_bp.route("/transactions/<transaction_id>", methods=["GET"])
+@payment_bp.route("/transactions/<transaction_id>", methods=["GET"])
 @require_user_id
 def get_transaction(transaction_id):
     """Get specific transaction"""
     try:
-        transaction = Transaction.query.filter_by(
-            id=transaction_id, user_id=request.user_id
-        ).first()
+        transaction = Transaction.find_one(
+            "id = ? AND user_id = ?", (transaction_id, request.user_id)
+        )
 
         if not transaction:
             return jsonify({"error": "Transaction not found"}), 404
@@ -504,13 +508,15 @@ def get_transaction(transaction_id):
         return jsonify({"error": "Failed to get transaction", "details": str(e)}), 500
 
 
-# Wallet Routes
-@user_bp.route("/wallets", methods=["GET"])
+# --- Wallet Routes ---
+
+
+@payment_bp.route("/wallets", methods=["GET"])
 @require_user_id
 def get_wallets():
     """Get all wallets for user"""
     try:
-        wallets = Wallet.query.filter_by(user_id=request.user_id, is_active=True).all()
+        wallets = Wallet.find_all("user_id = ? AND is_active = 1", (request.user_id,))
 
         return (
             jsonify(
@@ -526,19 +532,19 @@ def get_wallets():
         return jsonify({"error": "Failed to get wallets", "details": str(e)}), 500
 
 
-@user_bp.route("/wallets/<currency>", methods=["GET"])
+@payment_bp.route("/wallets/<currency>", methods=["GET"])
 @require_user_id
 def get_wallet_by_currency(currency):
     """Get wallet for specific currency"""
     try:
-        wallet = Wallet.query.filter_by(
-            user_id=request.user_id, currency=currency.upper(), is_active=True
-        ).first()
+        wallet = Wallet.find_one(
+            "user_id = ? AND currency = ? AND is_active = 1",
+            (request.user_id, currency.upper()),
+        )
 
         if not wallet:
             # Create wallet if it doesn't exist
             wallet = create_or_update_wallet(request.user_id, currency.upper())
-            db.session.commit()
 
         return jsonify({"wallet": wallet.to_dict()}), 200
 
@@ -546,40 +552,29 @@ def get_wallet_by_currency(currency):
         return jsonify({"error": "Failed to get wallet", "details": str(e)}), 500
 
 
-@user_bp.route("/wallets/<currency>/history", methods=["GET"])
+@payment_bp.route("/wallets/<currency>/history", methods=["GET"])
 @require_user_id
 def get_wallet_history(currency):
     """Get wallet balance history"""
     try:
-        wallet = Wallet.query.filter_by(
-            user_id=request.user_id, currency=currency.upper(), is_active=True
-        ).first()
+        wallet = Wallet.find_one(
+            "user_id = ? AND currency = ? AND is_active = 1",
+            (request.user_id, currency.upper()),
+        )
 
         if not wallet:
             return jsonify({"error": "Wallet not found"}), 404
 
-        page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 20, type=int)
-
-        history = (
-            WalletBalanceHistory.query.filter_by(wallet_id=wallet.id)
-            .order_by(WalletBalanceHistory.created_at.desc())
-            .paginate(page=page, per_page=per_page, error_out=False)
+        history = WalletBalanceHistory.find_all(
+            "wallet_id = ? ORDER BY created_at DESC", (wallet.id,)
         )
 
         return (
             jsonify(
                 {
                     "wallet": wallet.to_dict(),
-                    "history": [record.to_dict() for record in history.items],
-                    "pagination": {
-                        "page": page,
-                        "per_page": per_page,
-                        "total": history.total,
-                        "pages": history.pages,
-                        "has_next": history.has_next,
-                        "has_prev": history.has_prev,
-                    },
+                    "history": [record.to_dict() for record in history],
+                    "total": len(history),
                 }
             ),
             200,
@@ -592,16 +587,16 @@ def get_wallet_history(currency):
         )
 
 
-# Recurring Payment Routes
-@user_bp.route("/recurring-payments", methods=["GET"])
+# --- Recurring Payment Routes ---
+
+
+@payment_bp.route("/recurring-payments", methods=["GET"])
 @require_user_id
 def get_recurring_payments():
     """Get recurring payments for user"""
     try:
-        recurring_payments = (
-            RecurringPayment.query.filter_by(user_id=request.user_id)
-            .order_by(RecurringPayment.next_payment_date)
-            .all()
+        recurring_payments = RecurringPayment.find_all(
+            "user_id = ? ORDER BY next_payment_date", (request.user_id,)
         )
 
         return (
@@ -623,7 +618,7 @@ def get_recurring_payments():
         )
 
 
-@user_bp.route("/recurring-payments", methods=["POST"])
+@payment_bp.route("/recurring-payments", methods=["POST"])
 @require_user_id
 def create_recurring_payment():
     """Create new recurring payment"""
@@ -637,39 +632,39 @@ def create_recurring_payment():
                 return jsonify({"error": f"{field} is required"}), 400
 
         # Validate payment method
-        payment_method = PaymentMethod.query.filter_by(
-            id=data["payment_method_id"], user_id=request.user_id, is_active=True
-        ).first()
+        payment_method = PaymentMethod.find_one(
+            "id = ? AND user_id = ? AND is_active = 1",
+            (data["payment_method_id"], request.user_id),
+        )
 
         if not payment_method:
             return jsonify({"error": "Invalid payment method"}), 400
 
-        # Calculate next payment date
-        start_date = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+        # Calculate next payment date (simplified)
+        start_date = data["start_date"]
         next_payment_date = start_date
 
         # Create recurring payment
         recurring_payment = RecurringPayment(
+            id=str(uuid.uuid4()),
             user_id=request.user_id,
             payment_method_id=data["payment_method_id"],
-            amount=Decimal(str(data["amount"])),
+            amount=float(data["amount"]),
             currency=data.get("currency", "USD"),
             frequency=data["frequency"],
-            interval=data.get("interval", 1),
             description=data.get("description"),
             start_date=start_date,
-            end_date=(
-                datetime.strptime(data["end_date"], "%Y-%m-%d").date()
-                if data.get("end_date")
-                else None
-            ),
+            end_date=data.get("end_date"),
             next_payment_date=next_payment_date,
             total_payments=data.get("total_payments"),
+            payments_made=0,
+            status=data.get("status", "active"),
             metadata=data.get("metadata"),
+            created_at=datetime.utcnow().isoformat(),
+            updated_at=datetime.utcnow().isoformat(),
         )
 
-        db.session.add(recurring_payment)
-        db.session.commit()
+        recurring_payment.save()
 
         return (
             jsonify(
@@ -682,214 +677,16 @@ def create_recurring_payment():
         )
 
     except Exception as e:
-        db.session.rollback()
         return (
             jsonify({"error": "Failed to create recurring payment", "details": str(e)}),
             500,
         )
 
 
-# Exchange Rate Routes
-@user_bp.route("/exchange-rates", methods=["GET"])
-def get_exchange_rates():
-    """Get current exchange rates"""
-    try:
-        base_currency = request.args.get("base", "USD")
-        target_currency = request.args.get("target")
-
-        query = ExchangeRate.query.filter_by(base_currency=base_currency)
-
-        if target_currency:
-            query = query.filter_by(target_currency=target_currency)
-
-        # Get latest rates
-        rates = (
-            query.filter(ExchangeRate.valid_from <= datetime.utcnow())
-            .order_by(ExchangeRate.valid_from.desc())
-            .all()
-        )
-
-        # Remove duplicates, keeping only the latest for each currency pair
-        unique_rates = {}
-        for rate in rates:
-            key = f"{rate.base_currency}_{rate.target_currency}"
-            if key not in unique_rates:
-                unique_rates[key] = rate
-
-        return (
-            jsonify(
-                {
-                    "exchange_rates": [
-                        rate.to_dict() for rate in unique_rates.values()
-                    ],
-                    "base_currency": base_currency,
-                    "timestamp": datetime.utcnow().isoformat(),
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        return (
-            jsonify({"error": "Failed to get exchange rates", "details": str(e)}),
-            500,
-        )
+# --- Health check ---
 
 
-@user_bp.route("/exchange-rates/convert", methods=["POST"])
-def convert_currency():
-    """Convert amount between currencies"""
-    try:
-        data = request.get_json()
-
-        required_fields = ["amount", "from_currency", "to_currency"]
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({"error": f"{field} is required"}), 400
-
-        amount = Decimal(str(data["amount"]))
-        from_currency = data["from_currency"].upper()
-        to_currency = data["to_currency"].upper()
-
-        if from_currency == to_currency:
-            return (
-                jsonify(
-                    {
-                        "original_amount": float(amount),
-                        "converted_amount": float(amount),
-                        "from_currency": from_currency,
-                        "to_currency": to_currency,
-                        "exchange_rate": 1.0,
-                        "timestamp": datetime.utcnow().isoformat(),
-                    }
-                ),
-                200,
-            )
-
-        # Get exchange rate
-        exchange_rate = (
-            ExchangeRate.query.filter_by(
-                base_currency=from_currency, target_currency=to_currency
-            )
-            .filter(ExchangeRate.valid_from <= datetime.utcnow())
-            .order_by(ExchangeRate.valid_from.desc())
-            .first()
-        )
-
-        if not exchange_rate:
-            # Try reverse rate
-            reverse_rate = (
-                ExchangeRate.query.filter_by(
-                    base_currency=to_currency, target_currency=from_currency
-                )
-                .filter(ExchangeRate.valid_from <= datetime.utcnow())
-                .order_by(ExchangeRate.valid_from.desc())
-                .first()
-            )
-
-            if reverse_rate:
-                rate = Decimal("1") / reverse_rate.rate
-            else:
-                return jsonify({"error": "Exchange rate not available"}), 404
-        else:
-            rate = exchange_rate.rate
-
-        converted_amount = amount * rate
-
-        return (
-            jsonify(
-                {
-                    "original_amount": float(amount),
-                    "converted_amount": float(converted_amount),
-                    "from_currency": from_currency,
-                    "to_currency": to_currency,
-                    "exchange_rate": float(rate),
-                    "timestamp": datetime.utcnow().isoformat(),
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        return jsonify({"error": "Failed to convert currency", "details": str(e)}), 500
-
-
-# Analytics Routes
-@user_bp.route("/analytics/summary", methods=["GET"])
-@require_user_id
-def get_payment_analytics():
-    """Get payment analytics summary"""
-    try:
-        start_date = request.args.get("start_date")
-        end_date = request.args.get("end_date")
-
-        if not start_date or not end_date:
-            # Default to last 30 days
-            end_date = date.today()
-            start_date = end_date - timedelta(days=30)
-        else:
-            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-
-        # Get transaction summary
-        transactions = Transaction.query.filter(
-            Transaction.user_id == request.user_id,
-            Transaction.created_at >= start_date,
-            Transaction.created_at <= end_date,
-            Transaction.status == "completed",
-        ).all()
-
-        total_volume = sum(t.amount for t in transactions)
-        total_fees = sum(t.fees for t in transactions)
-        transaction_count = len(transactions)
-
-        # Group by transaction type
-        by_type = {}
-        for transaction in transactions:
-            if transaction.transaction_type not in by_type:
-                by_type[transaction.transaction_type] = {
-                    "count": 0,
-                    "volume": Decimal("0"),
-                    "fees": Decimal("0"),
-                }
-            by_type[transaction.transaction_type]["count"] += 1
-            by_type[transaction.transaction_type]["volume"] += transaction.amount
-            by_type[transaction.transaction_type]["fees"] += transaction.fees
-
-        # Convert to serializable format
-        for type_name in by_type:
-            by_type[type_name]["volume"] = float(by_type[type_name]["volume"])
-            by_type[type_name]["fees"] = float(by_type[type_name]["fees"])
-
-        return (
-            jsonify(
-                {
-                    "summary": {
-                        "total_volume": float(total_volume),
-                        "total_fees": float(total_fees),
-                        "transaction_count": transaction_count,
-                        "average_transaction": (
-                            float(total_volume / transaction_count)
-                            if transaction_count > 0
-                            else 0
-                        ),
-                    },
-                    "by_type": by_type,
-                    "period": {
-                        "start_date": start_date.isoformat(),
-                        "end_date": end_date.isoformat(),
-                    },
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        return jsonify({"error": "Failed to get analytics", "details": str(e)}), 500
-
-
-# Health check
-@user_bp.route("/health", methods=["GET"])
+@payment_bp.route("/health", methods=["GET"])
 def health_check():
     """Health check endpoint"""
     return (

@@ -71,7 +71,7 @@ setup_request_logging(app)
 logger = get_logger("open_banking_gateway")
 
 # Initialize database
-db_path = "/home/ubuntu/NexaFi/backend/open-banking-gateway/data/open_banking.db"
+db_path = os.path.join(os.path.dirname(__file__), "database", "open_banking.db")
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
 
@@ -792,8 +792,8 @@ def internal_error(error):
 
 
 if __name__ == "__main__":
-    # Create keys directory
-    os.makedirs("/home/ubuntu/NexaFi/backend/open-banking-gateway/keys", exist_ok=True)
-    os.makedirs("/home/ubuntu/NexaFi/backend/open-banking-gateway/data", exist_ok=True)
+    # Create necessary directories
+    os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(__file__), "keys"), exist_ok=True)
 
-    app.run(host="0.0.0.0", port=5010, debug=False)
+    app.run(host="0.0.0.0", port=5010, debug=True)

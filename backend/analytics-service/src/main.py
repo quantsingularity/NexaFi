@@ -5,22 +5,37 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
-from src.models.user import db
-from src.routes.user import user_bp
+from database.manager import BaseModel, initialize_database
+from .models.user import (
+    Dashboard,
+    Report,
+    ReportExecution,
+    DataSource,
+    Metric,
+    MetricHistory,
+)
+from .routes.user import analytics_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 app.config["SECRET_KEY"] = "asdf#FGSgvasgf$5$WGT"
 
-app.register_blueprint(user_bp, url_prefix="/api")
+app.register_blueprint(analytics_bp, url_prefix="/api/v1/analytics")
 
-# uncomment if you need to use database
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db.init_app(app)
-with app.app_context():
-    db.create_all()
+# Initialize database
+db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
+db_manager, migration_manager = initialize_database(db_path)
+
+# Set database manager for models
+BaseModel.set_db_manager(db_manager)
+
+# Apply Analytics-specific migrations
+from .migrations import ANALYTICS_MIGRATIONS
+
+for version, migration in ANALYTICS_MIGRATIONS.items():
+    migration_manager.apply_migration(
+        version, migration["description"], migration["sql"]
+    )
 
 
 @app.route("/", defaults={"path": ""})
@@ -41,4 +56,10 @@ def serve(path):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Ensure data directory exists
+    os.makedirs(
+        "/home/ubuntu/NexaFi/backend/analytics-service/src/database", exist_ok=True
+    )
+
+    # Development server
+    app.run(host="0.0.0.0", port=5003, debug=True)

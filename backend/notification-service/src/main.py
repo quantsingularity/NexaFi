@@ -24,6 +24,7 @@ from logging.logger import get_logger, setup_request_logging
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
+from .models.user import Notification, NotificationPreferences, NotificationTemplate
 from middleware.auth import require_auth, require_permission
 from validators.schemas import (
     SanitizationMixin,
@@ -46,9 +47,7 @@ setup_request_logging(app)
 logger = get_logger("notification_service")
 
 # Initialize database
-db_path = (
-    "/home/ubuntu/nexafi_backend_refactored/notification-service/data/notifications.db"
-)
+db_path = os.path.join(os.path.dirname(__file__), "database", "notifications.db")
 db_manager, migration_manager = initialize_database(db_path)
 
 # Apply notification-specific migrations
@@ -129,18 +128,6 @@ for version, migration in NOTIFICATION_MIGRATIONS.items():
 
 # Set database manager for models
 BaseModel.set_db_manager(db_manager)
-
-
-class Notification(BaseModel):
-    table_name = "notifications"
-
-
-class NotificationPreferences(BaseModel):
-    table_name = "notification_preferences"
-
-
-class NotificationTemplate(BaseModel):
-    table_name = "notification_templates"
 
 
 # Validation schemas
@@ -768,7 +755,7 @@ def notification_stats():
 if __name__ == "__main__":
     # Ensure data directory exists
     os.makedirs(
-        "/home/ubuntu/nexafi_backend_refactored/notification-service/data",
+        os.path.join(os.path.dirname(__file__), "database"),
         exist_ok=True,
     )
 
@@ -776,4 +763,4 @@ if __name__ == "__main__":
     initialize_templates()
 
     # Development server
-    app.run(host="0.0.0.0", port=5006, debug=False)
+    app.run(host="0.0.0.0", port=5006, debug=True)
