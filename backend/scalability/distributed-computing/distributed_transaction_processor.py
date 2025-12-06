@@ -1129,11 +1129,10 @@ if __name__ == "__main__":
 
     # Submit transaction
     tx_id = manager.submit_transaction(transaction)
-    print(f"Submitted transaction: {tx_id}")
-
+    logger.info(f"Submitted transaction: {tx_id}")
     # Start processing (in production, this would run in separate processes)
     # manager.start_processing(num_workers=4)
 
     # Get system metrics
     metrics = manager.get_system_metrics()
-    print(f"System Metrics: {json.dumps(metrics, indent=2)}")
+    logger.info(f"System Metrics: {json.dumps(metrics, indent=2)}")

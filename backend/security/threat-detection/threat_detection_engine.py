@@ -41,6 +41,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from twilio.rest import Client as TwilioClient
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 warnings.filterwarnings("ignore")
 
 
@@ -1721,10 +1725,9 @@ if __name__ == "__main__":
 
     threats = engine.analyze_event(event_data)
 
-    print(f"Detected {len(threats)} threats")
+    logger.info(f"Detected {len(threats)} threats")
     for threat in threats:
-        print(f"- {threat.threat_type.value}: {threat.description}")
-
+        logger.info(f"- {threat.threat_type.value}: {threat.description}")
     # Get statistics
     stats = engine.get_threat_statistics()
-    print(f"Threat Statistics: {json.dumps(stats, indent=2)}")
+    logger.info(f"Threat Statistics: {json.dumps(stats, indent=2)}")

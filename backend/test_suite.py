@@ -5,6 +5,10 @@ from datetime import datetime
 
 import requests
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 # Test configuration
 BASE_URL = "http://localhost:5000"
 SERVICES = {
@@ -36,18 +40,18 @@ class TestRunner:
         self.test_data = {}
 
     def log(self, message, color=Colors.BLUE):
-        print(f"{color}{message}{Colors.ENDC}")
+        logger.info(f"{color}{message}{Colors.ENDC}")
 
     def success(self, message):
         self.passed += 1
-        print(f"{Colors.GREEN}✓ {message}{Colors.ENDC}")
+        logger.info(f"{Colors.GREEN}✓ {message}{Colors.ENDC}")
 
     def error(self, message):
         self.failed += 1
-        print(f"{Colors.RED}✗ {message}{Colors.ENDC}")
+        logger.info(f"{Colors.RED}✗ {message}{Colors.ENDC}")
 
     def warning(self, message):
-        print(f"{Colors.YELLOW}⚠ {message}{Colors.ENDC}")
+        logger.info(f"{Colors.YELLOW}⚠ {message}{Colors.ENDC}")
 
     def test_health_checks(self):
         """Test health endpoints for all services"""

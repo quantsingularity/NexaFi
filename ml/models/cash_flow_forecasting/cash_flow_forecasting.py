@@ -1,6 +1,10 @@
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class CashFlowForecaster:
     def __init__(self):
@@ -45,5 +49,5 @@ if __name__ == "__main__":
     forecaster.train(processed_data)
     predictions = forecaster.predict(3)
 
-    print("Processed Data:\n", processed_data)
-    print("\nForecasted Cash Flow for next 3 months:\n", predictions)
+    logger.info("Processed Data:\n", processed_data)
+    logger.info("\nForecasted Cash Flow for next 3 months:\n", predictions)

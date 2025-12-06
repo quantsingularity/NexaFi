@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 # Add shared modules to path
 sys.path.append("/home/ubuntu/NexaFi/backend/shared")
 
-from enhanced_security import (
+from security import (
     AdvancedEncryption,
     FraudDetectionEngine,
     MultiFactorAuthentication,
@@ -32,6 +32,10 @@ from open_banking_compliance import (
     SCAStatus,
     TransactionRiskAnalysis,
 )
+
+from core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class TestFAPI2SecurityProfile(unittest.TestCase):
@@ -704,26 +708,23 @@ if __name__ == "__main__":
     result = runner.run(test_suite)
 
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"TEST SUMMARY")
-    print(f"{'='*60}")
-    print(f"Tests run: {result.testsRun}")
-    print(f"Failures: {len(result.failures)}")
-    print(f"Errors: {len(result.errors)}")
-    print(
+    logger.info(f"\n{'='*60}")
+    logger.info(f"TEST SUMMARY")
+    logger.info(f"{'='*60}")
+    logger.info(f"Tests run: {result.testsRun}")
+    logger.info(f"Failures: {len(result.failures)}")
+    logger.info(f"Errors: {len(result.errors)}")
+    logger.info(
         f"Success rate: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
     )
-
     if result.failures:
-        print(f"\nFAILURES:")
+        logger.info(f"\nFAILURES:")
         for test, traceback in result.failures:
-            print(f"- {test}: {traceback}")
-
+            logger.info(f"- {test}: {traceback}")
     if result.errors:
-        print(f"\nERRORS:")
+        logger.info(f"\nERRORS:")
         for test, traceback in result.errors:
-            print(f"- {test}: {traceback}")
-
+            logger.info(f"- {test}: {traceback}")
     # Exit with appropriate code
     exit_code = 0 if result.wasSuccessful() else 1
     exit(exit_code)

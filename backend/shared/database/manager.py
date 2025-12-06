@@ -9,6 +9,10 @@ import threading
 from contextlib import contextmanager
 from typing import Any, Dict, List, Tuple
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class DatabaseManager:
     """Database connection and transaction manager"""
@@ -137,11 +141,10 @@ class MigrationManager:
         applied_migrations = self.get_applied_migrations()
 
         if version in applied_migrations:
-            print(f"Migration {version} already applied")
+            logger.info(f"Migration {version} already applied")
             return
 
-        print(f"Applying migration {version}: {description}")
-
+        logger.info(f"Applying migration {version}: {description}")
         with self.db_manager.transaction() as conn:
             # Execute migration SQL
             for statement in sql.split(";"):
@@ -155,18 +158,17 @@ class MigrationManager:
                 (version, description),
             )
 
-        print(f"Migration {version} applied successfully")
+        logger.info(f"Migration {version} applied successfully")
 
     def rollback_migration(self, version: str, rollback_sql: str):
         """Rollback a database migration"""
         applied_migrations = self.get_applied_migrations()
 
         if version not in applied_migrations:
-            print(f"Migration {version} not applied")
+            logger.info(f"Migration {version} not applied")
             return
 
-        print(f"Rolling back migration {version}")
-
+        logger.info(f"Rolling back migration {version}")
         with self.db_manager.transaction() as conn:
             # Execute rollback SQL
             for statement in rollback_sql.split(";"):
@@ -179,7 +181,7 @@ class MigrationManager:
                 f"DELETE FROM {self.migrations_table} WHERE version = ?", (version,)
             )
 
-        print(f"Migration {version} rolled back successfully")
+        logger.info(f"Migration {version} rolled back successfully")
 
 
 class BaseModel:

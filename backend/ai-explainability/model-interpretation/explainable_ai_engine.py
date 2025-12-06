@@ -1384,11 +1384,10 @@ if __name__ == "__main__":
     # Generate explanation
     result = engine.explain_model(request)
 
-    print(f"Explanation ID: {result.explanation_id}")
-    print(f"Confidence Score: {result.confidence_score}")
-    print(f"Compliance Status: {result.compliance_status}")
-    print(f"Explanations: {json.dumps(result.explanations, indent=2)}")
-
+    logger.info(f"Explanation ID: {result.explanation_id}")
+    logger.info(f"Confidence Score: {result.confidence_score}")
+    logger.info(f"Compliance Status: {result.compliance_status}")
+    logger.info(f"Explanations: {json.dumps(result.explanations, indent=2)}")
     # Generate compliance report
     compliance_report = engine.generate_compliance_report(result.explanation_id)
-    print(f"Compliance Report: {json.dumps(compliance_report, indent=2)}")
+    logger.info(f"Compliance Report: {json.dumps(compliance_report, indent=2)}")

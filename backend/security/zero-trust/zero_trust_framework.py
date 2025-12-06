@@ -30,6 +30,10 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 Base = declarative_base()
 
 
@@ -1239,11 +1243,10 @@ if __name__ == "__main__":
         request_data=request_data,
     )
 
-    print(f"Access Decision: {decision.value}")
-    print(f"Policy: {policy}")
-    print(f"Trust Score: {context.trust_score}")
-    print(f"Risk Score: {context.risk_score}")
-
+    logger.info(f"Access Decision: {decision.value}")
+    logger.info(f"Policy: {policy}")
+    logger.info(f"Trust Score: {context.trust_score}")
+    logger.info(f"Risk Score: {context.risk_score}")
     # Get security metrics
     metrics = framework.get_security_metrics()
-    print(f"Security Metrics: {json.dumps(metrics, indent=2)}")
+    logger.info(f"Security Metrics: {json.dumps(metrics, indent=2)}")

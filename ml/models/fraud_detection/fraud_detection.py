@@ -2,6 +2,10 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import classification_report
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class FraudDetector:
     def __init__(self):
@@ -34,8 +38,8 @@ class FraudDetector:
         y_true_binary = [
             1 if t == 1 else 0 for t in y_true
         ]  # Assuming 1 is fraud, 0 is legitimate
-        print("\nFraud Detection Model Performance:")
-        print(
+        logger.info("\nFraud Detection Model Performance:")
+        logger.info(
             classification_report(
                 y_true_binary, y_pred_binary, target_names=["Legitimate", "Fraud"]
             )
@@ -76,8 +80,7 @@ if __name__ == "__main__":
 
     # Predict on the same data for demonstration
     predictions = detector.predict(X)
-    print("\nPredictions (-1 for fraud, 1 for legitimate):", predictions)
-
+    logger.info("\nPredictions (-1 for fraud, 1 for legitimate):", predictions)
     # Evaluate the model (requires true labels)
     detector.evaluate(X, y)
 
@@ -91,4 +94,6 @@ if __name__ == "__main__":
     )
     processed_new_transaction = detector.preprocess_data(new_transaction)
     fraud_prediction = detector.predict(processed_new_transaction)
-    print(f"\nPrediction for new transaction: {fraud_prediction[0]} (-1 means fraud)")
+    logger.info(
+        f"\nPrediction for new transaction: {fraud_prediction[0]} (-1 means fraud)"
+    )

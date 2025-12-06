@@ -28,6 +28,10 @@ from ..shared.base_integration import (
     SyncResult,
 )
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 @dataclass
 class OracleConfig:
@@ -1104,16 +1108,14 @@ if __name__ == "__main__":
 
     # Test connection
     if oracle_integration.test_connection():
-        print("Oracle connection successful")
-
+        logger.info("Oracle connection successful")
         # Sync suppliers
         result = oracle_integration.sync_data("suppliers")
-        print(f"Supplier sync result: {result}")
-
+        logger.info(f"Supplier sync result: {result}")
         # Sync invoices
         result = oracle_integration.sync_data(
             "invoices", date_from="2024-01-01", date_to="2024-12-31"
         )
-        print(f"Invoice sync result: {result}")
+        logger.info(f"Invoice sync result: {result}")
     else:
-        print("Oracle connection failed")
+        logger.info("Oracle connection failed")

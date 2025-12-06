@@ -28,6 +28,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urllib3.util.retry import Retry
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 # Metrics for monitoring
 INTEGRATION_REQUESTS = Counter(
     "integration_requests_total", "Total integration requests", ["system", "operation"]
@@ -857,4 +861,4 @@ if __name__ == "__main__":
     # Start scheduler
     manager.start_scheduler()
 
-    print("Enterprise Integration Framework initialized")
+    logger.info("Enterprise Integration Framework initialized")

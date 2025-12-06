@@ -19,6 +19,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class ConsentStatus(Enum):
     """PSD2 Consent Status"""
@@ -453,7 +457,7 @@ class SCAManager:
         """Send authentication challenge to user"""
         # Implementation would integrate with SMS, push notification, etc.
         # For now, just log the challenge
-        print(f"SCA Challenge for user {psu_id} via {method.value}: {challenge}")
+        logger.info(f"SCA Challenge for user {psu_id} via {method.value}: {challenge}")
 
     def verify_sca(
         self, authentication_id: str, response: str

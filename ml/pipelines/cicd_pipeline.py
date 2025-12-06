@@ -19,6 +19,10 @@ from kubernetes import client
 from kubernetes import config as k8s_config
 from mlflow.tracking import MlflowClient
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 @dataclass
 class PipelineConfig:
@@ -1188,4 +1192,4 @@ if __name__ == "__main__":
     }
 
     result = pipeline.run_pipeline(trigger_event)
-    print(f"Pipeline result: {result['status']}")
+    logger.info(f"Pipeline result: {result['status']}")

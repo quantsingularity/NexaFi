@@ -14,6 +14,10 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class AuditEventType(Enum):
     """Types of audit events"""
@@ -145,7 +149,7 @@ class AuditLogger:
                 continue
             except Exception as e:
                 # Log error but continue processing
-                print(f"Error processing audit event: {e}")
+                logger.info(f"Error processing audit event: {e}")
 
     def _store_event(self, event: AuditEvent):
         """Store audit event with integrity chain"""

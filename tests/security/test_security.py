@@ -3,6 +3,10 @@ import time
 import pytest
 import requests
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 # Dictionary mapping service names to their base URLs for easy access.
 BASE_URLS = {
     "ai-service": "http://localhost:5004",
@@ -147,8 +151,7 @@ def test_sql_injection_vulnerability():
         "Content-Type": "application/json",
     }
 
-    print(f"\nTesting URL: {BASE_URL}")
-
+    logger.info(f"\nTesting URL: {BASE_URL}")
     for payload in sqli_payloads:
         # NOTE: Using a PUT or POST request to send the data
         try:
@@ -162,10 +165,9 @@ def test_sql_injection_vulnerability():
                 "This could indicate a vulnerability."
             )
 
-            print(
+            logger.info(
                 f"✅ Payload rejected or handled securely. Status: {response.status_code}"
             )
-
         except requests.exceptions.RequestException as e:
             # Handle connection errors or timeouts gracefully
             pytest.fail(f"Request to {BASE_URL} failed: {e}")
@@ -276,12 +278,13 @@ def test_cors_misconfiguration():
 
                 # Check 2: Is it set to the wildcard '*' which might be overly permissive?
                 if allow_origin == "*":
-                    print(
+                    logger.info(
                         f"Warning: CORS for {service} is set to '*' (wildcard). Check if this is intentional."
                     )
-
         except requests.exceptions.ConnectionError:
-            print(f"Could not connect to {service} at {base_url}, skipping CORS test.")
+            logger.info(
+                f"Could not connect to {service} at {base_url}, skipping CORS test."
+            )
 
 
 @pytest.mark.security
@@ -364,7 +367,7 @@ def test_broken_authentication_session_management():
                 invalidated_response.status_code == 401
             ), "Token not invalidated after logout (session remains active)"
     else:
-        print(
+        logger.info(
             "Skipping logout invalidation test: Login failed or mock data not available."
         )
 
@@ -379,7 +382,7 @@ def test_insecure_direct_object_references():
     # 3. User B creates resource X (e.g., document ID 123).
     # 4. User A attempts to access resource X using Token A.
     # 5. Expect a 403 Forbidden or 404 Not Found, not a 200 OK.
-    print(
+    logger.info(
         "IDOR test requires multiple user accounts and resource creation; conceptual test only."
     )
 
@@ -389,7 +392,7 @@ def test_security_misconfiguration():
     """Test for common security misconfigurations (e.g., exposed debug interfaces)."""
     # This test is highly application-specific and deployment-environment dependent.
     # Example: checking for known default credentials, or exposed configuration files.
-    print(
+    logger.info(
         "Security misconfiguration test is conceptual and highly dependent on deployment environment."
     )
 
@@ -399,7 +402,7 @@ def test_using_components_with_known_vulnerabilities():
     """Test for outdated or vulnerable components."""
     # This typically involves dependency scanning tools (e.g., Snyk, OWASP Dependency-Check).
     # It checks the version history of libraries used (e.g., Flask, Python, requests, etc.).
-    print(
+    logger.info(
         "Testing for known vulnerabilities requires dependency scanning tools; conceptual test only."
     )
 
@@ -409,7 +412,7 @@ def test_insufficient_logging_monitoring():
     """Test for insufficient logging and monitoring of security events."""
     # This is a grey-box test requiring access to application logs.
     # Conceptual test: Trigger a failure (e.g., 401 or 500) and verify a corresponding log entry exists.
-    print(
+    logger.info(
         "Insufficient logging/monitoring test requires access to application logs; conceptual test only."
     )
 
@@ -420,7 +423,7 @@ def test_server_side_request_forgery_ssrf():
     # SSRF occurs when a web application fetches a remote resource without validating the user-supplied URL.
     # If NexaFi has a feature that fetches URLs (e.g., document import from URL), it could be vulnerable.
     # Conceptual test: Try to make the application fetch an internal resource (like http://localhost) or a non-HTTP/HTTPS URL.
-    print("SSRF test is conceptual and depends on specific application features.")
+    logger.info("SSRF test is conceptual and depends on specific application features.")
 
 
 @pytest.mark.security
@@ -428,7 +431,7 @@ def test_unvalidated_redirects_forwards():
     """Test for unvalidated redirects and forwards."""
     # If the application redirects users based on a URL parameter, it could be vulnerable to phishing.
     # Conceptual test: Try to provide a malicious URL as a redirect parameter (e.g., /login?next=http://malicious.com).
-    print(
+    logger.info(
         "Unvalidated redirects test is conceptual and depends on specific application features."
     )
 
@@ -438,6 +441,6 @@ def test_file_upload_vulnerabilities():
     """Test for file upload vulnerabilities (e.g., uploading malicious executables)."""
     # If NexaFi allows file uploads (e.g., for documents), it could be vulnerable.
     # Conceptual test: Try to upload a file with a malicious extension (e.g., .exe, .php) or content (e.g., a reverse shell).
-    print(
+    logger.info(
         "File upload vulnerability test is conceptual and depends on specific application features."
     )

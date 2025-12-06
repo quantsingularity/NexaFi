@@ -2,6 +2,10 @@ import pytesseract
 import spacy
 from PIL import Image
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class DocumentProcessor:
     def __init__(self):
@@ -9,7 +13,7 @@ class DocumentProcessor:
         try:
             self.nlp = spacy.load("en_core_web_sm")
         except OSError:
-            print("Downloading spaCy model 'en_core_web_sm'...")
+            logger.info("Downloading spaCy model 'en_core_web_sm'...")
             spacy.cli.download("en_core_web_sm")
             self.nlp = spacy.load("en_core_web_sm")
 
@@ -18,7 +22,7 @@ class DocumentProcessor:
             text = pytesseract.image_to_string(Image.open(image_path))
             return text
         except Exception as e:
-            print(f"Error during OCR: {e}")
+            logger.info(f"Error during OCR: {e}")
             return None
 
     def analyze_text(self, text):
@@ -67,23 +71,21 @@ if __name__ == "__main__":
         )
         img.save(img_path)
 
-        print(f"Dummy image saved to {img_path}")
-
+        logger.info(f"Dummy image saved to {img_path}")
         extracted_text = processor.extract_text_from_image(img_path)
-        print("\nExtracted Text:\n", extracted_text)
-
+        logger.info("\nExtracted Text:\n", extracted_text)
         analysis_results = processor.analyze_text(extracted_text)
-        print("\nAnalysis Results:\n", analysis_results)
-
+        logger.info("\nAnalysis Results:\n", analysis_results)
     except ImportError:
-        print("Pillow not installed. Cannot create dummy image for demonstration.")
-        print("Please install Pillow (pip install Pillow) to run the example.")
+        logger.info(
+            "Pillow not installed. Cannot create dummy image for demonstration."
+        )
+        logger.info("Please install Pillow (pip install Pillow) to run the example.")
     except Exception as e:
-        print(f"An error occurred during example execution: {e}")
-
+        logger.info(f"An error occurred during example execution: {e}")
     # Clean up dummy image
     import os
 
     if os.path.exists(img_path):
         os.remove(img_path)
-        print(f"Cleaned up dummy image {img_path}")
+        logger.info(f"Cleaned up dummy image {img_path}")

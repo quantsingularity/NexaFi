@@ -17,6 +17,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class SecurityLevel(Enum):
     """Security levels for different operations"""
@@ -679,12 +683,14 @@ class SecurityMonitor:
     def _trigger_ip_block(self, ip_address: str, reason: str):
         """Trigger IP address block"""
         # Implementation would integrate with firewall/WAF
-        print(f"SECURITY ALERT: Blocking IP {ip_address} - Reason: {reason}")
+        logger.info(f"SECURITY ALERT: Blocking IP {ip_address} - Reason: {reason}")
 
     def _trigger_account_review(self, user_id: str, reason: str):
         """Trigger account security review"""
         # Implementation would notify security team
-        print(f"SECURITY ALERT: Account {user_id} requires review - Reason: {reason}")
+        logger.info(
+            f"SECURITY ALERT: Account {user_id} requires review - Reason: {reason}"
+        )
 
     def get_threat_summary(self, hours: int = 24) -> Dict[str, Any]:
         """Get threat summary for specified time period"""

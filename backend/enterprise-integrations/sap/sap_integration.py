@@ -23,6 +23,10 @@ from ..shared.base_integration import (
     SyncResult,
 )
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 @dataclass
 class SAPConfig:
@@ -991,16 +995,14 @@ if __name__ == "__main__":
 
     # Test connection
     if sap_integration.test_connection():
-        print("SAP connection successful")
-
+        logger.info("SAP connection successful")
         # Sync business partners
         result = sap_integration.sync_data("business_partners")
-        print(f"Business partner sync result: {result}")
-
+        logger.info(f"Business partner sync result: {result}")
         # Sync financial data
         result = sap_integration.sync_data(
             "general_ledger", company_code="1000", fiscal_year="2024"
         )
-        print(f"Financial sync result: {result}")
+        logger.info(f"Financial sync result: {result}")
     else:
-        print("SAP connection failed")
+        logger.info("SAP connection failed")

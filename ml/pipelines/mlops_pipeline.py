@@ -22,6 +22,10 @@ from mlflow.tracking import MlflowClient
 from sklearn.base import BaseEstimator
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 @dataclass
 class ModelMetadata:
@@ -1198,4 +1202,4 @@ if __name__ == "__main__":
     pipeline = MLOpsPipeline(config)
 
     # This would be integrated with actual model training workflows
-    print("MLOps Pipeline initialized successfully")
+    logger.info("MLOps Pipeline initialized successfully")

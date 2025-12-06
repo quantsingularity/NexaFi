@@ -3,6 +3,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class CreditScorer:
     def __init__(self):
@@ -24,9 +28,9 @@ class CreditScorer:
         self.model = LogisticRegression(max_iter=1000)
         self.model.fit(X_train, y_train)
         y_pred = self.model.predict(X_test)
-        print("\nCredit Scoring Model Performance:")
-        print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
-        print("Classification Report:\n", classification_report(y_test, y_pred))
+        logger.info("\nCredit Scoring Model Performance:")
+        logger.info(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
+        logger.info("Classification Report:\n", classification_report(y_test, y_pred))
 
     def predict(self, X_new):
         if self.model is None:
@@ -122,6 +126,6 @@ if __name__ == "__main__":
     processed_new_applicant_df = processed_new_applicant_df[train_cols]
 
     credit_probability = scorer.predict(processed_new_applicant_df)
-    print(
+    logger.info(
         f"\nProbability of good credit for new applicant: {credit_probability[0]:.2f}"
     )

@@ -1055,7 +1055,7 @@ if __name__ == "__main__":
     # Example usage
     cache_manager.set("user_data", "user:123", {"name": "John Doe", "balance": 1000.0})
     user_data = cache_manager.get("user_data", "user:123")
-    print(f"User data: {user_data}")
+    logger.info(f"User data: {user_data}")
 
     # Example with decorator
     @cached(cache_name="financial_data", ttl=1800)
@@ -1066,15 +1066,12 @@ if __name__ == "__main__":
 
     # First call - will be cached
     price1 = get_stock_price("AAPL")
-    print(f"Stock price (first call): {price1}")
-
+    logger.info(f"Stock price (first call): {price1}")
     # Second call - will be served from cache
     price2 = get_stock_price("AAPL")
-    print(f"Stock price (cached): {price2}")
-
+    logger.info(f"Stock price (cached): {price2}")
     # Get global statistics
     stats = cache_manager.get_global_stats()
-    print(f"Cache Statistics: {json.dumps(stats, indent=2, default=str)}")
-
+    logger.info(f"Cache Statistics: {json.dumps(stats, indent=2, default=str)}")
     # Stop metrics collection
     cache_manager.stop_metrics_collection()

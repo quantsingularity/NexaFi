@@ -2,6 +2,10 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class ProductRecommender:
     def __init__(self):
@@ -81,12 +85,11 @@ if __name__ == "__main__":
     user_pref = "I want to save money and invest in environmentally friendly options."
     recommendations = recommender.recommend_products(user_pref, num_recommendations=2)
 
-    print("\nRecommended Products for user preferences:\n", user_pref)
-    print(recommendations)
-
+    logger.info("\nRecommended Products for user preferences:\n", user_pref)
+    logger.info(recommendations)
     user_pref_2 = "Looking for a credit card with good rewards for travel."
     recommendations_2 = recommender.recommend_products(
         user_pref_2, num_recommendations=1
     )
-    print("\nRecommended Products for user preferences:\n", user_pref_2)
-    print(recommendations_2)
+    logger.info("\nRecommended Products for user preferences:\n", user_pref_2)
+    logger.info(recommendations_2)
