@@ -2,92 +2,64 @@ import uuid
 from datetime import datetime, date
 from decimal import Decimal
 from functools import wraps
-
 from flask import Blueprint, jsonify, request
-
-from .models.user import (
-    Account,
-    JournalEntry,
-    JournalEntryLine,
-)
+from .models.user import Account, JournalEntry, JournalEntryLine
 
 ledger_bp = Blueprint("ledger", __name__)
 
 
-def require_user_id(f):
+def require_user_id(f: Any) -> Any:
     """Decorator to extract user_id from request headers"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user_id = request.headers.get("X-User-ID")
         if not user_id:
-            return jsonify({"error": "User ID is required in headers"}), 401
+            return (jsonify({"error": "User ID is required in headers"}), 401)
         request.user_id = user_id
         return f(*args, **kwargs)
 
     return decorated_function
 
 
-def generate_entry_number(user_id):
+def generate_entry_number(user_id: Any) -> Any:
     """Generate unique journal entry number (simulated)"""
     return f"JE-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
 
 
-# --- Account Management Routes ---
-
-
 @ledger_bp.route("/accounts", methods=["GET"])
 @require_user_id
-def get_accounts():
+def get_accounts() -> Any:
     """Get all accounts for user"""
     try:
         account_type = request.args.get("type")
         is_active = request.args.get("active", "true").lower() == "true"
-
         where_clause = "user_id = ?"
         params = [request.user_id]
-
         if account_type:
             where_clause += " AND account_type = ?"
             params.append(account_type)
-
         if is_active:
             where_clause += " AND is_active = 1"
-
         accounts = Account.find_all(
             where_clause + " ORDER BY account_code", tuple(params)
         )
-
-        # Calculate current balance for each account
         account_data = []
         for account in accounts:
             data = account.to_dict()
-            # Note: The actual get_balance implementation is in main.py, but for a clean model file,
-            # we'll rely on the current_balance field which is updated on posting.
             data["balance"] = data["current_balance"]
             account_data.append(data)
-
-        return (
-            jsonify(
-                {
-                    "accounts": account_data,
-                    "total": len(account_data),
-                }
-            ),
-            200,
-        )
-
+        return (jsonify({"accounts": account_data, "total": len(account_data)}), 200)
     except Exception as e:
-        return jsonify({"error": "Failed to get accounts", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to get accounts", "details": str(e)}), 500)
 
 
 @ledger_bp.route("/accounts", methods=["POST"])
 @require_user_id
-def create_account():
+def create_account() -> Any:
     """Create new account"""
     try:
         data = request.get_json()
-
         required_fields = [
             "account_code",
             "account_name",
@@ -96,18 +68,12 @@ def create_account():
         ]
         for field in required_fields:
             if not data.get(field):
-                return jsonify({"error": f"{field} is required"}), 400
-
-        # Check if account code already exists
+                return (jsonify({"error": f"{field} is required"}), 400)
         existing_account = Account.find_one(
-            "user_id = ? AND account_code = ?",
-            (request.user_id, data["account_code"]),
+            "user_id = ? AND account_code = ?", (request.user_id, data["account_code"])
         )
-
         if existing_account:
-            return jsonify({"error": "Account code already exists"}), 409
-
-        # Create account
+            return (jsonify({"error": "Account code already exists"}), 409)
         account = Account(
             id=str(uuid.uuid4()),
             user_id=request.user_id,
@@ -124,9 +90,7 @@ def create_account():
             created_at=datetime.utcnow().isoformat(),
             updated_at=datetime.utcnow().isoformat(),
         )
-
         account.save()
-
         return (
             jsonify(
                 {
@@ -136,51 +100,39 @@ def create_account():
             ),
             201,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to create account", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to create account", "details": str(e)}), 500)
 
 
 @ledger_bp.route("/accounts/<account_id>", methods=["GET"])
 @require_user_id
-def get_account(account_id):
+def get_account(account_id: Any) -> Any:
     """Get specific account"""
     try:
         account = Account.find_one(
             "id = ? AND user_id = ?", (account_id, request.user_id)
         )
-
         if not account:
-            return jsonify({"error": "Account not found"}), 404
-
-        # Get account balance
-        # The full get_balance logic is in main.py, here we use the stored current_balance
+            return (jsonify({"error": "Account not found"}), 404)
         balance = account.current_balance
-
         account_data = account.to_dict()
         account_data["balance"] = float(balance)
-
-        return jsonify({"account": account_data}), 200
-
+        return (jsonify({"account": account_data}), 200)
     except Exception as e:
-        return jsonify({"error": "Failed to get account", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to get account", "details": str(e)}), 500)
 
 
 @ledger_bp.route("/accounts/<account_id>", methods=["PUT"])
 @require_user_id
-def update_account(account_id):
+def update_account(account_id: Any) -> Any:
     """Update account"""
     try:
         account = Account.find_one(
             "id = ? AND user_id = ?", (account_id, request.user_id)
         )
-
         if not account:
-            return jsonify({"error": "Account not found"}), 404
-
+            return (jsonify({"error": "Account not found"}), 404)
         data = request.get_json()
-
-        # Update fields
         updatable_fields = [
             "account_name",
             "account_type",
@@ -192,10 +144,8 @@ def update_account(account_id):
         for field in updatable_fields:
             if field in data:
                 setattr(account, field, data[field])
-
         account.updated_at = datetime.utcnow().isoformat()
         account.save()
-
         return (
             jsonify(
                 {
@@ -205,44 +155,32 @@ def update_account(account_id):
             ),
             200,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to update account", "details": str(e)}), 500
-
-
-# --- Journal Entry Routes ---
+        return (jsonify({"error": "Failed to update account", "details": str(e)}), 500)
 
 
 @ledger_bp.route("/journal-entries", methods=["GET"])
 @require_user_id
-def get_journal_entries():
+def get_journal_entries() -> Any:
     """Get journal entries for user"""
     try:
         status = request.args.get("status")
         start_date = request.args.get("start_date")
         end_date = request.args.get("end_date")
-
         where_clause = "user_id = ?"
         params = [request.user_id]
-
         if status:
             where_clause += " AND status = ?"
             params.append(status)
-
         if start_date:
             where_clause += " AND entry_date >= ?"
             params.append(start_date)
-
         if end_date:
             where_clause += " AND entry_date <= ?"
             params.append(end_date)
-
         entries = JournalEntry.find_all(
             where_clause + " ORDER BY entry_date DESC, entry_number DESC", tuple(params)
         )
-
-        # Note: The full implementation of fetching lines is complex with the custom ORM.
-        # We will return the entry without lines for simplicity in this minimal implementation.
         return (
             jsonify(
                 {
@@ -252,7 +190,6 @@ def get_journal_entries():
             ),
             200,
         )
-
     except Exception as e:
         return (
             jsonify({"error": "Failed to get journal entries", "details": str(e)}),
@@ -262,18 +199,14 @@ def get_journal_entries():
 
 @ledger_bp.route("/journal-entries", methods=["POST"])
 @require_user_id
-def create_journal_entry():
+def create_journal_entry() -> Any:
     """Create new journal entry"""
     try:
         data = request.get_json()
-
         if not data.get("description") or not data.get("lines"):
-            return jsonify({"error": "Description and lines are required"}), 400
-
+            return (jsonify({"error": "Description and lines are required"}), 400)
         if len(data["lines"]) < 2:
-            return jsonify({"error": "At least two lines are required"}), 400
-
-        # Create journal entry
+            return (jsonify({"error": "At least two lines are required"}), 400)
         entry = JournalEntry(
             id=str(uuid.uuid4()),
             user_id=request.user_id,
@@ -288,44 +221,35 @@ def create_journal_entry():
             created_at=datetime.utcnow().isoformat(),
             updated_at=datetime.utcnow().isoformat(),
         )
-
-        # Calculate totals and create lines
         total_debits = Decimal("0")
         total_credits = Decimal("0")
         lines_to_save = []
-
         for i, line_data in enumerate(data["lines"]):
             account = Account.find_one(
-                "id = ? AND user_id = ?",
-                (line_data.get("account_id"), request.user_id),
+                "id = ? AND user_id = ?", (line_data.get("account_id"), request.user_id)
             )
-
             if not account:
-                return jsonify({"error": f"Invalid account ID for line {i+1}"}), 400
-
+                return (jsonify({"error": f"Invalid account ID for line {i + 1}"}), 400)
             debit_amount = Decimal(str(line_data.get("debit_amount", 0)))
             credit_amount = Decimal(str(line_data.get("credit_amount", 0)))
-
             if debit_amount == 0 and credit_amount == 0:
                 return (
                     jsonify(
                         {
-                            "error": f"Either debit or credit amount is required for line {i+1}"
+                            "error": f"Either debit or credit amount is required for line {i + 1}"
                         }
                     ),
                     400,
                 )
-
             if debit_amount > 0 and credit_amount > 0:
                 return (
                     jsonify(
                         {
-                            "error": f"Line {i+1} cannot have both debit and credit amounts"
+                            "error": f"Line {i + 1} cannot have both debit and credit amounts"
                         }
                     ),
                     400,
                 )
-
             line = JournalEntryLine(
                 id=str(uuid.uuid4()),
                 journal_entry_id=entry.id,
@@ -336,27 +260,20 @@ def create_journal_entry():
                 line_number=i + 1,
                 created_at=datetime.utcnow().isoformat(),
             )
-
             lines_to_save.append(line)
             total_debits += debit_amount
             total_credits += credit_amount
-
-        # Validate that debits equal credits
         if total_debits != total_credits:
-            return jsonify({"error": "Total debits must equal total credits"}), 400
-
+            return (jsonify({"error": "Total debits must equal total credits"}), 400)
         entry.total_amount = float(total_debits)
         entry.save()
         for line in lines_to_save:
             line.save()
-
-        # Auto-post if requested (simplified, full posting logic is in main.py)
         if data.get("auto_post", False):
             entry.status = "posted"
             entry.posted_by = request.user_id
             entry.posted_at = datetime.utcnow().isoformat()
             entry.save()
-
         return (
             jsonify(
                 {
@@ -366,7 +283,6 @@ def create_journal_entry():
             ),
             201,
         )
-
     except Exception as e:
         return (
             jsonify({"error": "Failed to create journal entry", "details": str(e)}),
@@ -376,25 +292,20 @@ def create_journal_entry():
 
 @ledger_bp.route("/journal-entries/<entry_id>/post", methods=["POST"])
 @require_user_id
-def post_journal_entry(entry_id):
+def post_journal_entry(entry_id: Any) -> Any:
     """Post a journal entry (simplified, full posting logic is in main.py)"""
     try:
         entry = JournalEntry.find_one(
             "id = ? AND user_id = ?", (entry_id, request.user_id)
         )
-
         if not entry:
-            return jsonify({"error": "Journal entry not found"}), 404
-
+            return (jsonify({"error": "Journal entry not found"}), 404)
         if entry.status != "draft":
-            return jsonify({"error": "Only draft entries can be posted"}), 400
-
-        # Simulate posting
+            return (jsonify({"error": "Only draft entries can be posted"}), 400)
         entry.status = "posted"
         entry.posted_by = request.user_id
         entry.posted_at = datetime.utcnow().isoformat()
         entry.save()
-
         return (
             jsonify(
                 {
@@ -404,7 +315,6 @@ def post_journal_entry(entry_id):
             ),
             200,
         )
-
     except Exception as e:
         return (
             jsonify({"error": "Failed to post journal entry", "details": str(e)}),
@@ -412,12 +322,9 @@ def post_journal_entry(entry_id):
         )
 
 
-# --- Financial Reports (Simplified, full logic is in main.py) ---
-
-
 @ledger_bp.route("/reports/trial-balance", methods=["GET"])
 @require_user_id
-def get_trial_balance():
+def get_trial_balance() -> Any:
     """Generate trial balance report (simulated)"""
     return (
         jsonify({"error": "Report generation is handled by the core logic in main.py"}),
@@ -427,7 +334,7 @@ def get_trial_balance():
 
 @ledger_bp.route("/reports/balance-sheet", methods=["GET"])
 @require_user_id
-def get_balance_sheet():
+def get_balance_sheet() -> Any:
     """Generate balance sheet report (simulated)"""
     return (
         jsonify({"error": "Report generation is handled by the core logic in main.py"}),
@@ -437,7 +344,7 @@ def get_balance_sheet():
 
 @ledger_bp.route("/reports/income-statement", methods=["GET"])
 @require_user_id
-def get_income_statement():
+def get_income_statement() -> Any:
     """Generate income statement report (simulated)"""
     return (
         jsonify({"error": "Report generation is handled by the core logic in main.py"}),
@@ -445,27 +352,18 @@ def get_income_statement():
     )
 
 
-# --- Initialization ---
-
-
 @ledger_bp.route("/accounts/initialize", methods=["POST"])
 @require_user_id
-def initialize_accounts():
+def initialize_accounts() -> Any:
     """Initialize default chart of accounts for user (simulated)"""
     try:
-        # Check if user already has accounts
         existing_accounts = Account.find_all("user_id = ?", (request.user_id,))
-
         if len(existing_accounts) > 0:
-            return jsonify({"error": "User already has accounts initialized"}), 409
-
-        # In a real scenario, this would create the default accounts
-        # For now, we'll just return success
+            return (jsonify({"error": "User already has accounts initialized"}), 409)
         return (
             jsonify({"message": "Default chart of accounts created successfully"}),
             201,
         )
-
     except Exception as e:
         return (
             jsonify({"error": "Failed to initialize accounts", "details": str(e)}),
@@ -473,11 +371,8 @@ def initialize_accounts():
         )
 
 
-# --- Health check ---
-
-
 @ledger_bp.route("/health", methods=["GET"])
-def health_check():
+def health_check() -> Any:
     """Health check endpoint"""
     return (
         jsonify(

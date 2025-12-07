@@ -2,7 +2,6 @@ import random
 from datetime import datetime, timedelta
 from decimal import Decimal
 from functools import wraps
-
 import numpy as np
 from flask import Blueprint, jsonify, request
 from src.models.user import (
@@ -17,40 +16,33 @@ from src.models.user import (
 user_bp = Blueprint("ai", __name__)
 
 
-def require_user_id(f):
+def require_user_id(f: Any) -> Any:
     """Decorator to extract user_id from request headers"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user_id = request.headers.get("X-User-ID")
         if not user_id:
-            return jsonify({"error": "User ID is required in headers"}), 401
+            return (jsonify({"error": "User ID is required in headers"}), 401)
         request.user_id = user_id
         return f(*args, **kwargs)
 
     return decorated_function
 
 
-# Cash Flow Forecasting
-def generate_cash_flow_forecast(user_id, historical_data, days_ahead=30):
+def generate_cash_flow_forecast(
+    user_id: Any, historical_data: Any, days_ahead: Any = 30
+) -> Any:
     """Generate cash flow forecast using simulated ML model"""
-    # Simulate LSTM-based cash flow prediction
     base_amount = historical_data.get("average_monthly_cash_flow", 10000)
     seasonal_factor = 1 + 0.1 * np.sin(2 * np.pi * datetime.now().month / 12)
-    trend_factor = 1.02  # 2% growth trend
-
+    trend_factor = 1.02
     forecasts = []
     current_date = datetime.now().date()
-
     for i in range(days_ahead):
         date = current_date + timedelta(days=i)
-
-        # Add some randomness to simulate real predictions
         random_factor = 1 + random.uniform(-0.15, 0.15)
-        daily_amount = (
-            (base_amount / 30) * seasonal_factor * trend_factor * random_factor
-        )
-
+        daily_amount = base_amount / 30 * seasonal_factor * trend_factor * random_factor
         forecasts.append(
             {
                 "date": date.isoformat(),
@@ -61,23 +53,16 @@ def generate_cash_flow_forecast(user_id, historical_data, days_ahead=30):
                 },
             }
         )
-
     return forecasts
 
 
-def calculate_credit_score(user_id, business_data):
+def calculate_credit_score(user_id: Any, business_data: Any) -> Any:
     """Calculate credit score using simulated ML model"""
-    # Simulate credit scoring algorithm
     base_score = 650
-
-    # Factor in business metrics
     revenue_factor = min(business_data.get("annual_revenue", 0) / 1000000 * 50, 100)
     age_factor = min(business_data.get("business_age_months", 0) / 12 * 10, 50)
     employee_factor = min(business_data.get("employee_count", 0) * 5, 30)
-
-    # Payment history simulation
     payment_history_factor = random.uniform(0, 80)
-
     credit_score = int(
         base_score
         + revenue_factor
@@ -85,9 +70,7 @@ def calculate_credit_score(user_id, business_data):
         + employee_factor
         + payment_history_factor
     )
-    credit_score = min(max(credit_score, 300), 850)  # Clamp between 300-850
-
-    # Determine risk category
+    credit_score = min(max(credit_score, 300), 850)
     if credit_score >= 750:
         risk_category = "excellent"
     elif credit_score >= 700:
@@ -98,7 +81,6 @@ def calculate_credit_score(user_id, business_data):
         risk_category = "poor"
     else:
         risk_category = "very_poor"
-
     return {
         "credit_score": credit_score,
         "risk_category": risk_category,
@@ -112,24 +94,17 @@ def calculate_credit_score(user_id, business_data):
     }
 
 
-# AI Prediction Routes
 @user_bp.route("/predictions/cash-flow", methods=["POST"])
 @require_user_id
-def predict_cash_flow():
+def predict_cash_flow() -> Any:
     """Generate cash flow forecast"""
     try:
         data = request.get_json()
-
-        # Get historical data (in real implementation, this would come from ledger service)
         historical_data = data.get("historical_data", {})
         days_ahead = data.get("days_ahead", 30)
-
-        # Generate forecast
         forecast = generate_cash_flow_forecast(
             request.user_id, historical_data, days_ahead
         )
-
-        # Get or create cash flow model
         model = AIModel.query.filter_by(
             name="cash_flow_forecast_v1", is_active=True
         ).first()
@@ -146,8 +121,6 @@ def predict_cash_flow():
             )
             db.session.add(model)
             db.session.flush()
-
-        # Create prediction record
         prediction = AIPrediction(
             user_id=request.user_id,
             model_id=model.id,
@@ -165,10 +138,8 @@ def predict_cash_flow():
             },
             execution_time_ms=245,
         )
-
         db.session.add(prediction)
         db.session.commit()
-
         return (
             jsonify(
                 {
@@ -176,10 +147,10 @@ def predict_cash_flow():
                     "forecast": forecast,
                     "summary": {
                         "total_predicted_cash_flow": sum(
-                            f["predicted_cash_flow"] for f in forecast
+                            (f["predicted_cash_flow"] for f in forecast)
                         ),
                         "average_daily_cash_flow": sum(
-                            f["predicted_cash_flow"] for f in forecast
+                            (f["predicted_cash_flow"] for f in forecast)
                         )
                         / len(forecast),
                         "confidence_score": float(prediction.confidence_score),
@@ -193,7 +164,6 @@ def predict_cash_flow():
             ),
             200,
         )
-
     except Exception as e:
         db.session.rollback()
         return (
@@ -206,18 +176,12 @@ def predict_cash_flow():
 
 @user_bp.route("/predictions/credit-score", methods=["POST"])
 @require_user_id
-def predict_credit_score():
+def predict_credit_score() -> Any:
     """Calculate credit score"""
     try:
         data = request.get_json()
-
-        # Get business data
         business_data = data.get("business_data", {})
-
-        # Calculate credit score
         credit_result = calculate_credit_score(request.user_id, business_data)
-
-        # Get or create credit scoring model
         model = AIModel.query.filter_by(
             name="credit_scoring_v1", is_active=True
         ).first()
@@ -234,8 +198,6 @@ def predict_credit_score():
             )
             db.session.add(model)
             db.session.flush()
-
-        # Create prediction record
         prediction = AIPrediction(
             user_id=request.user_id,
             model_id=model.id,
@@ -249,10 +211,8 @@ def predict_credit_score():
             },
             execution_time_ms=156,
         )
-
         db.session.add(prediction)
         db.session.commit()
-
         return (
             jsonify(
                 {
@@ -275,7 +235,6 @@ def predict_credit_score():
             ),
             200,
         )
-
     except Exception as e:
         db.session.rollback()
         return (
@@ -284,31 +243,24 @@ def predict_credit_score():
         )
 
 
-# Financial Insights Routes
 @user_bp.route("/insights", methods=["GET"])
 @require_user_id
-def get_financial_insights():
+def get_financial_insights() -> Any:
     """Get financial insights for user"""
     try:
         category = request.args.get("category")
         severity = request.args.get("severity")
         is_read = request.args.get("is_read")
-
         query = FinancialInsight.query.filter_by(
             user_id=request.user_id, is_dismissed=False
         )
-
         if category:
             query = query.filter_by(category=category)
-
         if severity:
             query = query.filter_by(severity=severity)
-
         if is_read is not None:
             query = query.filter_by(is_read=is_read.lower() == "true")
-
         insights = query.order_by(FinancialInsight.created_at.desc()).all()
-
         return (
             jsonify(
                 {
@@ -327,23 +279,18 @@ def get_financial_insights():
             ),
             200,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to get insights", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to get insights", "details": str(e)}), 500)
 
 
 @user_bp.route("/insights/generate", methods=["POST"])
 @require_user_id
-def generate_insights():
+def generate_insights() -> Any:
     """Generate new financial insights"""
     try:
         data = request.get_json()
         financial_data = data.get("financial_data", {})
-
-        # Generate sample insights based on financial data
         insights_to_create = []
-
-        # Cash flow insight
         if financial_data.get("cash_flow_trend") == "declining":
             insights_to_create.append(
                 {
@@ -366,8 +313,6 @@ def generate_insights():
                     ],
                 }
             )
-
-        # Expense anomaly insight
         if financial_data.get("unusual_expenses"):
             insights_to_create.append(
                 {
@@ -391,8 +336,6 @@ def generate_insights():
                     ],
                 }
             )
-
-        # Revenue opportunity insight
         insights_to_create.append(
             {
                 "insight_type": "revenue_opportunity",
@@ -414,8 +357,6 @@ def generate_insights():
                 ],
             }
         )
-
-        # Create insights in database
         created_insights = []
         for insight_data in insights_to_create:
             insight = FinancialInsight(
@@ -431,9 +372,7 @@ def generate_insights():
             )
             db.session.add(insight)
             created_insights.append(insight)
-
         db.session.commit()
-
         return (
             jsonify(
                 {
@@ -443,31 +382,28 @@ def generate_insights():
             ),
             201,
         )
-
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Failed to generate insights", "details": str(e)}), 500
+        return (
+            jsonify({"error": "Failed to generate insights", "details": str(e)}),
+            500,
+        )
 
 
 @user_bp.route("/insights/<insight_id>/read", methods=["POST"])
 @require_user_id
-def mark_insight_read(insight_id):
+def mark_insight_read(insight_id: Any) -> Any:
     """Mark insight as read"""
     try:
         insight = FinancialInsight.query.filter_by(
             id=insight_id, user_id=request.user_id
         ).first()
-
         if not insight:
-            return jsonify({"error": "Insight not found"}), 404
-
+            return (jsonify({"error": "Insight not found"}), 404)
         insight.is_read = True
         insight.updated_at = datetime.utcnow()
-
         db.session.commit()
-
-        return jsonify({"message": "Insight marked as read"}), 200
-
+        return (jsonify({"message": "Insight marked as read"}), 200)
     except Exception as e:
         db.session.rollback()
         return (
@@ -476,10 +412,9 @@ def mark_insight_read(insight_id):
         )
 
 
-# Conversational AI Routes
 @user_bp.route("/chat/sessions", methods=["GET"])
 @require_user_id
-def get_chat_sessions():
+def get_chat_sessions() -> Any:
     """Get chat sessions for user"""
     try:
         sessions = (
@@ -487,7 +422,6 @@ def get_chat_sessions():
             .order_by(ConversationSession.last_activity_at.desc())
             .all()
         )
-
         return (
             jsonify(
                 {
@@ -497,30 +431,29 @@ def get_chat_sessions():
             ),
             200,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to get chat sessions", "details": str(e)}), 500
+        return (
+            jsonify({"error": "Failed to get chat sessions", "details": str(e)}),
+            500,
+        )
 
 
 @user_bp.route("/chat/sessions", methods=["POST"])
 @require_user_id
-def create_chat_session():
+def create_chat_session() -> Any:
     """Create new chat session"""
     try:
         data = request.get_json()
-
         session = ConversationSession(
             user_id=request.user_id,
             session_name=data.get(
                 "session_name",
-                f'Chat Session {datetime.now().strftime("%Y-%m-%d %H:%M")}',
+                f"Chat Session {datetime.now().strftime('%Y-%m-%d %H:%M')}",
             ),
             context=data.get("context", {}),
         )
-
         db.session.add(session)
         db.session.commit()
-
         return (
             jsonify(
                 {
@@ -530,7 +463,6 @@ def create_chat_session():
             ),
             201,
         )
-
     except Exception as e:
         db.session.rollback()
         return (
@@ -541,22 +473,19 @@ def create_chat_session():
 
 @user_bp.route("/chat/sessions/<session_id>/messages", methods=["GET"])
 @require_user_id
-def get_chat_messages(session_id):
+def get_chat_messages(session_id: Any) -> Any:
     """Get messages for chat session"""
     try:
         session = ConversationSession.query.filter_by(
             id=session_id, user_id=request.user_id
         ).first()
-
         if not session:
-            return jsonify({"error": "Chat session not found"}), 404
-
+            return (jsonify({"error": "Chat session not found"}), 404)
         messages = (
             ConversationMessage.query.filter_by(session_id=session_id)
             .order_by(ConversationMessage.created_at)
             .all()
         )
-
         return (
             jsonify(
                 {
@@ -567,43 +496,35 @@ def get_chat_messages(session_id):
             ),
             200,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to get chat messages", "details": str(e)}), 500
+        return (
+            jsonify({"error": "Failed to get chat messages", "details": str(e)}),
+            500,
+        )
 
 
 @user_bp.route("/chat/sessions/<session_id>/messages", methods=["POST"])
 @require_user_id
-def send_chat_message(session_id):
+def send_chat_message(session_id: Any) -> Any:
     """Send message to chat session"""
     try:
         session = ConversationSession.query.filter_by(
             id=session_id, user_id=request.user_id
         ).first()
-
         if not session:
-            return jsonify({"error": "Chat session not found"}), 404
-
+            return (jsonify({"error": "Chat session not found"}), 404)
         data = request.get_json()
         user_message_content = data.get("message", "").strip()
-
         if not user_message_content:
-            return jsonify({"error": "Message content is required"}), 400
-
-        # Create user message
+            return (jsonify({"error": "Message content is required"}), 400)
         user_message = ConversationMessage(
             session_id=session_id,
             message_type="user",
             content=user_message_content,
             metadata=data.get("metadata", {}),
         )
-
         db.session.add(user_message)
-
-        # Generate AI response (simplified simulation)
         ai_response = generate_ai_response(user_message_content, session.context)
-
-        # Create AI response message
         ai_message = ConversationMessage(
             session_id=session_id,
             message_type="assistant",
@@ -612,15 +533,10 @@ def send_chat_message(session_id):
             tokens_used=ai_response["tokens_used"],
             processing_time_ms=ai_response["processing_time_ms"],
         )
-
         db.session.add(ai_message)
-
-        # Update session activity
         session.last_activity_at = datetime.utcnow()
         session.updated_at = datetime.utcnow()
-
         db.session.commit()
-
         return (
             jsonify(
                 {
@@ -630,34 +546,28 @@ def send_chat_message(session_id):
             ),
             201,
         )
-
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Failed to send message", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to send message", "details": str(e)}), 500)
 
 
-def generate_ai_response(user_message, context):
+def generate_ai_response(user_message: Any, context: Any) -> Any:
     """Generate AI response (simplified simulation)"""
-    # Simulate AI processing
     processing_time = random.randint(500, 2000)
     tokens_used = random.randint(50, 200)
-
-    # Simple keyword-based responses
     user_message_lower = user_message.lower()
-
-    if any(word in user_message_lower for word in ["cash flow", "cash", "flow"]):
+    if any((word in user_message_lower for word in ["cash flow", "cash", "flow"])):
         response = "I can help you analyze your cash flow. Based on your recent transactions, I notice some patterns that might be worth discussing. Would you like me to generate a detailed cash flow forecast for the next 30 days?"
-    elif any(word in user_message_lower for word in ["credit", "score", "loan"]):
+    elif any((word in user_message_lower for word in ["credit", "score", "loan"])):
         response = "I can assist with credit-related questions. Your current credit profile shows several positive factors. Would you like me to run a credit assessment or help you understand what factors most impact your business credit score?"
     elif any(
-        word in user_message_lower for word in ["expense", "expenses", "spending"]
+        (word in user_message_lower for word in ["expense", "expenses", "spending"])
     ):
         response = "I can analyze your expense patterns. I've noticed some interesting trends in your spending that could help optimize your budget. Would you like me to identify potential cost-saving opportunities?"
-    elif any(word in user_message_lower for word in ["revenue", "income", "sales"]):
+    elif any((word in user_message_lower for word in ["revenue", "income", "sales"])):
         response = "Let me help you with revenue analysis. Your revenue trends show some promising patterns. I can provide insights on growth opportunities and revenue optimization strategies. What specific aspect would you like to explore?"
     else:
         response = "I'm here to help with your financial questions and provide insights about your business. I can assist with cash flow analysis, expense optimization, revenue forecasting, credit assessment, and general financial planning. What would you like to know more about?"
-
     return {
         "content": response,
         "metadata": {
@@ -674,42 +584,35 @@ def generate_ai_response(user_message, context):
     }
 
 
-# Model Management Routes
 @user_bp.route("/models", methods=["GET"])
-def get_models():
+def get_models() -> Any:
     """Get available AI models"""
     try:
         models = AIModel.query.filter_by(is_active=True).all()
-
         return (
             jsonify(
                 {"models": [model.to_dict() for model in models], "total": len(models)}
             ),
             200,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to get models", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to get models", "details": str(e)}), 500)
 
 
 @user_bp.route("/predictions", methods=["GET"])
 @require_user_id
-def get_predictions():
+def get_predictions() -> Any:
     """Get user's prediction history"""
     try:
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 20, type=int)
         prediction_type = request.args.get("type")
-
         query = AIPrediction.query.filter_by(user_id=request.user_id)
-
         if prediction_type:
             query = query.filter_by(prediction_type=prediction_type)
-
         predictions = query.order_by(AIPrediction.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
-
         return (
             jsonify(
                 {
@@ -728,14 +631,12 @@ def get_predictions():
             ),
             200,
         )
-
     except Exception as e:
-        return jsonify({"error": "Failed to get predictions", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to get predictions", "details": str(e)}), 500)
 
 
-# Health check
 @user_bp.route("/health", methods=["GET"])
-def health_check():
+def health_check() -> Any:
     """Health check endpoint"""
     return (
         jsonify(

@@ -6,27 +6,20 @@ import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
-
 from ..config.infrastructure import InfrastructureConfig
 
 
 class StructuredLogger:
     """Structured logging for better log analysis"""
 
-    def __init__(self, service_name: str):
+    def __init__(self, service_name: str) -> Any:
         self.service_name = service_name
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(getattr(logging, InfrastructureConfig.LOG_LEVEL))
-
-        # Create formatter
         formatter = logging.Formatter(InfrastructureConfig.LOG_FORMAT)
-
-        # Create console handler
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
-
-        # Create file handler
         file_handler = logging.FileHandler(f"logs/{service_name}.log")
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
@@ -41,33 +34,31 @@ class StructuredLogger:
             "level": level,
             "message": message,
         }
-
         if extra_data:
             entry.update(extra_data)
-
         return entry
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs) -> Any:
         """Log info message"""
         entry = self._create_log_entry("INFO", message, kwargs)
         self.logger.info(json.dumps(entry))
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs) -> Any:
         """Log warning message"""
         entry = self._create_log_entry("WARNING", message, kwargs)
         self.logger.warning(json.dumps(entry))
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs) -> Any:
         """Log error message"""
         entry = self._create_log_entry("ERROR", message, kwargs)
         self.logger.error(json.dumps(entry))
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs) -> Any:
         """Log debug message"""
         entry = self._create_log_entry("DEBUG", message, kwargs)
         self.logger.debug(json.dumps(entry))
 
-    def critical(self, message: str, **kwargs):
+    def critical(self, message: str, **kwargs) -> Any:
         """Log critical message"""
         entry = self._create_log_entry("CRITICAL", message, kwargs)
         self.logger.critical(json.dumps(entry))

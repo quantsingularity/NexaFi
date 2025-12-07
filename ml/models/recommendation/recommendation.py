@@ -1,55 +1,44 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
 class ProductRecommender:
-    def __init__(self):
+
+    def __init__(self) -> Any:
         self.products_df = None
         self.tfidf_matrix = None
         self.tfidf_vectorizer = None
 
-    def load_products(self, products_data):
-        # products_data should be a list of dictionaries with 'product_id' and 'description'
+    def load_products(self, products_data: Any) -> Any:
         self.products_df = pd.DataFrame(products_data)
         self.products_df = self.products_df.set_index("product_id")
 
-    def train(self):
+    def train(self) -> Any:
         if self.products_df is None:
             raise ValueError("Products data not loaded. Call load_products() first.")
-
         self.tfidf_vectorizer = TfidfVectorizer(stop_words="english")
         self.tfidf_matrix = self.tfidf_vectorizer.fit_transform(
             self.products_df["description"]
         )
 
-    def recommend_products(self, user_preferences, num_recommendations=3):
+    def recommend_products(
+        self, user_preferences: Any, num_recommendations: Any = 3
+    ) -> Any:
         if self.tfidf_matrix is None:
             raise ValueError("Model has not been trained yet. Call train() first.")
-
-        # Create a TF-IDF vector for user preferences
         user_tfidf = self.tfidf_vectorizer.transform([user_preferences])
-
-        # Calculate cosine similarity between user preferences and all products
         cosine_similarities = cosine_similarity(user_tfidf, self.tfidf_matrix).flatten()
-
-        # Get the indices of the top N most similar products
         product_indices = cosine_similarities.argsort()[: -num_recommendations - 1 : -1]
-
-        # Return the recommended products
         recommended_products = self.products_df.iloc[product_indices]
         return recommended_products
 
 
 if __name__ == "__main__":
-    # Example Usage:
     recommender = ProductRecommender()
-
-    # Dummy product data
     products_data = [
         {
             "product_id": "P001",
@@ -77,14 +66,10 @@ if __name__ == "__main__":
             "description": "Retirement planning service with financial advisors.",
         },
     ]
-
     recommender.load_products(products_data)
     recommender.train()
-
-    # User preferences
     user_pref = "I want to save money and invest in environmentally friendly options."
     recommendations = recommender.recommend_products(user_pref, num_recommendations=2)
-
     logger.info("\nRecommended Products for user preferences:\n", user_pref)
     logger.info(recommendations)
     user_pref_2 = "Looking for a credit card with good rewards for travel."

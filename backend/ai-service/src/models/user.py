@@ -2,36 +2,30 @@ import json
 from typing import Any, Dict
 
 
-# Placeholder for BaseModel. The actual BaseModel is set in main.py
 class BaseModel:
     table_name = None
     db_manager = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> Any:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     @classmethod
-    def find_by_id(cls, id_value: Any):
-        # Placeholder for actual implementation
+    def find_by_id(cls: Any, id_value: Any) -> Any:
         pass
 
     @classmethod
-    def find_all(cls, where_clause: str = "", params: tuple = ()):
-        # Placeholder for actual implementation
+    def find_all(cls: Any, where_clause: str = "", params: tuple = ()) -> Any:
         pass
 
     @classmethod
-    def find_one(cls, where_clause: str, params: tuple = ()):
-        # Placeholder for actual implementation
+    def find_one(cls: Any, where_clause: str, params: tuple = ()) -> Any:
         pass
 
-    def save(self):
-        # Placeholder for actual implementation
+    def save(self) -> Any:
         pass
 
     def to_dict(self) -> Dict[str, Any]:
-        # Placeholder for actual implementation
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
 
@@ -40,13 +34,12 @@ class AIModel(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
-        # Convert JSON strings back to dicts if they exist
         for key in ["model_config", "training_data_info", "performance_metrics"]:
             if key in data and isinstance(data[key], str):
                 try:
                     data[key] = json.loads(data[key])
                 except json.JSONDecodeError:
-                    pass  # Keep as string if decoding fails
+                    pass
         return data
 
 
@@ -55,14 +48,12 @@ class AIPrediction(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
-        # Convert JSON strings back to dicts if they exist
         for key in ["input_data", "prediction_result", "explanation"]:
             if key in data and isinstance(data[key], str):
                 try:
                     data[key] = json.loads(data[key])
                 except json.JSONDecodeError:
                     pass
-        # Convert Decimal to float for JSON serialization
         if "confidence_score" in data and data["confidence_score"] is not None:
             data["confidence_score"] = float(data["confidence_score"])
         return data
@@ -73,7 +64,6 @@ class FinancialInsight(BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
-        # Convert JSON strings back to dicts if they exist
         for key in ["data_points", "recommendations"]:
             if key in data and isinstance(data[key], str):
                 try:
@@ -93,9 +83,6 @@ class ConversationSession(BaseModel):
                 data["context"] = json.loads(data["context"])
             except json.JSONDecodeError:
                 pass
-        # Note: Relationships like 'messages' are not handled by the simple BaseModel
-        # We will need to fetch messages separately in the route or enhance BaseModel.
-        # For now, we'll remove the relationship handling from the to_dict method.
         data.pop("messages", None)
         return data
 

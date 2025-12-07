@@ -13,7 +13,6 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -27,31 +26,24 @@ class AuditEventType(Enum):
     USER_REGISTRATION = "user_registration"
     USER_UPDATE = "user_update"
     USER_DELETE = "user_delete"
-
     ACCOUNT_CREATE = "account_create"
     ACCOUNT_UPDATE = "account_update"
     ACCOUNT_DELETE = "account_delete"
-
     TRANSACTION_CREATE = "transaction_create"
     TRANSACTION_UPDATE = "transaction_update"
     TRANSACTION_DELETE = "transaction_delete"
-
     JOURNAL_ENTRY_CREATE = "journal_entry_create"
     JOURNAL_ENTRY_POST = "journal_entry_post"
     JOURNAL_ENTRY_REVERSE = "journal_entry_reverse"
-
     PAYMENT_CREATE = "payment_create"
     PAYMENT_PROCESS = "payment_process"
     PAYMENT_FAIL = "payment_fail"
     PAYMENT_REFUND = "payment_refund"
-
     REPORT_GENERATE = "report_generate"
     REPORT_EXPORT = "report_export"
-
     SYSTEM_CONFIG_CHANGE = "system_config_change"
     SECURITY_VIOLATION = "security_violation"
     API_ACCESS = "api_access"
-
     DATA_EXPORT = "data_export"
     DATA_IMPORT = "data_import"
     DATA_DELETE = "data_delete"
@@ -98,7 +90,6 @@ class AuditEvent:
 
     def calculate_hash(self) -> str:
         """Calculate hash of audit event for integrity verification"""
-        # Create a canonical representation for hashing
         canonical_data = {
             "event_id": self.event_id,
             "event_type": self.event_type.value,
@@ -108,7 +99,6 @@ class AuditEvent:
             "details": json.dumps(self.details, sort_keys=True),
             "success": self.success,
         }
-
         canonical_string = json.dumps(canonical_data, sort_keys=True)
         return hashlib.sha256(canonical_string.encode()).hexdigest()
 
@@ -116,29 +106,27 @@ class AuditEvent:
 class AuditLogger:
     """Audit logging system with integrity verification"""
 
-    def __init__(self, storage_backend=None):
+    def __init__(self, storage_backend: Any = None) -> Any:
         self.storage_backend = storage_backend
         self.event_queue = queue.Queue()
         self.worker_thread = None
         self.running = False
         self.previous_hash = None
-
-        # Start background worker
         self.start_worker()
 
-    def start_worker(self):
+    def start_worker(self) -> Any:
         """Start background worker thread for processing audit events"""
         self.running = True
         self.worker_thread = threading.Thread(target=self._process_events, daemon=True)
         self.worker_thread.start()
 
-    def stop_worker(self):
+    def stop_worker(self) -> Any:
         """Stop background worker thread"""
         self.running = False
         if self.worker_thread:
             self.worker_thread.join()
 
-    def _process_events(self):
+    def _process_events(self) -> Any:
         """Background worker to process audit events"""
         while self.running:
             try:
@@ -148,51 +136,36 @@ class AuditLogger:
             except queue.Empty:
                 continue
             except Exception as e:
-                # Log error but continue processing
                 logger.info(f"Error processing audit event: {e}")
 
-    def _store_event(self, event: AuditEvent):
+    def _store_event(self, event: AuditEvent) -> Any:
         """Store audit event with integrity chain"""
-        # Calculate event hash
         event_hash = event.calculate_hash()
-
-        # Create integrity chain
         if self.previous_hash:
             chain_hash = hashlib.sha256(
                 (self.previous_hash + event_hash).encode()
             ).hexdigest()
         else:
             chain_hash = event_hash
-
-        # Add integrity information
         event_data = event.to_dict()
         event_data["event_hash"] = event_hash
         event_data["chain_hash"] = chain_hash
         event_data["previous_hash"] = self.previous_hash
-
-        # Store event
         if self.storage_backend:
             self.storage_backend.store(event_data)
         else:
-            # Default: write to file
             self._write_to_file(event_data)
-
-        # Update previous hash for chain
         self.previous_hash = chain_hash
 
-    def _write_to_file(self, event_data: Dict[str, Any]):
+    def _write_to_file(self, event_data: Dict[str, Any]) -> Any:
         """Write audit event to file"""
         import os
 
-        # Ensure logs directory exists
         os.makedirs("/home/ubuntu/nexafi_backend_refactored/logs/audit", exist_ok=True)
-
-        # Write to daily log file
         date_str = datetime.now().strftime("%Y-%m-%d")
         log_file = (
             f"/home/ubuntu/nexafi_backend_refactored/logs/audit/audit_{date_str}.jsonl"
         )
-
         with open(log_file, "a") as f:
             f.write(json.dumps(event_data) + "\n")
 
@@ -213,9 +186,8 @@ class AuditLogger:
         error_message: Optional[str] = None,
         severity: AuditSeverity = AuditSeverity.MEDIUM,
         correlation_id: Optional[str] = None,
-    ):
+    ) -> Any:
         """Log an audit event"""
-
         event = AuditEvent(
             event_id=str(uuid.uuid4()),
             event_type=event_type,
@@ -235,8 +207,6 @@ class AuditLogger:
             error_message=error_message,
             correlation_id=correlation_id,
         )
-
-        # Add to queue for processing
         self.event_queue.put(event)
 
     def log_user_action(
@@ -246,7 +216,7 @@ class AuditLogger:
         action: str,
         details: Optional[Dict[str, Any]] = None,
         **kwargs,
-    ):
+    ) -> Any:
         """Log user-related action"""
         self.log_event(
             event_type=event_type,
@@ -267,14 +237,13 @@ class AuditLogger:
         currency: str,
         details: Optional[Dict[str, Any]] = None,
         **kwargs,
-    ):
+    ) -> Any:
         """Log financial transaction"""
         transaction_details = {
             "amount": amount,
             "currency": currency,
             **(details or {}),
         }
-
         self.log_event(
             event_type=event_type,
             action=f"financial_transaction_{event_type.value}",
@@ -292,7 +261,7 @@ class AuditLogger:
         ip_address: str,
         details: Optional[Dict[str, Any]] = None,
         **kwargs,
-    ):
+    ) -> Any:
         """Log security-related event"""
         self.log_event(
             event_type=AuditEventType.SECURITY_VIOLATION,
@@ -313,7 +282,7 @@ class AuditLogger:
         user_agent: str,
         response_time: float,
         **kwargs,
-    ):
+    ) -> Any:
         """Log API access"""
         details = {
             "endpoint": endpoint,
@@ -321,7 +290,6 @@ class AuditLogger:
             "status_code": status_code,
             "response_time_ms": response_time * 1000,
         }
-
         self.log_event(
             event_type=AuditEventType.API_ACCESS,
             action=f"{method} {endpoint}",
@@ -335,22 +303,19 @@ class AuditLogger:
         )
 
 
-# Global audit logger instance
 audit_logger = AuditLogger()
 
 
-# Decorator for automatic audit logging
 def audit_action(
     event_type: AuditEventType,
     action: str,
     resource_type: Optional[str] = None,
     severity: AuditSeverity = AuditSeverity.MEDIUM,
-):
+) -> Any:
     """Decorator for automatic audit logging of function calls"""
 
     def decorator(f):
         from functools import wraps
-
         from flask import g, request
 
         @wraps(f)
@@ -361,11 +326,8 @@ def audit_action(
                 "HTTP_X_FORWARDED_FOR", request.remote_addr
             )
             user_agent = request.headers.get("User-Agent", "")
-
             try:
                 result = f(*args, **kwargs)
-
-                # Log successful action
                 audit_logger.log_event(
                     event_type=event_type,
                     action=action,
@@ -377,11 +339,8 @@ def audit_action(
                     severity=severity,
                     details={"execution_time_ms": (time.time() - start_time) * 1000},
                 )
-
                 return result
-
             except Exception as e:
-                # Log failed action
                 audit_logger.log_event(
                     event_type=event_type,
                     action=action,
@@ -394,7 +353,6 @@ def audit_action(
                     severity=AuditSeverity.HIGH,
                     details={"execution_time_ms": (time.time() - start_time) * 1000},
                 )
-
                 raise
 
         return decorated_function

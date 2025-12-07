@@ -3,7 +3,7 @@
 # Comprehensive Linting Script for NexaFi Project
 # This script lints all relevant files in the backend, frontend, and infrastructure directories.
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED="\033[0;31m"
@@ -37,15 +37,13 @@ lint_python() {
     print_status "Linting Python files in backend/ with flake8 and black..."
 
     # Check for flake8
-    if ! command -v flake8 &> /dev/null; then
-        print_warning "flake8 not found. Skipping Python linting. Please install with: pip install flake8"
-        return
+    if ! command -v flake8 &> /dev/null; then\n        print_warning "flake8 not found. Attempting to install..."\n        pip install flake8 || { print_error "Failed to install flake8. Skipping Python linting."; return; }
+
     fi
 
     # Check for black
-    if ! command -v black &> /dev/null; then
-        print_warning "black not found. Skipping Python formatting check. Please install with: pip install black"
-        return
+    if ! command -v black &> /dev/null; then\n        print_warning "black not found. Attempting to install..."\n        pip install black || { print_error "Failed to install black. Skipping Python formatting check."; return; }
+
     fi
 
     # Run flake8
@@ -70,15 +68,13 @@ lint_javascript() {
     print_status "Linting JavaScript/React files in nexafi-frontend/ and nexafi-mobile-frontend/ with eslint and prettier..."
 
     # Check for eslint
-    if ! command -v eslint &> /dev/null; then
-        print_warning "eslint not found. Skipping JavaScript linting. Please install with: npm install -g eslint"
-        return
+    if ! command -v eslint &> /dev/null; then\n        print_warning "eslint not found. Skipping JavaScript linting. Please ensure it's installed in your project."\n        return
+
     fi
 
     # Check for prettier
-    if ! command -v prettier &> /dev/null; then
-        print_warning "prettier not found. Skipping JavaScript formatting check. Please install with: npm install -g prettier"
-        return
+    if ! command -v prettier &> /dev/null; then\n        print_warning "prettier not found. Skipping JavaScript formatting check. Please ensure it's installed in your project."\n        return
+
     fi
 
     # Lint desktop frontend
@@ -129,9 +125,8 @@ lint_yaml() {
     print_status "Linting YAML files in infra/ with yamllint..."
 
     # Check for yamllint
-    if ! command -v yamllint &> /dev/null; then
-        print_warning "yamllint not found. Skipping YAML linting. Please install with: pip install yamllint"
-        return
+    if ! command -v yamllint &> /dev/null; then\n        print_warning "yamllint not found. Attempting to install..."\n        pip install yamllint || { print_error "Failed to install yamllint. Skipping YAML linting."; return; }
+
     fi
 
     if [ -d "infra" ]; then
@@ -151,9 +146,8 @@ lint_markdown() {
     print_status "Linting Markdown files with markdownlint-cli..."
 
     # Check for markdownlint-cli
-    if ! command -v markdownlint &> /dev/null; then
-        print_warning "markdownlint-cli not found. Skipping Markdown linting. Please install with: npm install -g markdownlint-cli"
-        return
+    if ! command -v markdownlint &> /dev/null; then\n        print_warning "markdownlint-cli not found. Skipping Markdown linting. Please ensure it's installed globally or locally."\n        return
+
     fi
 
     # Find all markdown files in the project, excluding node_modules and venv

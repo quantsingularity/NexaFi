@@ -3,55 +3,49 @@ from datetime import datetime
 from typing import Any, Dict
 
 
-# Placeholder for BaseModel. The actual BaseModel is set in main.py
 class BaseModel:
     table_name = None
     db_manager = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> Any:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     @classmethod
-    def find_by_id(cls, id_value: Any):
-        # Placeholder for actual implementation
+    def find_by_id(cls: Any, id_value: Any) -> Any:
         pass
 
     @classmethod
-    def find_all(cls, where_clause: str = "", params: tuple = ()):
-        # Placeholder for actual implementation
+    def find_all(cls: Any, where_clause: str = "", params: tuple = ()) -> Any:
         pass
 
     @classmethod
-    def find_one(cls, where_clause: str, params: tuple = ()):
-        # Placeholder for actual implementation
+    def find_one(cls: Any, where_clause: str, params: tuple = ()) -> Any:
         pass
 
-    def save(self):
-        # Placeholder for actual implementation
+    def save(self) -> Any:
         pass
 
     def to_dict(self) -> Dict[str, Any]:
-        # Placeholder for actual implementation
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
 
 class Dashboard(BaseModel):
     table_name = "dashboards"
 
-    def get_layout(self):
+    def get_layout(self) -> Any:
         return json.loads(self.layout) if self.layout else {}
 
-    def set_layout(self, layout):
+    def set_layout(self, layout: Any) -> Any:
         self.layout = json.dumps(layout)
 
-    def get_filters(self):
+    def get_filters(self) -> Any:
         return json.loads(self.filters) if self.filters else {}
 
-    def set_filters(self, filters):
+    def set_filters(self, filters: Any) -> Any:
         self.filters = json.dumps(filters)
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
         data["layout"] = self.get_layout()
         data["filters"] = self.get_filters()
@@ -61,19 +55,19 @@ class Dashboard(BaseModel):
 class Report(BaseModel):
     table_name = "reports"
 
-    def get_parameters(self):
+    def get_parameters(self) -> Any:
         return json.loads(self.parameters) if self.parameters else {}
 
-    def set_parameters(self, params):
+    def set_parameters(self, params: Any) -> Any:
         self.parameters = json.dumps(params)
 
-    def get_schedule_config(self):
+    def get_schedule_config(self) -> Any:
         return json.loads(self.schedule_config) if self.schedule_config else {}
 
-    def set_schedule_config(self, config):
+    def set_schedule_config(self, config: Any) -> Any:
         self.schedule_config = json.dumps(config)
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
         data["parameters"] = self.get_parameters()
         data["schedule_config"] = self.get_schedule_config()
@@ -83,19 +77,19 @@ class Report(BaseModel):
 class ReportExecution(BaseModel):
     table_name = "report_executions"
 
-    def get_result_data(self):
+    def get_result_data(self) -> Any:
         return json.loads(self.result_data) if self.result_data else None
 
-    def set_result_data(self, data):
+    def set_result_data(self, data: Any) -> Any:
         self.result_data = json.dumps(data)
 
-    def get_parameters_used(self):
+    def get_parameters_used(self) -> Any:
         return json.loads(self.parameters_used) if self.parameters_used else {}
 
-    def set_parameters_used(self, params):
+    def set_parameters_used(self, params: Any) -> Any:
         self.parameters_used = json.dumps(params)
 
-    def mark_completed(self, result_data=None, row_count=None):
+    def mark_completed(self, result_data: Any = None, row_count: Any = None) -> Any:
         self.status = "completed"
         self.completed_at = datetime.utcnow()
         if result_data:
@@ -103,7 +97,6 @@ class ReportExecution(BaseModel):
         if row_count is not None:
             self.row_count = row_count
         if self.started_at:
-            # Assuming started_at is a datetime object or can be converted
             started_at_dt = (
                 datetime.fromisoformat(self.started_at)
                 if isinstance(self.started_at, str)
@@ -111,12 +104,11 @@ class ReportExecution(BaseModel):
             )
             self.execution_time = (self.completed_at - started_at_dt).total_seconds()
 
-    def mark_failed(self, error_message):
+    def mark_failed(self, error_message: Any) -> Any:
         self.status = "failed"
         self.completed_at = datetime.utcnow()
         self.error_message = error_message
         if self.started_at:
-            # Assuming started_at is a datetime object or can be converted
             started_at_dt = (
                 datetime.fromisoformat(self.started_at)
                 if isinstance(self.started_at, str)
@@ -124,10 +116,9 @@ class ReportExecution(BaseModel):
             )
             self.execution_time = (self.completed_at - started_at_dt).total_seconds()
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
         data["parameters_used"] = self.get_parameters_used()
-        # Convert datetime objects to ISO format strings for serialization
         for key in ["started_at", "completed_at", "created_at"]:
             if key in data and data[key] and isinstance(data[key], datetime):
                 data[key] = data[key].isoformat()
@@ -137,65 +128,61 @@ class ReportExecution(BaseModel):
 class DataSource(BaseModel):
     table_name = "data_sources"
 
-    def get_connection_config(self):
+    def get_connection_config(self) -> Any:
         return json.loads(self.connection_config) if self.connection_config else {}
 
-    def set_connection_config(self, config):
+    def set_connection_config(self, config: Any) -> Any:
         self.connection_config = json.dumps(config)
 
-    def get_authentication(self):
+    def get_authentication(self) -> Any:
         return json.loads(self.authentication) if self.authentication else {}
 
-    def set_authentication(self, auth):
+    def set_authentication(self, auth: Any) -> Any:
         self.authentication = json.dumps(auth)
 
-    def get_schema_config(self):
+    def get_schema_config(self) -> Any:
         return json.loads(self.schema_config) if self.schema_config else {}
 
-    def set_schema_config(self, schema):
+    def set_schema_config(self, schema: Any) -> Any:
         self.schema_config = json.dumps(schema)
 
-    def get_sample_data(self):
+    def get_sample_data(self) -> Any:
         return json.loads(self.sample_data) if self.sample_data else None
 
-    def set_sample_data(self, data):
+    def set_sample_data(self, data: Any) -> Any:
         self.sample_data = json.dumps(data)
 
-    def to_dict(self, include_sensitive=False):
+    def to_dict(self, include_sensitive: Any = False) -> Any:
         data = super().to_dict()
         data["schema_config"] = self.get_schema_config()
         data["sample_data"] = self.get_sample_data()
-
         if include_sensitive:
             data["connection_config"] = self.get_connection_config()
             data["authentication"] = self.get_authentication()
-
-        # Convert datetime objects to ISO format strings for serialization
         for key in ["last_tested", "created_at", "updated_at"]:
             if key in data and data[key] and isinstance(data[key], datetime):
                 data[key] = data[key].isoformat()
-
         return data
 
 
 class Metric(BaseModel):
     table_name = "metrics"
 
-    def get_format_config(self):
+    def get_format_config(self) -> Any:
         return json.loads(self.format_config) if self.format_config else {}
 
-    def set_format_config(self, config):
+    def set_format_config(self, config: Any) -> Any:
         self.format_config = json.dumps(config)
 
-    def calculate_change(self):
+    def calculate_change(self) -> Any:
         """Calculate percentage change from previous value"""
         if self.previous_value and self.previous_value != 0:
             return (
-                (self.current_value - self.previous_value) / self.previous_value
-            ) * 100
+                (self.current_value - self.previous_value) / self.previous_value * 100
+            )
         return 0
 
-    def update_status(self):
+    def update_status(self) -> Any:
         """Update status based on thresholds"""
         if self.current_value is None:
             self.status = "unknown"
@@ -206,38 +193,32 @@ class Metric(BaseModel):
         else:
             self.status = "normal"
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
         data["format_config"] = self.get_format_config()
         data["change_percentage"] = self.calculate_change()
-
-        # Convert datetime objects to ISO format strings for serialization
         for key in ["last_calculated", "created_at", "updated_at"]:
             if key in data and data[key] and isinstance(data[key], datetime):
                 data[key] = data[key].isoformat()
-
         return data
 
 
 class MetricHistory(BaseModel):
     table_name = "metric_history"
 
-    def get_calculation_details(self):
+    def get_calculation_details(self) -> Any:
         return json.loads(self.calculation_details) if self.calculation_details else {}
 
-    def set_calculation_details(self, details):
+    def set_calculation_details(self, details: Any) -> Any:
         self.calculation_details = json.dumps(details)
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
         data["calculation_details"] = self.get_calculation_details()
-
-        # Convert datetime objects to ISO format strings for serialization
         if (
             "timestamp" in data
             and data["timestamp"]
             and isinstance(data["timestamp"], datetime)
         ):
             data["timestamp"] = data["timestamp"].isoformat()
-
         return data

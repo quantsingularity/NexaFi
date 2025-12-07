@@ -1,31 +1,22 @@
 import random
-
 from locust import HttpUser, between, task
 
 
 class WebsiteUser(HttpUser):
-    wait_time = between(1, 2)  # Users wait between 1 and 2 seconds between tasks
+    wait_time = between(1, 2)
+    host = "http://localhost:5000"
 
-    host = "http://localhost:5000"  # Default host for API Gateway
-
-    # On start, each user will try to log in to get a token
-    def on_start(self):
+    def on_start(self) -> Any:
         self.client.post(
-            "/auth/login",
-            json={
-                "email": "test@example.com",  # Use a pre-registered test user
-                "password": "password123",
-            },
+            "/auth/login", json={"email": "test@example.com", "password": "password123"}
         )
-        # Assuming successful login, the token would be stored in the client session
-        # For simplicity, we're not explicitly handling token refresh here, but in a real scenario, it would be needed.
 
     @task
-    def index_page(self):
+    def index_page(self) -> Any:
         self.client.get("/", name="01_Homepage")
 
-    @task(3)  # This task has a higher weight (3 times more likely to be executed)
-    def login(self):
+    @task(3)
+    def login(self) -> Any:
         self.client.post(
             "/auth/login",
             json={"email": "test@example.com", "password": "password123"},
@@ -33,12 +24,11 @@ class WebsiteUser(HttpUser):
         )
 
     @task
-    def get_user_profile(self):
+    def get_user_profile(self) -> Any:
         self.client.get("/users/profile", name="03_UserProfile")
 
     @task
-    def update_user_profile(self):
-        # Simulate updating a user profile
+    def update_user_profile(self) -> Any:
         self.client.put(
             "/users/profile",
             json={
@@ -50,11 +40,11 @@ class WebsiteUser(HttpUser):
         )
 
     @task
-    def get_accounts(self):
+    def get_accounts(self) -> Any:
         self.client.get("/accounts", name="05_GetAccounts")
 
     @task
-    def create_account(self):
+    def create_account(self) -> Any:
         self.client.post(
             "/accounts",
             json={
@@ -69,11 +59,11 @@ class WebsiteUser(HttpUser):
         )
 
     @task
-    def get_journal_entries(self):
+    def get_journal_entries(self) -> Any:
         self.client.get("/journal-entries", name="07_GetJournalEntries")
 
     @task
-    def create_journal_entry(self):
+    def create_journal_entry(self) -> Any:
         self.client.post(
             "/journal-entries",
             json={
@@ -88,48 +78,38 @@ class WebsiteUser(HttpUser):
         )
 
     @task
-    def get_financial_summary(self):
+    def get_financial_summary(self) -> Any:
         self.client.get("/dashboard/financial-summary", name="09_FinancialSummary")
 
     @task
-    def get_transactions(self):
+    def get_transactions(self) -> Any:
         self.client.get("/transactions", name="10_GetTransactions")
 
     @task
-    def create_transaction(self):
+    def create_transaction(self) -> Any:
         self.client.post(
             "/transactions",
             json={
                 "amount": random.uniform(10, 500),
                 "type": random.choice(["income", "expense"]),
                 "description": f"Locust Transaction {random.randint(1, 10000)}",
-                "payment_method_id": "some_method_id",  # Placeholder
+                "payment_method_id": "some_method_id",
             },
             name="11_CreateTransaction",
         )
 
     @task
-    def predict_cash_flow(self):
+    def predict_cash_flow(self) -> Any:
         self.client.post(
             "/predictions/cash-flow",
-            json={
-                "data": [random.uniform(100, 1000) for _ in range(12)]  # Example data
-            },
+            json={"data": [random.uniform(100, 1000) for _ in range(12)]},
             name="12_PredictCashFlow",
         )
 
     @task
-    def get_insights(self):
+    def get_insights(self) -> Any:
         self.client.get("/insights", name="13_GetInsights")
 
     @task
-    def health_check(self):
+    def health_check(self) -> Any:
         self.client.get("/health", name="14_HealthCheck")
-
-
-# To run this Locust test:
-# 1. Make sure you have Locust installed: pip install locust
-# 2. Save this code as, e.g., `locustfile.py`
-# 3. Run from your terminal: locust -f locustfile.py --host=http://localhost:5000
-# 4. Open your browser to http://localhost:8089 (Locust web UI)
-# 5. Start the test with desired number of users and spawn rate.

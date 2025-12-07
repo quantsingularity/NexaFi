@@ -13,15 +13,11 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any, Dict, Optional
-
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-# Add shared modules to path
 sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
-
 from logging.logger import get_logger, setup_request_logging
-
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
 from .models.user import Notification, NotificationPreferences, NotificationTemplate
@@ -38,99 +34,32 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "nexafi-notification-service-secret-key-2024"
 )
-
-# Enable CORS
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
-
-# Setup logging
 setup_request_logging(app)
 logger = get_logger("notification_service")
-
-# Initialize database
 db_path = os.path.join(os.path.dirname(__file__), "database", "notifications.db")
 db_manager, migration_manager = initialize_database(db_path)
-
-# Apply notification-specific migrations
 NOTIFICATION_MIGRATIONS = {
     "008_create_notifications_table": {
         "description": "Create notifications table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT NOT NULL,
-            notification_type TEXT NOT NULL,
-            channel TEXT NOT NULL,
-            priority TEXT NOT NULL DEFAULT 'normal',
-            subject TEXT,
-            message TEXT NOT NULL,
-            template_name TEXT,
-            template_data TEXT,
-            status TEXT NOT NULL DEFAULT 'pending',
-            scheduled_at TIMESTAMP,
-            sent_at TIMESTAMP,
-            delivery_attempts INTEGER DEFAULT 0,
-            error_message TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
-        CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status);
-        CREATE INDEX IF NOT EXISTS idx_notifications_scheduled_at ON notifications(scheduled_at);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS notifications (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            user_id TEXT NOT NULL,\n            notification_type TEXT NOT NULL,\n            channel TEXT NOT NULL,\n            priority TEXT NOT NULL DEFAULT 'normal',\n            subject TEXT,\n            message TEXT NOT NULL,\n            template_name TEXT,\n            template_data TEXT,\n            status TEXT NOT NULL DEFAULT 'pending',\n            scheduled_at TIMESTAMP,\n            sent_at TIMESTAMP,\n            delivery_attempts INTEGER DEFAULT 0,\n            error_message TEXT,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);\n        CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications(status);\n        CREATE INDEX IF NOT EXISTS idx_notifications_scheduled_at ON notifications(scheduled_at);\n        ",
     },
     "009_create_notification_preferences_table": {
         "description": "Create notification preferences table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS notification_preferences (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT NOT NULL UNIQUE,
-            email_enabled BOOLEAN DEFAULT 1,
-            sms_enabled BOOLEAN DEFAULT 1,
-            push_enabled BOOLEAN DEFAULT 1,
-            marketing_enabled BOOLEAN DEFAULT 0,
-            security_alerts BOOLEAN DEFAULT 1,
-            transaction_alerts BOOLEAN DEFAULT 1,
-            compliance_alerts BOOLEAN DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification_preferences(user_id);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS notification_preferences (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            user_id TEXT NOT NULL UNIQUE,\n            email_enabled BOOLEAN DEFAULT 1,\n            sms_enabled BOOLEAN DEFAULT 1,\n            push_enabled BOOLEAN DEFAULT 1,\n            marketing_enabled BOOLEAN DEFAULT 0,\n            security_alerts BOOLEAN DEFAULT 1,\n            transaction_alerts BOOLEAN DEFAULT 1,\n            compliance_alerts BOOLEAN DEFAULT 1,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification_preferences(user_id);\n        ",
     },
     "010_create_notification_templates_table": {
         "description": "Create notification templates table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS notification_templates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            template_name TEXT NOT NULL UNIQUE,
-            template_type TEXT NOT NULL,
-            channel TEXT NOT NULL,
-            subject_template TEXT,
-            body_template TEXT NOT NULL,
-            variables TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_notification_templates_name ON notification_templates(template_name);
-        CREATE INDEX IF NOT EXISTS idx_notification_templates_type ON notification_templates(template_type);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS notification_templates (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            template_name TEXT NOT NULL UNIQUE,\n            template_type TEXT NOT NULL,\n            channel TEXT NOT NULL,\n            subject_template TEXT,\n            body_template TEXT NOT NULL,\n            variables TEXT,\n            is_active BOOLEAN DEFAULT 1,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_notification_templates_name ON notification_templates(template_name);\n        CREATE INDEX IF NOT EXISTS idx_notification_templates_type ON notification_templates(template_type);\n        ",
     },
 }
-
-# Apply migrations
 for version, migration in NOTIFICATION_MIGRATIONS.items():
     migration_manager.apply_migration(
         version, migration["description"], migration["sql"]
     )
-
-# Set database manager for models
 BaseModel.set_db_manager(db_manager)
 
 
-# Validation schemas
 class NotificationSchema(SanitizationMixin, Schema):
     user_id = fields.Str(required=True)
     notification_type = fields.Str(
@@ -171,48 +100,19 @@ class NotificationPreferencesSchema(SanitizationMixin, Schema):
     compliance_alerts = fields.Bool(required=False)
 
 
-# Notification templates
 DEFAULT_TEMPLATES = {
     "security_alert_email": {
         "template_type": "security_alert",
         "channel": "email",
         "subject_template": "Security Alert - {alert_type}",
-        "body_template": """
-        Dear {user_name},
-
-        We detected a security event on your account:
-
-        Alert Type: {alert_type}
-        Time: {timestamp}
-        IP Address: {ip_address}
-        Details: {details}
-
-        If this was not you, please contact our security team immediately.
-
-        Best regards,
-        NexaFi Security Team
-        """,
+        "body_template": "\n        Dear {user_name},\n\n        We detected a security event on your account:\n\n        Alert Type: {alert_type}\n        Time: {timestamp}\n        IP Address: {ip_address}\n        Details: {details}\n\n        If this was not you, please contact our security team immediately.\n\n        Best regards,\n        NexaFi Security Team\n        ",
         "variables": ["user_name", "alert_type", "timestamp", "ip_address", "details"],
     },
     "transaction_confirmation_email": {
         "template_type": "transaction_alert",
         "channel": "email",
         "subject_template": "Transaction Confirmation - {amount} {currency}",
-        "body_template": """
-        Dear {user_name},
-
-        Your transaction has been processed successfully:
-
-        Amount: {amount} {currency}
-        Transaction ID: {transaction_id}
-        Date: {timestamp}
-        Description: {description}
-
-        Thank you for using NexaFi.
-
-        Best regards,
-        NexaFi Team
-        """,
+        "body_template": "\n        Dear {user_name},\n\n        Your transaction has been processed successfully:\n\n        Amount: {amount} {currency}\n        Transaction ID: {transaction_id}\n        Date: {timestamp}\n        Description: {description}\n\n        Thank you for using NexaFi.\n\n        Best regards,\n        NexaFi Team\n        ",
         "variables": [
             "user_name",
             "amount",
@@ -226,20 +126,7 @@ DEFAULT_TEMPLATES = {
         "template_type": "compliance_alert",
         "channel": "email",
         "subject_template": "KYC Verification Update - {status}",
-        "body_template": """
-        Dear {user_name},
-
-        Your KYC verification status has been updated:
-
-        Status: {status}
-        Verification Type: {verification_type}
-        Updated: {timestamp}
-
-        {additional_message}
-
-        Best regards,
-        NexaFi Compliance Team
-        """,
+        "body_template": "\n        Dear {user_name},\n\n        Your KYC verification status has been updated:\n\n        Status: {status}\n        Verification Type: {verification_type}\n        Updated: {timestamp}\n\n        {additional_message}\n\n        Best regards,\n        NexaFi Compliance Team\n        ",
         "variables": [
             "user_name",
             "status",
@@ -254,12 +141,10 @@ DEFAULT_TEMPLATES = {
 class NotificationQueue:
     """Notification queue processor"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.queue = queue.Queue()
         self.worker_thread = None
         self.running = False
-
-        # Email configuration (in production, use proper SMTP settings)
         self.smtp_config = {
             "host": os.environ.get("SMTP_HOST", "localhost"),
             "port": int(os.environ.get("SMTP_PORT", 587)),
@@ -267,10 +152,9 @@ class NotificationQueue:
             "password": os.environ.get("SMTP_PASSWORD", ""),
             "use_tls": os.environ.get("SMTP_USE_TLS", "true").lower() == "true",
         }
-
         self.start_worker()
 
-    def start_worker(self):
+    def start_worker(self) -> Any:
         """Start background worker thread"""
         self.running = True
         self.worker_thread = threading.Thread(
@@ -278,13 +162,13 @@ class NotificationQueue:
         )
         self.worker_thread.start()
 
-    def stop_worker(self):
+    def stop_worker(self) -> Any:
         """Stop background worker thread"""
         self.running = False
         if self.worker_thread:
             self.worker_thread.join()
 
-    def _process_notifications(self):
+    def _process_notifications(self) -> Any:
         """Background worker to process notifications"""
         while self.running:
             try:
@@ -296,12 +180,11 @@ class NotificationQueue:
             except Exception as e:
                 logger.error(f"Error processing notification: {e}")
 
-    def _send_notification(self, notification_id: int):
+    def _send_notification(self, notification_id: int) -> Any:
         """Send a notification"""
         notification = Notification.find_by_id(notification_id)
         if not notification:
             return
-
         try:
             if notification.channel == "email":
                 self._send_email(notification)
@@ -311,55 +194,36 @@ class NotificationQueue:
                 self._send_push(notification)
             elif notification.channel == "in_app":
                 self._send_in_app(notification)
-
-            # Update notification status
             notification.status = "sent"
             notification.sent_at = datetime.utcnow()
             notification.save()
-
             logger.info(
                 f"Notification {notification_id} sent successfully via {notification.channel}"
             )
-
         except Exception as e:
-            # Update notification with error
             notification.status = "failed"
             notification.error_message = str(e)
             notification.delivery_attempts += 1
             notification.save()
-
             logger.error(f"Failed to send notification {notification_id}: {e}")
-
-            # Retry logic for failed notifications
             if notification.delivery_attempts < 3 and notification.priority in [
                 "high",
                 "urgent",
             ]:
-                # Re-queue for retry after delay
-                threading.Timer(
-                    300, lambda: self.queue.put(notification_id)
-                ).start()  # 5 minute delay
+                threading.Timer(300, lambda: self.queue.put(notification_id)).start()
 
-    def _send_email(self, notification: Notification):
+    def _send_email(self, notification: Notification) -> Any:
         """Send email notification"""
         if not self.smtp_config["host"] or self.smtp_config["host"] == "localhost":
-            # Simulate email sending in development
             logger.info(
                 f"Simulated email sent to user {notification.user_id}: {notification.subject}"
             )
             return
-
-        # Create email message
         msg = MIMEMultipart()
         msg["From"] = self.smtp_config["username"]
-        msg["To"] = (
-            f"user{notification.user_id}@example.com"  # In production, get actual email
-        )
+        msg["To"] = f"user{notification.user_id}@example.com"
         msg["Subject"] = notification.subject or "NexaFi Notification"
-
         msg.attach(MIMEText(notification.message, "plain"))
-
-        # Send email
         with smtplib.SMTP(self.smtp_config["host"], self.smtp_config["port"]) as server:
             if self.smtp_config["use_tls"]:
                 server.starttls()
@@ -367,31 +231,27 @@ class NotificationQueue:
                 server.login(self.smtp_config["username"], self.smtp_config["password"])
             server.send_message(msg)
 
-    def _send_sms(self, notification: Notification):
+    def _send_sms(self, notification: Notification) -> Any:
         """Send SMS notification"""
-        # Simulate SMS sending (in production, integrate with SMS provider)
         logger.info(
             f"Simulated SMS sent to user {notification.user_id}: {notification.message[:50]}..."
         )
 
-    def _send_push(self, notification: Notification):
+    def _send_push(self, notification: Notification) -> Any:
         """Send push notification"""
-        # Simulate push notification (in production, integrate with push service)
         logger.info(
             f"Simulated push notification sent to user {notification.user_id}: {notification.subject}"
         )
 
-    def _send_in_app(self, notification: Notification):
+    def _send_in_app(self, notification: Notification) -> Any:
         """Send in-app notification"""
-        # In-app notifications are just stored in database for retrieval
         logger.info(f"In-app notification created for user {notification.user_id}")
 
-    def enqueue_notification(self, notification_id: int):
+    def enqueue_notification(self, notification_id: int) -> Any:
         """Add notification to queue"""
         self.queue.put(notification_id)
 
 
-# Global notification queue
 notification_queue = NotificationQueue()
 
 
@@ -408,14 +268,14 @@ class TemplateEngine:
         return rendered
 
     @classmethod
-    def get_template(cls, template_name: str) -> Optional[NotificationTemplate]:
+    def get_template(cls: Any, template_name: str) -> Optional[NotificationTemplate]:
         """Get template by name"""
         return NotificationTemplate.find_one(
             "template_name = ? AND is_active = 1", (template_name,)
         )
 
 
-def initialize_templates():
+def initialize_templates() -> Any:
     """Initialize default notification templates"""
     for template_name, template_data in DEFAULT_TEMPLATES.items():
         existing = NotificationTemplate.find_one("template_name = ?", (template_name,))
@@ -432,7 +292,7 @@ def initialize_templates():
 
 
 @app.route("/api/v1/health", methods=["GET"])
-def health_check():
+def health_check() -> Any:
     """Health check endpoint"""
     return jsonify(
         {
@@ -452,44 +312,38 @@ def health_check():
 @audit_action(
     AuditEventType.SYSTEM_CONFIG_CHANGE, "notification_sent", severity=AuditSeverity.LOW
 )
-def send_notification():
+def send_notification() -> Any:
     """Send a notification"""
     data = request.validated_data
-
-    # Check user preferences
     preferences = NotificationPreferences.find_one("user_id = ?", (data["user_id"],))
     if preferences:
-        # Check if user has enabled this type of notification
         channel = data["channel"]
         notification_type = data["notification_type"]
-
-        if channel == "email" and not preferences.email_enabled:
-            return jsonify({"error": "User has disabled email notifications"}), 400
-        elif channel == "sms" and not preferences.sms_enabled:
-            return jsonify({"error": "User has disabled SMS notifications"}), 400
-        elif channel == "push" and not preferences.push_enabled:
-            return jsonify({"error": "User has disabled push notifications"}), 400
-
-        # Check specific notification type preferences
-        if notification_type == "marketing" and not preferences.marketing_enabled:
-            return jsonify({"error": "User has disabled marketing notifications"}), 400
-        elif notification_type == "security_alert" and not preferences.security_alerts:
-            return jsonify({"error": "User has disabled security alerts"}), 400
-        elif (
-            notification_type == "transaction_alert"
-            and not preferences.transaction_alerts
+        if channel == "email" and (not preferences.email_enabled):
+            return (jsonify({"error": "User has disabled email notifications"}), 400)
+        elif channel == "sms" and (not preferences.sms_enabled):
+            return (jsonify({"error": "User has disabled SMS notifications"}), 400)
+        elif channel == "push" and (not preferences.push_enabled):
+            return (jsonify({"error": "User has disabled push notifications"}), 400)
+        if notification_type == "marketing" and (not preferences.marketing_enabled):
+            return (
+                jsonify({"error": "User has disabled marketing notifications"}),
+                400,
+            )
+        elif notification_type == "security_alert" and (
+            not preferences.security_alerts
         ):
-            return jsonify({"error": "User has disabled transaction alerts"}), 400
-        elif (
-            notification_type == "compliance_alert"
-            and not preferences.compliance_alerts
+            return (jsonify({"error": "User has disabled security alerts"}), 400)
+        elif notification_type == "transaction_alert" and (
+            not preferences.transaction_alerts
         ):
-            return jsonify({"error": "User has disabled compliance alerts"}), 400
-
-    # Process template if specified
+            return (jsonify({"error": "User has disabled transaction alerts"}), 400)
+        elif notification_type == "compliance_alert" and (
+            not preferences.compliance_alerts
+        ):
+            return (jsonify({"error": "User has disabled compliance alerts"}), 400)
     message = data["message"]
     subject = data.get("subject")
-
     if data.get("template_name"):
         template = TemplateEngine.get_template(data["template_name"])
         if template:
@@ -501,8 +355,6 @@ def send_notification():
                 subject = TemplateEngine.render_template(
                     template.subject_template, template_data
                 )
-
-    # Create notification record
     notification = Notification(
         user_id=data["user_id"],
         notification_type=data["notification_type"],
@@ -515,19 +367,14 @@ def send_notification():
         scheduled_at=data.get("scheduled_at", datetime.utcnow()),
     )
     notification.save()
-
-    # Queue for immediate sending or schedule for later
     if data.get("scheduled_at") and data["scheduled_at"] > datetime.utcnow():
         notification.status = "scheduled"
         notification.save()
-        # In production, use a proper scheduler like Celery
         logger.info(
             f"Notification {notification.id} scheduled for {data['scheduled_at']}"
         )
     else:
         notification_queue.enqueue_notification(notification.id)
-
-    # Log notification
     audit_logger.log_event(
         AuditEventType.SYSTEM_CONFIG_CHANGE,
         "notification_created",
@@ -541,7 +388,6 @@ def send_notification():
             "priority": data.get("priority", "normal"),
         },
     )
-
     return (
         jsonify(
             {
@@ -556,20 +402,21 @@ def send_notification():
 
 @app.route("/api/v1/notifications/preferences/<user_id>", methods=["GET"])
 @require_auth
-def get_notification_preferences(user_id):
+def get_notification_preferences(user_id: Any) -> Any:
     """Get user notification preferences"""
-    # Users can only access their own preferences unless they have admin permission
-    if g.current_user["user_id"] != user_id and not any(
-        role in ["admin", "business_owner"] for role in g.current_user.get("roles", [])
+    if g.current_user["user_id"] != user_id and (
+        not any(
+            (
+                role in ["admin", "business_owner"]
+                for role in g.current_user.get("roles", [])
+            )
+        )
     ):
-        return jsonify({"error": "Access denied"}), 403
-
+        return (jsonify({"error": "Access denied"}), 403)
     preferences = NotificationPreferences.find_one("user_id = ?", (user_id,))
     if not preferences:
-        # Create default preferences
         preferences = NotificationPreferences(user_id=user_id)
         preferences.save()
-
     return jsonify({"preferences": preferences.to_dict()})
 
 
@@ -577,21 +424,21 @@ def get_notification_preferences(user_id):
 @require_auth
 @validate_json_request(NotificationPreferencesSchema)
 @audit_action(AuditEventType.USER_UPDATE, "notification_preferences_updated")
-def update_notification_preferences(user_id):
+def update_notification_preferences(user_id: Any) -> Any:
     """Update user notification preferences"""
-    # Users can only update their own preferences unless they have admin permission
-    if g.current_user["user_id"] != user_id and not any(
-        role in ["admin", "business_owner"] for role in g.current_user.get("roles", [])
+    if g.current_user["user_id"] != user_id and (
+        not any(
+            (
+                role in ["admin", "business_owner"]
+                for role in g.current_user.get("roles", [])
+            )
+        )
     ):
-        return jsonify({"error": "Access denied"}), 403
-
+        return (jsonify({"error": "Access denied"}), 403)
     data = request.validated_data
-
     preferences = NotificationPreferences.find_one("user_id = ?", (user_id,))
     if not preferences:
         preferences = NotificationPreferences(user_id=user_id)
-
-    # Update preferences
     for field in [
         "email_enabled",
         "sms_enabled",
@@ -603,18 +450,14 @@ def update_notification_preferences(user_id):
     ]:
         if field in data:
             setattr(preferences, field, data[field])
-
     preferences.updated_at = datetime.utcnow()
     preferences.save()
-
-    # Log preference update
     audit_logger.log_user_action(
         AuditEventType.USER_UPDATE,
         user_id,
         "notification_preferences_updated",
         details=data,
     )
-
     return jsonify(
         {
             "message": "Notification preferences updated",
@@ -625,36 +468,31 @@ def update_notification_preferences(user_id):
 
 @app.route("/api/v1/notifications/user/<user_id>", methods=["GET"])
 @require_auth
-def get_user_notifications(user_id):
+def get_user_notifications(user_id: Any) -> Any:
     """Get notifications for a user"""
-    # Users can only access their own notifications unless they have admin permission
-    if g.current_user["user_id"] != user_id and not any(
-        role in ["admin", "business_owner"] for role in g.current_user.get("roles", [])
+    if g.current_user["user_id"] != user_id and (
+        not any(
+            (
+                role in ["admin", "business_owner"]
+                for role in g.current_user.get("roles", [])
+            )
+        )
     ):
-        return jsonify({"error": "Access denied"}), 403
-
-    # Get query parameters
+        return (jsonify({"error": "Access denied"}), 403)
     limit = min(int(request.args.get("limit", 50)), 100)
     offset = int(request.args.get("offset", 0))
     status = request.args.get("status")
     notification_type = request.args.get("type")
-
-    # Build query
     where_clause = "user_id = ?"
     params = [user_id]
-
     if status:
         where_clause += " AND status = ?"
         params.append(status)
-
     if notification_type:
         where_clause += " AND notification_type = ?"
         params.append(notification_type)
-
     where_clause += f" ORDER BY created_at DESC LIMIT {limit} OFFSET {offset}"
-
     notifications = Notification.find_all(where_clause, tuple(params))
-
     return jsonify(
         {
             "notifications": [notification.to_dict() for notification in notifications],
@@ -668,24 +506,19 @@ def get_user_notifications(user_id):
 @app.route("/api/v1/notifications/<int:notification_id>/status", methods=["PUT"])
 @require_auth
 @require_permission("notification:write")
-def update_notification_status(notification_id):
+def update_notification_status(notification_id: Any) -> Any:
     """Update notification status (for admin use)"""
     data = request.get_json() or {}
     new_status = data.get("status")
-
     if new_status not in ["pending", "sent", "failed", "cancelled"]:
-        return jsonify({"error": "Invalid status"}), 400
-
+        return (jsonify({"error": "Invalid status"}), 400)
     notification = Notification.find_by_id(notification_id)
     if not notification:
-        return jsonify({"error": "Notification not found"}), 404
-
+        return (jsonify({"error": "Notification not found"}), 404)
     notification.status = new_status
     if new_status == "cancelled":
         notification.error_message = "Cancelled by admin"
-
     notification.save()
-
     return jsonify(
         {
             "message": "Notification status updated",
@@ -698,11 +531,9 @@ def update_notification_status(notification_id):
 @app.route("/api/v1/notifications/stats", methods=["GET"])
 @require_auth
 @require_permission("notification:read")
-def notification_stats():
+def notification_stats() -> Any:
     """Get notification statistics"""
-    # Get statistics for the last 30 days
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-
     total_sent = len(
         Notification.find_all(
             "status = 'sent' AND created_at >= ?", (thirty_days_ago.isoformat(),)
@@ -714,8 +545,6 @@ def notification_stats():
         )
     )
     total_pending = len(Notification.find_all("status = 'pending'"))
-
-    # Get stats by channel
     email_sent = len(
         Notification.find_all(
             "channel = 'email' AND status = 'sent' AND created_at >= ?",
@@ -734,7 +563,6 @@ def notification_stats():
             (thirty_days_ago.isoformat(),),
         )
     )
-
     return jsonify(
         {
             "period": "30_days",
@@ -742,8 +570,8 @@ def notification_stats():
             "total_failed": total_failed,
             "total_pending": total_pending,
             "success_rate": (
-                (total_sent / (total_sent + total_failed)) * 100
-                if (total_sent + total_failed) > 0
+                total_sent / (total_sent + total_failed) * 100
+                if total_sent + total_failed > 0
                 else 0
             ),
             "by_channel": {"email": email_sent, "sms": sms_sent, "push": push_sent},
@@ -753,14 +581,6 @@ def notification_stats():
 
 
 if __name__ == "__main__":
-    # Ensure data directory exists
-    os.makedirs(
-        os.path.join(os.path.dirname(__file__), "database"),
-        exist_ok=True,
-    )
-
-    # Initialize default templates
+    os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
     initialize_templates()
-
-    # Development server
     app.run(host="0.0.0.0", port=5006, debug=True)

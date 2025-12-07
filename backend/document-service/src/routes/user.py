@@ -2,76 +2,54 @@ import os
 import uuid
 from datetime import datetime
 from functools import wraps
-
 from flask import Blueprint, jsonify, request, send_file
-
-from .models.user import (
-    Document,
-    DocumentTemplate,
-    DocumentShare,
-    DocumentVersion,
-)
+from .models.user import Document, DocumentTemplate, DocumentShare, DocumentVersion
 
 document_bp = Blueprint("document", __name__)
-
-# --- Configuration (Simulated Storage) ---
-# In a real application, this would be S3 or a dedicated file storage service.
 DOCUMENT_STORAGE_PATH = "/home/ubuntu/NexaFi/backend/document-service/storage"
 
 
-def require_user_id(f):
+def require_user_id(f: Any) -> Any:
     """Decorator to extract user_id from request headers"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
         user_id = request.headers.get("X-User-ID")
         if not user_id:
-            return jsonify({"error": "User ID is required in headers"}), 401
+            return (jsonify({"error": "User ID is required in headers"}), 401)
         request.user_id = user_id
         return f(*args, **kwargs)
 
     return decorated_function
 
 
-# --- Document Routes ---
-
-
 @document_bp.route("/documents", methods=["GET"])
 @require_user_id
-def get_documents():
+def get_documents() -> Any:
     """Get all documents for the current user."""
     try:
         documents = Document.find_all("user_id = ?", (request.user_id,))
-        return jsonify([d.to_dict() for d in documents]), 200
+        return (jsonify([d.to_dict() for d in documents]), 200)
     except Exception as e:
-        return jsonify({"error": "Failed to fetch documents", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to fetch documents", "details": str(e)}), 500)
 
 
 @document_bp.route("/documents", methods=["POST"])
 @require_user_id
-def upload_document():
+def upload_document() -> Any:
     """Upload a new document (simulated file handling)."""
     try:
-        # Ensure storage path exists
         os.makedirs(DOCUMENT_STORAGE_PATH, exist_ok=True)
-
-        # Simulated file upload from request data
         data = request.get_json()
         if not data or "file_content" not in data:
-            return jsonify({"error": "Missing file_content in request"}), 400
-
-        # Generate unique file name and path
+            return (jsonify({"error": "Missing file_content in request"}), 400)
         doc_id = str(uuid.uuid4())
         file_name = data.get("file_name", f"document_{doc_id}.txt")
         file_path = os.path.join(DOCUMENT_STORAGE_PATH, doc_id, file_name)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        # Save the file content (simulated)
         file_content = data["file_content"]
         with open(file_path, "w") as f:
             f.write(file_content)
-
-        # Create document record
         new_document = Document(
             id=doc_id,
             user_id=request.user_id,
@@ -88,8 +66,6 @@ def upload_document():
             updated_at=datetime.utcnow().isoformat(),
         )
         new_document.save()
-
-        # Create initial version
         initial_version = DocumentVersion(
             id=str(uuid.uuid4()),
             document_id=doc_id,
@@ -99,37 +75,32 @@ def upload_document():
             created_at=datetime.utcnow().isoformat(),
         )
         initial_version.save()
-
-        return jsonify(new_document.to_dict()), 201
+        return (jsonify(new_document.to_dict()), 201)
     except Exception as e:
-        return jsonify({"error": "Failed to upload document", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to upload document", "details": str(e)}), 500)
 
 
 @document_bp.route("/documents/<document_id>", methods=["GET"])
 @require_user_id
-def get_document(document_id):
+def get_document(document_id: Any) -> Any:
     """Get a specific document by ID."""
     document = Document.find_one(
         "id = ? AND user_id = ?", (document_id, request.user_id)
     )
     if not document:
-        return jsonify({"error": "Document not found"}), 404
-    return jsonify(document.to_dict()), 200
+        return (jsonify({"error": "Document not found"}), 404)
+    return (jsonify(document.to_dict()), 200)
 
 
 @document_bp.route("/documents/<document_id>/download", methods=["GET"])
 @require_user_id
-def download_document(document_id):
+def download_document(document_id: Any) -> Any:
     """Download the latest version of a document."""
     document = Document.find_one(
         "id = ? AND user_id = ?", (document_id, request.user_id)
     )
     if not document:
-        return jsonify({"error": "Document not found"}), 404
-
-    # Check for share permissions if not the owner (not fully implemented here)
-    # For now, only owner can download
-
+        return (jsonify({"error": "Document not found"}), 404)
     try:
         return send_file(
             document.file_path,
@@ -138,56 +109,45 @@ def download_document(document_id):
             download_name=document.file_name,
         )
     except FileNotFoundError:
-        return jsonify({"error": "File not found on server"}), 500
+        return (jsonify({"error": "File not found on server"}), 500)
 
 
 @document_bp.route("/documents/<document_id>", methods=["DELETE"])
 @require_user_id
-def delete_document(document_id):
+def delete_document(document_id: Any) -> Any:
     """Delete a document and all its versions."""
     try:
         document = Document.find_one(
             "id = ? AND user_id = ?", (document_id, request.user_id)
         )
         if not document:
-            return jsonify({"error": "Document not found"}), 404
-
-        # Delete all versions
+            return (jsonify({"error": "Document not found"}), 404)
         versions = DocumentVersion.find_all("document_id = ?", (document_id,))
         for version in versions:
-            # Simulated file deletion
             if os.path.exists(version.file_path):
                 os.remove(version.file_path)
             version.delete()
-
-        # Delete document record
         document.delete()
-
-        # Clean up document directory
         doc_dir = os.path.join(DOCUMENT_STORAGE_PATH, document_id)
         if os.path.exists(doc_dir):
             os.rmdir(doc_dir)
-
-        return jsonify({"message": "Document deleted successfully"}), 204
+        return (jsonify({"message": "Document deleted successfully"}), 204)
     except Exception as e:
-        return jsonify({"error": "Failed to delete document", "details": str(e)}), 500
-
-
-# --- Document Template Routes ---
+        return (jsonify({"error": "Failed to delete document", "details": str(e)}), 500)
 
 
 @document_bp.route("/templates", methods=["GET"])
-def get_templates():
+def get_templates() -> Any:
     """Get all document templates."""
     try:
         templates = DocumentTemplate.find_all()
-        return jsonify([t.to_dict() for t in templates]), 200
+        return (jsonify([t.to_dict() for t in templates]), 200)
     except Exception as e:
-        return jsonify({"error": "Failed to fetch templates", "details": str(e)}), 500
+        return (jsonify({"error": "Failed to fetch templates", "details": str(e)}), 500)
 
 
 @document_bp.route("/templates", methods=["POST"])
-def create_template():
+def create_template() -> Any:
     """Create a new document template."""
     try:
         data = request.get_json()
@@ -203,34 +163,30 @@ def create_template():
             updated_at=datetime.utcnow().isoformat(),
         )
         new_template.save()
-        return jsonify(new_template.to_dict()), 201
+        return (jsonify(new_template.to_dict()), 201)
     except Exception as e:
-        return jsonify({"error": "Failed to create template", "details": str(e)}), 400
+        return (jsonify({"error": "Failed to create template", "details": str(e)}), 400)
 
 
 @document_bp.route("/templates/<template_id>", methods=["GET"])
-def get_template(template_id):
+def get_template(template_id: Any) -> Any:
     """Get a specific document template by ID."""
     template = DocumentTemplate.find_by_id(template_id)
     if not template:
-        return jsonify({"error": "Template not found"}), 404
-    return jsonify(template.to_dict()), 200
-
-
-# --- Document Sharing Routes ---
+        return (jsonify({"error": "Template not found"}), 404)
+    return (jsonify(template.to_dict()), 200)
 
 
 @document_bp.route("/documents/<document_id>/share", methods=["POST"])
 @require_user_id
-def share_document(document_id):
+def share_document(document_id: Any) -> Any:
     """Share a document with another user or email."""
     try:
         document = Document.find_one(
             "id = ? AND user_id = ?", (document_id, request.user_id)
         )
         if not document:
-            return jsonify({"error": "Document not found"}), 404
-
+            return (jsonify({"error": "Document not found"}), 404)
         data = request.get_json()
         new_share = DocumentShare(
             id=str(uuid.uuid4()),
@@ -243,21 +199,19 @@ def share_document(document_id):
             created_at=datetime.utcnow().isoformat(),
         )
         new_share.save()
-        return jsonify(new_share.to_dict()), 201
+        return (jsonify(new_share.to_dict()), 201)
     except Exception as e:
-        return jsonify({"error": "Failed to share document", "details": str(e)}), 400
+        return (jsonify({"error": "Failed to share document", "details": str(e)}), 400)
 
 
 @document_bp.route("/documents/<document_id>/shares", methods=["GET"])
 @require_user_id
-def get_document_shares(document_id):
+def get_document_shares(document_id: Any) -> Any:
     """Get all share records for a document."""
-    # Check if document exists and belongs to user
     document = Document.find_one(
         "id = ? AND user_id = ?", (document_id, request.user_id)
     )
     if not document:
-        return jsonify({"error": "Document not found"}), 404
-
+        return (jsonify({"error": "Document not found"}), 404)
     shares = DocumentShare.find_all("document_id = ?", (document_id,))
-    return jsonify([s.to_dict() for s in shares]), 200
+    return (jsonify([s.to_dict() for s in shares]), 200)

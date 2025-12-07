@@ -8,15 +8,11 @@ import sys
 import time
 from datetime import datetime
 from functools import wraps
-
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-# Add shared modules to path
 sys.path.append("/home/ubuntu/NexaFi/backend/shared")
-
 from logging.logger import get_logger, setup_request_logging
-
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import initialize_database
 from enhanced_security import (
@@ -50,8 +46,6 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "nexafi-open-banking-gateway-secret-key-2024"
 )
-
-# Enable CORS
 CORS(
     app,
     origins="*",
@@ -65,31 +59,21 @@ CORS(
         "DPoP",
     ],
 )
-
-# Setup logging
 setup_request_logging(app)
 logger = get_logger("open_banking_gateway")
-
-# Initialize database
 db_path = os.path.join(os.path.dirname(__file__), "database", "open_banking.db")
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
-
-# Initialize security components
 encryption = AdvancedEncryption()
 security_monitor = SecurityMonitor(db_manager)
 fraud_engine = FraudDetectionEngine(db_manager)
 mfa_manager = MultiFactorAuthentication(db_manager)
-
-# Initialize Open Banking components
 fapi_security = FAPI2SecurityProfile(
     private_key_path="/home/ubuntu/NexaFi/backend/open-banking-gateway/keys/private_key.pem",
     public_key_path="/home/ubuntu/NexaFi/backend/open-banking-gateway/keys/public_key.pem",
 )
 consent_manager = PSD2ConsentManager(db_manager)
 sca_manager = SCAManager(db_manager)
-
-# TPP Registry (in production, this would be from official sources)
 REGISTERED_TPPS = {
     "PSDGB-FCA-123456": {
         "organization_name": "Example TPP Ltd",
@@ -100,7 +84,6 @@ REGISTERED_TPPS = {
 }
 
 
-# Validation schemas
 class ConsentRequestSchema(SanitizationMixin, Schema):
     access = fields.Dict(required=True)
     recurringIndicator = fields.Bool(required=False, default=False)
@@ -137,12 +120,11 @@ class SCAInitiationSchema(SanitizationMixin, Schema):
     psuMessage = fields.Str(required=False, validate=validate.Length(max=500))
 
 
-def validate_tpp_certificate(f):
+def validate_tpp_certificate(f: Any) -> Any:
     """Decorator to validate TPP certificate"""
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Get TPP certificate from headers
         tpp_cert = request.headers.get("TPP-Signature-Certificate")
         if not tpp_cert:
             return (
@@ -154,8 +136,6 @@ def validate_tpp_certificate(f):
                 ),
                 400,
             )
-
-        # Validate certificate
         is_valid, cert_info = OpenBankingAPIValidator.validate_tpp_certificate(tpp_cert)
         if not is_valid:
             return (
@@ -167,18 +147,15 @@ def validate_tpp_certificate(f):
                 ),
                 401,
             )
-
-        # Store TPP info in request context
         g.tpp_id = cert_info["organization_id"]
         g.tpp_name = cert_info["organization_name"]
         g.tpp_roles = cert_info["roles"]
-
         return f(*args, **kwargs)
 
     return decorated_function
 
 
-def validate_fapi_headers(f):
+def validate_fapi_headers(f: Any) -> Any:
     """Decorator to validate FAPI required headers"""
 
     @wraps(f)
@@ -191,12 +168,11 @@ def validate_fapi_headers(f):
                 jsonify(
                     {
                         "error": "invalid_request",
-                        "error_description": f'FAPI header validation failed: {", ".join(errors)}',
+                        "error_description": f"FAPI header validation failed: {', '.join(errors)}",
                     }
                 ),
                 400,
             )
-
         return f(*args, **kwargs)
 
     return decorated_function
@@ -204,18 +180,16 @@ def validate_fapi_headers(f):
 
 def log_security_event(
     event_type: SecurityEventType, threat_level: ThreatLevel = ThreatLevel.LOW
-):
+) -> Any:
     """Decorator to log security events"""
 
     def decorator(f):
+
         @wraps(f)
         def decorated_function(*args, **kwargs):
             start_time = time.time()
-
             try:
                 result = f(*args, **kwargs)
-
-                # Log successful event
                 event = SecurityEvent(
                     event_type=event_type,
                     user_id=getattr(g, "user_id", None),
@@ -232,11 +206,8 @@ def log_security_event(
                     session_id=getattr(g, "session_id", None),
                 )
                 security_monitor.log_security_event(event)
-
                 return result
-
             except Exception as e:
-                # Log failed event
                 event = SecurityEvent(
                     event_type=SecurityEventType.SECURITY_VIOLATION,
                     user_id=getattr(g, "user_id", None),
@@ -261,7 +232,7 @@ def log_security_event(
 
 
 @app.route("/api/v1/health", methods=["GET"])
-def health_check():
+def health_check() -> Any:
     """Health check endpoint"""
     return jsonify(
         {
@@ -284,11 +255,9 @@ def health_check():
     "consent_creation_requested",
     severity=AuditSeverity.HIGH,
 )
-def create_consent():
+def create_consent() -> Any:
     """Create PSD2 consent (Account Information Service)"""
     data = request.validated_data
-
-    # Check TPP authorization for AIS
     if "PSP_AI" not in g.tpp_roles:
         return (
             jsonify(
@@ -299,8 +268,6 @@ def create_consent():
             ),
             403,
         )
-
-    # Extract PSU identification (would come from OAuth flow in production)
     psu_id = request.headers.get("PSU-ID")
     if not psu_id:
         return (
@@ -312,12 +279,9 @@ def create_consent():
             ),
             400,
         )
-
-    # Create consent
     valid_until = data.get("validUntil")
     if valid_until:
         valid_until = datetime.fromisoformat(valid_until.replace("Z", "+00:00"))
-
     consent = consent_manager.create_consent(
         psu_id=psu_id,
         tpp_id=g.tpp_id,
@@ -325,8 +289,6 @@ def create_consent():
         valid_until=valid_until,
         frequency_per_day=data.get("frequencyPerDay", 4),
     )
-
-    # Log consent creation
     audit_logger.log_event(
         AuditEventType.USER_UPDATE,
         "consent_created",
@@ -340,11 +302,9 @@ def create_consent():
         },
         severity=AuditSeverity.HIGH,
     )
-
     logger.info(
         f"Consent created: {consent.consent_id} for PSU {psu_id} by TPP {g.tpp_id}"
     )
-
     return (
         jsonify(
             {
@@ -366,17 +326,14 @@ def create_consent():
 @validate_tpp_certificate
 @validate_fapi_headers
 @log_security_event(SecurityEventType.DATA_ACCESS)
-def get_consent(consent_id):
+def get_consent(consent_id: Any) -> Any:
     """Get consent details"""
     consent = consent_manager.get_consent(consent_id)
-
     if not consent:
         return (
             jsonify({"error": "not_found", "error_description": "Consent not found"}),
             404,
         )
-
-    # Verify TPP authorization
     if consent.tpp_id != g.tpp_id:
         return (
             jsonify(
@@ -387,7 +344,6 @@ def get_consent(consent_id):
             ),
             403,
         )
-
     return jsonify(
         {
             "consentId": consent.consent_id,
@@ -406,25 +362,21 @@ def get_consent(consent_id):
 @validate_fapi_headers
 @validate_json_request(SCAInitiationSchema)
 @log_security_event(SecurityEventType.LOGIN_ATTEMPT, ThreatLevel.MODERATE)
-def initiate_consent_authorisation(consent_id):
+def initiate_consent_authorisation(consent_id: Any) -> Any:
     """Initiate Strong Customer Authentication for consent"""
     data = request.validated_data
-
-    # Validate consent
     is_valid, message = consent_manager.validate_consent(consent_id, g.tpp_id)
     if not is_valid:
-        return jsonify({"error": "invalid_consent", "error_description": message}), 400
-
+        return (
+            jsonify({"error": "invalid_consent", "error_description": message}),
+            400,
+        )
     consent = consent_manager.get_consent(consent_id)
-
-    # Initiate SCA
     sca_method = AuthenticationMethod(data["scaMethod"])
     sca_data = sca_manager.initiate_sca(
         psu_id=consent.psu_id, sca_method=sca_method, consent_id=consent_id
     )
-
     logger.info(f"SCA initiated for consent {consent_id}: {sca_data.authentication_id}")
-
     return (
         jsonify(
             {
@@ -450,11 +402,9 @@ def initiate_consent_authorisation(consent_id):
 @validate_tpp_certificate
 @validate_fapi_headers
 @log_security_event(SecurityEventType.LOGIN_ATTEMPT, ThreatLevel.HIGH)
-def update_consent_authorisation(consent_id, authorisation_id):
+def update_consent_authorisation(consent_id: Any, authorisation_id: Any) -> Any:
     """Update SCA authorisation with authentication data"""
     data = request.get_json() or {}
-
-    # Get authentication response
     auth_response = data.get("scaAuthenticationData")
     if not auth_response:
         return (
@@ -466,22 +416,15 @@ def update_consent_authorisation(consent_id, authorisation_id):
             ),
             400,
         )
-
-    # Verify SCA
     is_verified, sca_status = sca_manager.verify_sca(authorisation_id, auth_response)
-
     if is_verified:
-        # Update consent status to valid
         consent_manager.update_consent_status(consent_id, ConsentStatus.VALID)
-
         logger.info(f"Consent {consent_id} authorized successfully")
-
         return jsonify(
             {"scaStatus": sca_status.value, "consentStatus": ConsentStatus.VALID.value}
         )
     else:
         logger.warning(f"SCA verification failed for consent {consent_id}")
-
         return (
             jsonify(
                 {
@@ -504,11 +447,9 @@ def update_consent_authorisation(consent_id, authorisation_id):
     "payment_initiation_requested",
     severity=AuditSeverity.CRITICAL,
 )
-def initiate_payment():
+def initiate_payment() -> Any:
     """Initiate SEPA Credit Transfer (Payment Initiation Service)"""
     data = request.validated_data
-
-    # Check TPP authorization for PIS
     if "PSP_PI" not in g.tpp_roles:
         return (
             jsonify(
@@ -519,8 +460,6 @@ def initiate_payment():
             ),
             403,
         )
-
-    # Extract PSU identification
     psu_id = request.headers.get("PSU-ID")
     if not psu_id:
         return (
@@ -532,21 +471,14 @@ def initiate_payment():
             ),
             400,
         )
-
-    # Perform fraud detection
     transaction_data = {
         "amount": float(data["instructedAmount"]["amount"]),
         "currency": data["instructedAmount"]["currency"],
         "merchant_category": "bank_transfer",
-        "country": "DE",  # Would be determined from creditor account
+        "country": "DE",
         "timestamp": datetime.utcnow().isoformat(),
     }
-
-    user_data = {
-        "risk_score": 20,
-        "country": "DE",
-    }  # Would be fetched from user profile
-
+    user_data = {"risk_score": 20, "country": "DE"}
     risk_score, risk_factors = fraud_engine.analyze_transaction_behavior(
         psu_id,
         transaction_data["amount"],
@@ -554,29 +486,20 @@ def initiate_payment():
         transaction_data["merchant_category"],
         request.remote_addr,
     )
-
-    # Check if SCA exemption is possible
     exemption_eligible = TransactionRiskAnalysis.is_eligible_for_exemption(
         risk_score, transaction_data["amount"], "low_risk"
     )
-
-    # Create payment object
     payment_id = f"payment_{int(time.time())}_{psu_id[:8]}"
-
-    # Determine if SCA is required
     sca_required = not exemption_eligible or risk_score > 30
-
     if sca_required:
-        # Initiate SCA for payment
         sca_data = sca_manager.initiate_sca(
             psu_id=psu_id,
-            sca_method=AuthenticationMethod.SMS_OTP,  # Default method
+            sca_method=AuthenticationMethod.SMS_OTP,
             transaction_id=payment_id,
         )
-
         response_data = {
             "paymentId": payment_id,
-            "transactionStatus": "RCVD",  # Received
+            "transactionStatus": "RCVD",
             "scaRequired": True,
             "scaStatus": sca_data.status.value,
             "authorisationId": sca_data.authentication_id,
@@ -586,9 +509,7 @@ def initiate_payment():
                 "status": f"/api/v1/payments/sepa-credit-transfers/{payment_id}/status",
             },
         }
-
         if risk_score > 50:
-            # Create fraud alert
             fraud_engine.create_fraud_alert(
                 psu_id,
                 "high_risk_payment",
@@ -596,10 +517,9 @@ def initiate_payment():
                 {"payment_id": payment_id, "risk_factors": risk_factors},
             )
     else:
-        # Process payment without SCA (exemption applied)
         response_data = {
             "paymentId": payment_id,
-            "transactionStatus": "ACCP",  # Accepted
+            "transactionStatus": "ACCP",
             "scaRequired": False,
             "scaExemption": "lowRisk",
             "_links": {
@@ -607,8 +527,6 @@ def initiate_payment():
                 "status": f"/api/v1/payments/sepa-credit-transfers/{payment_id}/status",
             },
         }
-
-    # Log payment initiation
     audit_logger.log_financial_transaction(
         AuditEventType.TRANSACTION_CREATE,
         psu_id,
@@ -622,19 +540,16 @@ def initiate_payment():
             "sca_required": sca_required,
         },
     )
-
     logger.info(f"Payment initiated: {payment_id} for PSU {psu_id} by TPP {g.tpp_id}")
-
-    return jsonify(response_data), 201
+    return (jsonify(response_data), 201)
 
 
 @app.route("/api/v1/accounts", methods=["GET"])
 @validate_tpp_certificate
 @validate_fapi_headers
 @log_security_event(SecurityEventType.DATA_ACCESS)
-def get_accounts():
+def get_accounts() -> Any:
     """Get account list (Account Information Service)"""
-    # Get consent ID from request
     consent_id = request.headers.get("Consent-ID")
     if not consent_id:
         return (
@@ -646,15 +561,13 @@ def get_accounts():
             ),
             400,
         )
-
-    # Validate consent
     is_valid, message = consent_manager.validate_consent(consent_id, g.tpp_id)
     if not is_valid:
-        return jsonify({"error": "invalid_consent", "error_description": message}), 403
-
+        return (
+            jsonify({"error": "invalid_consent", "error_description": message}),
+            403,
+        )
     consent = consent_manager.get_consent(consent_id)
-
-    # Check if accounts access is granted
     if "accounts" not in consent.access:
         return (
             jsonify(
@@ -665,8 +578,6 @@ def get_accounts():
             ),
             403,
         )
-
-    # Mock account data (in production, fetch from core banking system)
     accounts = [
         {
             "resourceId": "account_001",
@@ -681,7 +592,6 @@ def get_accounts():
             },
         }
     ]
-
     return jsonify({"accounts": accounts})
 
 
@@ -689,9 +599,8 @@ def get_accounts():
 @validate_tpp_certificate
 @validate_fapi_headers
 @log_security_event(SecurityEventType.DATA_ACCESS)
-def get_account_balances(account_id):
+def get_account_balances(account_id: Any) -> Any:
     """Get account balances"""
-    # Validate consent (similar to get_accounts)
     consent_id = request.headers.get("Consent-ID")
     if not consent_id:
         return (
@@ -703,12 +612,12 @@ def get_account_balances(account_id):
             ),
             400,
         )
-
     is_valid, message = consent_manager.validate_consent(consent_id, g.tpp_id)
     if not is_valid:
-        return jsonify({"error": "invalid_consent", "error_description": message}), 403
-
-    # Mock balance data
+        return (
+            jsonify({"error": "invalid_consent", "error_description": message}),
+            403,
+        )
     balances = [
         {
             "balanceType": "closingBooked",
@@ -720,7 +629,6 @@ def get_account_balances(account_id):
             "balanceAmount": {"amount": "1500.00", "currency": "EUR"},
         },
     ]
-
     return jsonify(
         {"account": {"iban": "DE89370400440532013000"}, "balances": balances}
     )
@@ -729,16 +637,15 @@ def get_account_balances(account_id):
 @app.route("/api/v1/security/threat-summary", methods=["GET"])
 @require_auth
 @require_permission("security:read")
-def get_threat_summary():
+def get_threat_summary() -> Any:
     """Get security threat summary"""
     hours = request.args.get("hours", 24, type=int)
     summary = security_monitor.get_threat_summary(hours)
-
     return jsonify(summary)
 
 
 @app.errorhandler(400)
-def bad_request(error):
+def bad_request(error: Any) -> Any:
     """Handle bad request errors"""
     return (
         jsonify(
@@ -752,7 +659,7 @@ def bad_request(error):
 
 
 @app.errorhandler(401)
-def unauthorized(error):
+def unauthorized(error: Any) -> Any:
     """Handle unauthorized errors"""
     return (
         jsonify(
@@ -766,7 +673,7 @@ def unauthorized(error):
 
 
 @app.errorhandler(403)
-def forbidden(error):
+def forbidden(error: Any) -> Any:
     """Handle forbidden errors"""
     return (
         jsonify(
@@ -777,7 +684,7 @@ def forbidden(error):
 
 
 @app.errorhandler(500)
-def internal_error(error):
+def internal_error(error: Any) -> Any:
     """Handle internal server errors"""
     logger.error(f"Internal server error: {str(error)}")
     return (
@@ -792,8 +699,6 @@ def internal_error(error):
 
 
 if __name__ == "__main__":
-    # Create necessary directories
     os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), "keys"), exist_ok=True)
-
     app.run(host="0.0.0.0", port=5010, debug=True)

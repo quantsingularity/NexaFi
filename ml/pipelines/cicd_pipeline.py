@@ -12,13 +12,11 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List
-
 import docker
 import git
 from kubernetes import client
 from kubernetes import config as k8s_config
 from mlflow.tracking import MlflowClient
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -47,7 +45,7 @@ class PipelineConfig:
 class GitManager:
     """Git operations for CI/CD pipeline"""
 
-    def __init__(self, repo_path: str):
+    def __init__(self, repo_path: str) -> Any:
         self.repo_path = repo_path
         self.repo = None
         self.logger = logging.getLogger(__name__)
@@ -66,7 +64,6 @@ class GitManager:
         """Get current commit information"""
         if not self.repo:
             return {}
-
         try:
             commit = self.repo.head.commit
             return {
@@ -83,7 +80,6 @@ class GitManager:
         """Get list of changed files"""
         if not self.repo:
             return []
-
         try:
             diff = self.repo.git.diff("--name-only", base_commit, "HEAD")
             return diff.split("\n") if diff else []
@@ -95,7 +91,7 @@ class GitManager:
 class TestRunner:
     """Automated testing for ML models and pipelines"""
 
-    def __init__(self, project_path: str):
+    def __init__(self, project_path: str) -> Any:
         self.project_path = project_path
         self.logger = logging.getLogger(__name__)
 
@@ -116,10 +112,7 @@ class TestRunner:
                 capture_output=True,
                 text=True,
             )
-
-            # Parse test results
             test_results = self._parse_test_results("test_results.json")
-
             return {
                 "status": "passed" if result.returncode == 0 else "failed",
                 "return_code": result.returncode,
@@ -127,7 +120,6 @@ class TestRunner:
                 "stderr": result.stderr,
                 "test_results": test_results,
             }
-
         except Exception as e:
             self.logger.error(f"Unit tests failed: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -149,9 +141,7 @@ class TestRunner:
                 capture_output=True,
                 text=True,
             )
-
             test_results = self._parse_test_results("integration_results.json")
-
             return {
                 "status": "passed" if result.returncode == 0 else "failed",
                 "return_code": result.returncode,
@@ -159,7 +149,6 @@ class TestRunner:
                 "stderr": result.stderr,
                 "test_results": test_results,
             }
-
         except Exception as e:
             self.logger.error(f"Integration tests failed: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -169,7 +158,6 @@ class TestRunner:
     ) -> Dict[str, Any]:
         """Run model validation tests"""
         try:
-            # Custom model validation script
             result = subprocess.run(
                 [
                     "python",
@@ -183,14 +171,12 @@ class TestRunner:
                 capture_output=True,
                 text=True,
             )
-
             return {
                 "status": "passed" if result.returncode == 0 else "failed",
                 "return_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
             }
-
         except Exception as e:
             self.logger.error(f"Model validation failed: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -198,23 +184,18 @@ class TestRunner:
     def run_security_tests(self) -> Dict[str, Any]:
         """Run security tests"""
         try:
-            # Run bandit for security issues
             result = subprocess.run(
                 ["bandit", "-r", ".", "-f", "json", "-o", "security_report.json"],
                 cwd=self.project_path,
                 capture_output=True,
                 text=True,
             )
-
-            # Parse security report
             security_report = self._parse_security_report("security_report.json")
-
             return {
                 "status": "passed" if result.returncode == 0 else "failed",
                 "return_code": result.returncode,
                 "security_report": security_report,
             }
-
         except Exception as e:
             self.logger.error(f"Security tests failed: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -222,7 +203,6 @@ class TestRunner:
     def run_performance_tests(self) -> Dict[str, Any]:
         """Run performance tests"""
         try:
-            # Run locust performance tests
             result = subprocess.run(
                 [
                     "locust",
@@ -242,14 +222,12 @@ class TestRunner:
                 capture_output=True,
                 text=True,
             )
-
             return {
                 "status": "passed" if result.returncode == 0 else "failed",
                 "return_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
             }
-
         except Exception as e:
             self.logger.error(f"Performance tests failed: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -280,7 +258,7 @@ class TestRunner:
 class DockerBuilder:
     """Docker image building and management"""
 
-    def __init__(self, registry_url: str):
+    def __init__(self, registry_url: str) -> Any:
         self.registry_url = registry_url
         self.docker_client = docker.from_env()
         self.logger = logging.getLogger(__name__)
@@ -295,8 +273,6 @@ class DockerBuilder:
         """Build Docker image for model"""
         try:
             image_tag = f"{self.registry_url}/{model_name}:{model_version}"
-
-            # Build image
             image, build_logs = self.docker_client.images.build(
                 path=build_context,
                 dockerfile=dockerfile_path,
@@ -304,15 +280,11 @@ class DockerBuilder:
                 rm=True,
                 pull=True,
             )
-
-            # Log build output
             for log in build_logs:
                 if "stream" in log:
                     self.logger.info(log["stream"].strip())
-
             self.logger.info(f"Image {image_tag} built successfully")
             return image_tag
-
         except Exception as e:
             self.logger.error(f"Failed to build image: {str(e)}")
             raise
@@ -323,17 +295,14 @@ class DockerBuilder:
             push_logs = self.docker_client.images.push(
                 image_tag, stream=True, decode=True
             )
-
             for log in push_logs:
                 if "status" in log:
                     self.logger.debug(log["status"])
                 if "error" in log:
                     self.logger.error(log["error"])
                     return False
-
             self.logger.info(f"Image {image_tag} pushed successfully")
             return True
-
         except Exception as e:
             self.logger.error(f"Failed to push image: {str(e)}")
             return False
@@ -341,7 +310,6 @@ class DockerBuilder:
     def scan_image_security(self, image_tag: str) -> Dict[str, Any]:
         """Scan image for security vulnerabilities"""
         try:
-            # Use Trivy for vulnerability scanning
             result = subprocess.run(
                 [
                     "trivy",
@@ -355,11 +323,9 @@ class DockerBuilder:
                 capture_output=True,
                 text=True,
             )
-
             if result.returncode == 0:
                 with open("vulnerability_report.json", "r") as f:
                     scan_results = json.load(f)
-
                 return {
                     "status": "completed",
                     "vulnerabilities": scan_results,
@@ -372,7 +338,6 @@ class DockerBuilder:
                 }
             else:
                 return {"status": "failed", "error": result.stderr}
-
         except Exception as e:
             self.logger.error(f"Security scan failed: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -399,16 +364,13 @@ class DockerBuilder:
 class KubernetesDeployer:
     """Kubernetes deployment management"""
 
-    def __init__(self, namespace: str):
+    def __init__(self, namespace: str) -> Any:
         self.namespace = namespace
         self.logger = logging.getLogger(__name__)
-
-        # Initialize Kubernetes client
         try:
             k8s_config.load_incluster_config()
         except k8s_config.ConfigException:
             k8s_config.load_kube_config()
-
         self.apps_v1 = client.AppsV1Api()
         self.core_v1 = client.CoreV1Api()
         self.autoscaling_v2 = client.AutoscalingV2Api()
@@ -422,28 +384,19 @@ class KubernetesDeployer:
     ) -> bool:
         """Deploy model to Kubernetes"""
         try:
-            # Create deployment manifest
             deployment = self._create_deployment_manifest(
                 model_name, model_version, image_tag, deployment_config
             )
-
-            # Create service manifest
             service = self._create_service_manifest(model_name, deployment_config)
-
-            # Deploy to Kubernetes
             self._apply_deployment(deployment)
             self._apply_service(service)
-
-            # Create HPA if auto-scaling is enabled
             if deployment_config.get("auto_scaling", False):
                 hpa = self._create_hpa_manifest(model_name, deployment_config)
                 self._apply_hpa(hpa)
-
             self.logger.info(
                 f"Model {model_name}:{model_version} deployed successfully"
             )
             return True
-
         except Exception as e:
             self.logger.error(f"Deployment failed: {str(e)}")
             return False
@@ -457,7 +410,6 @@ class KubernetesDeployer:
     ) -> bool:
         """Deploy model using canary deployment strategy"""
         try:
-            # Create canary deployment
             canary_name = f"{model_name}-canary"
             canary_deployment = self._create_deployment_manifest(
                 canary_name,
@@ -465,18 +417,12 @@ class KubernetesDeployer:
                 image_tag,
                 {"replicas": 1, "labels": {"version": "canary"}},
             )
-
-            # Apply canary deployment
             self._apply_deployment(canary_deployment)
-
-            # Update service to include canary pods with traffic splitting
             self._update_service_for_canary(model_name, canary_percentage)
-
             self.logger.info(
                 f"Canary deployment for {model_name}:{model_version} created"
             )
             return True
-
         except Exception as e:
             self.logger.error(f"Canary deployment failed: {str(e)}")
             return False
@@ -485,39 +431,26 @@ class KubernetesDeployer:
         """Promote canary deployment to full production"""
         try:
             canary_name = f"{model_name}-canary"
-
-            # Get canary deployment
             canary_deployment = self.apps_v1.read_namespaced_deployment(
                 name=canary_name, namespace=self.namespace
             )
-
-            # Update main deployment with canary image
             main_deployment = self.apps_v1.read_namespaced_deployment(
                 name=f"{model_name}-deployment", namespace=self.namespace
             )
-
             main_deployment.spec.template.spec.containers[0].image = (
                 canary_deployment.spec.template.spec.containers[0].image
             )
-
-            # Apply updated main deployment
             self.apps_v1.patch_namespaced_deployment(
                 name=f"{model_name}-deployment",
                 namespace=self.namespace,
                 body=main_deployment,
             )
-
-            # Remove canary deployment
             self.apps_v1.delete_namespaced_deployment(
                 name=canary_name, namespace=self.namespace
             )
-
-            # Reset service to normal traffic routing
             self._reset_service_traffic(model_name)
-
             self.logger.info(f"Canary promoted for {model_name}:{model_version}")
             return True
-
         except Exception as e:
             self.logger.error(f"Canary promotion failed: {str(e)}")
             return False
@@ -526,29 +459,21 @@ class KubernetesDeployer:
         """Rollback deployment to previous version"""
         try:
             deployment_name = f"{model_name}-deployment"
-
-            # Get current deployment
             deployment = self.apps_v1.read_namespaced_deployment(
                 name=deployment_name, namespace=self.namespace
             )
-
-            # Update image to target version
             target_image = (
                 deployment.spec.template.spec.containers[0].image.split(":")[0]
                 + f":{target_version}"
             )
             deployment.spec.template.spec.containers[0].image = target_image
-
-            # Apply rollback
             self.apps_v1.patch_namespaced_deployment(
                 name=deployment_name, namespace=self.namespace, body=deployment
             )
-
             self.logger.info(
                 f"Rollback completed for {model_name} to version {target_version}"
             )
             return True
-
         except Exception as e:
             self.logger.error(f"Rollback failed: {str(e)}")
             return False
@@ -560,7 +485,6 @@ class KubernetesDeployer:
             deployment = self.apps_v1.read_namespaced_deployment(
                 name=deployment_name, namespace=self.namespace
             )
-
             return {
                 "name": deployment.metadata.name,
                 "namespace": deployment.metadata.namespace,
@@ -575,7 +499,6 @@ class KubernetesDeployer:
                     else "not_ready"
                 ),
             }
-
         except Exception as e:
             self.logger.error(f"Failed to get deployment status: {str(e)}")
             return {"status": "error", "error": str(e)}
@@ -700,14 +623,14 @@ class KubernetesDeployer:
             },
         }
 
-    def _apply_deployment(self, deployment: Dict[str, Any]):
+    def _apply_deployment(self, deployment: Dict[str, Any]) -> Any:
         """Apply deployment to Kubernetes"""
         try:
             self.apps_v1.create_namespaced_deployment(
                 namespace=self.namespace, body=deployment
             )
         except client.ApiException as e:
-            if e.status == 409:  # Already exists
+            if e.status == 409:
                 self.apps_v1.patch_namespaced_deployment(
                     name=deployment["metadata"]["name"],
                     namespace=self.namespace,
@@ -716,14 +639,14 @@ class KubernetesDeployer:
             else:
                 raise
 
-    def _apply_service(self, service: Dict[str, Any]):
+    def _apply_service(self, service: Dict[str, Any]) -> Any:
         """Apply service to Kubernetes"""
         try:
             self.core_v1.create_namespaced_service(
                 namespace=self.namespace, body=service
             )
         except client.ApiException as e:
-            if e.status == 409:  # Already exists
+            if e.status == 409:
                 self.core_v1.patch_namespaced_service(
                     name=service["metadata"]["name"],
                     namespace=self.namespace,
@@ -732,29 +655,29 @@ class KubernetesDeployer:
             else:
                 raise
 
-    def _apply_hpa(self, hpa: Dict[str, Any]):
+    def _apply_hpa(self, hpa: Dict[str, Any]) -> Any:
         """Apply HPA to Kubernetes"""
         try:
             self.autoscaling_v2.create_namespaced_horizontal_pod_autoscaler(
                 namespace=self.namespace, body=hpa
             )
         except client.ApiException as e:
-            if e.status == 409:  # Already exists
+            if e.status == 409:
                 self.autoscaling_v2.patch_namespaced_horizontal_pod_autoscaler(
                     name=hpa["metadata"]["name"], namespace=self.namespace, body=hpa
                 )
             else:
                 raise
 
-    def _update_service_for_canary(self, model_name: str, canary_percentage: int):
+    def _update_service_for_canary(
+        self, model_name: str, canary_percentage: int
+    ) -> Any:
         """Update service for canary deployment"""
-        # This would implement traffic splitting logic
-        # For simplicity, we'll just log the action
         self.logger.info(
             f"Updated service for canary deployment: {canary_percentage}% traffic"
         )
 
-    def _reset_service_traffic(self, model_name: str):
+    def _reset_service_traffic(self, model_name: str) -> Any:
         """Reset service to normal traffic routing"""
         self.logger.info(f"Reset service traffic for {model_name}")
 
@@ -762,21 +685,21 @@ class KubernetesDeployer:
 class NotificationManager:
     """Notification management for CI/CD pipeline"""
 
-    def __init__(self, channels: Dict[str, str]):
+    def __init__(self, channels: Dict[str, str]) -> Any:
         self.channels = channels
         self.logger = logging.getLogger(__name__)
 
-    def send_build_notification(self, status: str, details: Dict[str, Any]):
+    def send_build_notification(self, status: str, details: Dict[str, Any]) -> Any:
         """Send build notification"""
         message = self._format_build_message(status, details)
         self._send_to_channels(message, "build")
 
-    def send_deployment_notification(self, status: str, details: Dict[str, Any]):
+    def send_deployment_notification(self, status: str, details: Dict[str, Any]) -> Any:
         """Send deployment notification"""
         message = self._format_deployment_message(status, details)
         self._send_to_channels(message, "deployment")
 
-    def send_alert(self, alert_type: str, message: str):
+    def send_alert(self, alert_type: str, message: str) -> Any:
         """Send alert notification"""
         alert_message = f"🚨 ALERT: {alert_type}\n{message}"
         self._send_to_channels(alert_message, "alert")
@@ -784,26 +707,14 @@ class NotificationManager:
     def _format_build_message(self, status: str, details: Dict[str, Any]) -> str:
         """Format build notification message"""
         emoji = "✅" if status == "success" else "❌"
-        return (
-            f"{emoji} Build {status.upper()}\n"
-            f"Model: {details.get('model_name', 'unknown')}\n"
-            f"Version: {details.get('model_version', 'unknown')}\n"
-            f"Commit: {details.get('commit_hash', 'unknown')[:8]}\n"
-            f"Duration: {details.get('duration', 'unknown')}"
-        )
+        return f"{emoji} Build {status.upper()}\nModel: {details.get('model_name', 'unknown')}\nVersion: {details.get('model_version', 'unknown')}\nCommit: {details.get('commit_hash', 'unknown')[:8]}\nDuration: {details.get('duration', 'unknown')}"
 
     def _format_deployment_message(self, status: str, details: Dict[str, Any]) -> str:
         """Format deployment notification message"""
         emoji = "🚀" if status == "success" else "💥"
-        return (
-            f"{emoji} Deployment {status.upper()}\n"
-            f"Model: {details.get('model_name', 'unknown')}\n"
-            f"Version: {details.get('model_version', 'unknown')}\n"
-            f"Environment: {details.get('environment', 'unknown')}\n"
-            f"Replicas: {details.get('replicas', 'unknown')}"
-        )
+        return f"{emoji} Deployment {status.upper()}\nModel: {details.get('model_name', 'unknown')}\nVersion: {details.get('model_version', 'unknown')}\nEnvironment: {details.get('environment', 'unknown')}\nReplicas: {details.get('replicas', 'unknown')}"
 
-    def _send_to_channels(self, message: str, notification_type: str):
+    def _send_to_channels(self, message: str, notification_type: str) -> Any:
         """Send message to configured channels"""
         for channel_type, config in self.channels.items():
             try:
@@ -818,7 +729,7 @@ class NotificationManager:
                     f"Failed to send notification to {channel_type}: {str(e)}"
                 )
 
-    def _send_slack_message(self, config: str, message: str):
+    def _send_slack_message(self, config: str, message: str) -> Any:
         """Send Slack message"""
         import requests
 
@@ -826,7 +737,7 @@ class NotificationManager:
         response = requests.post(config, json=payload)
         response.raise_for_status()
 
-    def _send_email(self, config: Dict[str, str], message: str, subject: str):
+    def _send_email(self, config: Dict[str, str], message: str, subject: str) -> Any:
         """Send email notification"""
         import smtplib
         from email.mime.text import MIMEText
@@ -835,13 +746,12 @@ class NotificationManager:
         msg["Subject"] = f"NexaFi MLOps: {subject}"
         msg["From"] = config["from"]
         msg["To"] = config["to"]
-
         with smtplib.SMTP(config["smtp_server"], config.get("port", 587)) as server:
             server.starttls()
             server.login(config["username"], config["password"])
             server.send_message(msg)
 
-    def _send_webhook(self, config: str, message: str, notification_type: str):
+    def _send_webhook(self, config: str, message: str, notification_type: str) -> Any:
         """Send webhook notification"""
         import requests
 
@@ -857,11 +767,9 @@ class NotificationManager:
 class CICDPipeline:
     """Main CI/CD pipeline orchestrator"""
 
-    def __init__(self, config: PipelineConfig):
+    def __init__(self, config: PipelineConfig) -> Any:
         self.config = config
         self.logger = logging.getLogger(__name__)
-
-        # Initialize components
         self.git_manager = None
         self.test_runner = None
         self.docker_builder = DockerBuilder(config.docker_registry)
@@ -873,59 +781,38 @@ class CICDPipeline:
         """Run complete CI/CD pipeline"""
         pipeline_start = datetime.now()
         pipeline_id = f"pipeline-{int(pipeline_start.timestamp())}"
-
         try:
             self.logger.info(f"Starting CI/CD pipeline {pipeline_id}")
-
-            # Step 1: Setup workspace
             workspace_path = self._setup_workspace(pipeline_id)
-
-            # Step 2: Clone repository
             self.git_manager = GitManager(workspace_path)
             if not self.git_manager.clone_repository(
                 self.config.repository_url, self.config.branch
             ):
                 raise Exception("Failed to clone repository")
-
             commit_info = self.git_manager.get_commit_info()
-
-            # Step 3: Detect changes
             changed_files = self.git_manager.get_changed_files()
             model_changes = self._detect_model_changes(changed_files)
-
-            # Step 4: Run tests
             self.test_runner = TestRunner(workspace_path)
             test_results = self._run_all_tests()
-
             if not self._all_tests_passed(test_results):
                 raise Exception("Tests failed")
-
-            # Step 5: Build and scan images for changed models
             build_results = {}
             for model_name, model_info in model_changes.items():
                 build_result = self._build_and_scan_model(
                     model_name, model_info, workspace_path
                 )
                 build_results[model_name] = build_result
-
                 if not build_result["success"]:
                     raise Exception(f"Build failed for model {model_name}")
-
-            # Step 6: Deploy models
             deployment_results = {}
             for model_name, build_result in build_results.items():
                 if build_result["success"]:
                     deployment_result = self._deploy_model(model_name, build_result)
                     deployment_results[model_name] = deployment_result
-
-            # Step 7: Run post-deployment tests
             post_deployment_results = self._run_post_deployment_tests(
                 deployment_results
             )
-
             pipeline_duration = (datetime.now() - pipeline_start).total_seconds()
-
-            # Step 8: Send notifications
             self.notification_manager.send_build_notification(
                 "success",
                 {
@@ -935,10 +822,7 @@ class CICDPipeline:
                     "models_deployed": list(deployment_results.keys()),
                 },
             )
-
-            # Cleanup workspace
             self._cleanup_workspace(workspace_path)
-
             return {
                 "pipeline_id": pipeline_id,
                 "status": "success",
@@ -949,17 +833,11 @@ class CICDPipeline:
                 "deployment_results": deployment_results,
                 "post_deployment_results": post_deployment_results,
             }
-
         except Exception as e:
             self.logger.error(f"Pipeline {pipeline_id} failed: {str(e)}")
-
-            # Send failure notification
             self.notification_manager.send_alert("Pipeline Failure", str(e))
-
-            # Cleanup workspace
             if "workspace_path" in locals():
                 self._cleanup_workspace(workspace_path)
-
             return {
                 "pipeline_id": pipeline_id,
                 "status": "failed",
@@ -975,7 +853,7 @@ class CICDPipeline:
         os.makedirs(workspace_path, exist_ok=True)
         return workspace_path
 
-    def _cleanup_workspace(self, workspace_path: str):
+    def _cleanup_workspace(self, workspace_path: str) -> Any:
         """Cleanup temporary workspace"""
         try:
             shutil.rmtree(workspace_path)
@@ -987,10 +865,8 @@ class CICDPipeline:
     ) -> Dict[str, Dict[str, Any]]:
         """Detect which models have changed"""
         model_changes = {}
-
         for file_path in changed_files:
             if file_path.startswith("ml/models/"):
-                # Extract model name from path
                 path_parts = file_path.split("/")
                 if len(path_parts) >= 3:
                     model_name = path_parts[2]
@@ -1000,7 +876,6 @@ class CICDPipeline:
                             "version": self._generate_model_version(),
                         }
                     model_changes[model_name]["changed_files"].append(file_path)
-
         return model_changes
 
     def _generate_model_version(self) -> str:
@@ -1011,21 +886,12 @@ class CICDPipeline:
     def _run_all_tests(self) -> Dict[str, Any]:
         """Run all test suites"""
         results = {}
-
-        # Unit tests
         results["unit_tests"] = self.test_runner.run_unit_tests()
-
-        # Integration tests
         results["integration_tests"] = self.test_runner.run_integration_tests()
-
-        # Security tests
         if self.config.security_scan_enabled:
             results["security_tests"] = self.test_runner.run_security_tests()
-
-        # Performance tests
         if self.config.performance_test_enabled:
             results["performance_tests"] = self.test_runner.run_performance_tests()
-
         return results
 
     def _all_tests_passed(self, test_results: Dict[str, Any]) -> bool:
@@ -1041,34 +907,24 @@ class CICDPipeline:
         """Build and scan model image"""
         try:
             model_version = model_info["version"]
-
-            # Build Docker image
             image_tag = self.docker_builder.build_model_image(
                 model_name, model_version, workspace_path
             )
-
-            # Push image
             push_success = self.docker_builder.push_image(image_tag)
             if not push_success:
                 return {"success": False, "error": "Failed to push image"}
-
-            # Security scan
             scan_results = self.docker_builder.scan_image_security(image_tag)
-
-            # Check security scan results
             if scan_results.get("critical_severity_count", 0) > 0:
                 return {
                     "success": False,
                     "error": "Critical security vulnerabilities found",
                     "scan_results": scan_results,
                 }
-
             return {
                 "success": True,
                 "image_tag": image_tag,
                 "scan_results": scan_results,
             }
-
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -1077,11 +933,9 @@ class CICDPipeline:
     ) -> Dict[str, Any]:
         """Deploy model to environments"""
         deployment_results = {}
-
         for environment in self.config.deployment_environments:
             try:
                 if environment == "staging":
-                    # Deploy to staging
                     success = self.k8s_deployer.deploy_model(
                         model_name,
                         build_result["image_tag"].split(":")[-1],
@@ -1089,15 +943,13 @@ class CICDPipeline:
                         {"replicas": 1, "environment": "staging"},
                     )
                     deployment_results[environment] = {"success": success}
-
                 elif environment == "production":
-                    # Use canary deployment for production
                     if self.config.canary_deployment_enabled:
                         success = self.k8s_deployer.canary_deploy(
                             model_name,
                             build_result["image_tag"].split(":")[-1],
                             build_result["image_tag"],
-                            10,  # 10% canary traffic
+                            10,
                         )
                         deployment_results[environment] = {
                             "success": success,
@@ -1111,10 +963,8 @@ class CICDPipeline:
                             {"replicas": 3, "environment": "production"},
                         )
                         deployment_results[environment] = {"success": success}
-
             except Exception as e:
                 deployment_results[environment] = {"success": False, "error": str(e)}
-
         return deployment_results
 
     def _run_post_deployment_tests(
@@ -1122,30 +972,22 @@ class CICDPipeline:
     ) -> Dict[str, Any]:
         """Run post-deployment validation tests"""
         results = {}
-
         for model_name, deployment_result in deployment_results.items():
             if deployment_result.get("success"):
-                # Health check tests
                 health_check = self._run_health_check_tests(model_name)
-
-                # Load tests
                 load_test = self._run_load_tests(model_name)
-
                 results[model_name] = {
                     "health_check": health_check,
                     "load_test": load_test,
                 }
-
         return results
 
     def _run_health_check_tests(self, model_name: str) -> Dict[str, Any]:
         """Run health check tests"""
-        # Simplified health check
         return {"status": "passed", "response_time_ms": 150}
 
     def _run_load_tests(self, model_name: str) -> Dict[str, Any]:
         """Run load tests"""
-        # Simplified load test
         return {"status": "passed", "avg_response_time_ms": 200, "error_rate": 0.01}
 
 
@@ -1179,17 +1021,13 @@ def create_pipeline_config() -> PipelineConfig:
 
 
 if __name__ == "__main__":
-    # Example usage
     config = create_pipeline_config()
     pipeline = CICDPipeline(config)
-
-    # Simulate pipeline trigger
     trigger_event = {
         "type": "push",
         "branch": "main",
         "commit_hash": "abc123",
         "author": "developer@company.com",
     }
-
     result = pipeline.run_pipeline(trigger_event)
     logger.info(f"Pipeline result: {result['status']}")

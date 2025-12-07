@@ -7,7 +7,6 @@ import time
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable
-
 from ..config.infrastructure import InfrastructureConfig
 
 
@@ -20,14 +19,15 @@ class CircuitState(Enum):
 class CircuitBreaker:
     """Circuit breaker implementation"""
 
-    def __init__(self, failure_threshold: int = None, recovery_timeout: int = None):
+    def __init__(
+        self, failure_threshold: int = None, recovery_timeout: int = None
+    ) -> Any:
         self.failure_threshold = (
             failure_threshold or InfrastructureConfig.CIRCUIT_BREAKER_FAILURE_THRESHOLD
         )
         self.recovery_timeout = (
             recovery_timeout or InfrastructureConfig.CIRCUIT_BREAKER_RECOVERY_TIMEOUT
         )
-
         self.failure_count = 0
         self.last_failure_time = None
         self.state = CircuitState.CLOSED
@@ -41,7 +41,6 @@ class CircuitBreaker:
                     self.state = CircuitState.HALF_OPEN
                 else:
                     raise Exception("Circuit breaker is OPEN")
-
             try:
                 result = func(*args, **kwargs)
                 self._on_success()
@@ -52,23 +51,22 @@ class CircuitBreaker:
 
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset"""
-        return (time.time() - self.last_failure_time) >= self.recovery_timeout
+        return time.time() - self.last_failure_time >= self.recovery_timeout
 
-    def _on_success(self):
+    def _on_success(self) -> Any:
         """Handle successful call"""
         self.failure_count = 0
         self.state = CircuitState.CLOSED
 
-    def _on_failure(self):
+    def _on_failure(self) -> Any:
         """Handle failed call"""
         self.failure_count += 1
         self.last_failure_time = time.time()
-
         if self.failure_count >= self.failure_threshold:
             self.state = CircuitState.OPEN
 
 
-def circuit_breaker(failure_threshold: int = None, recovery_timeout: int = None):
+def circuit_breaker(failure_threshold: int = None, recovery_timeout: int = None) -> Any:
     """Decorator for circuit breaker protection"""
 
     def decorator(func):

@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-
 import geoip2.database
 import redis
 import user_agents
@@ -29,11 +28,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
-
 Base = declarative_base()
 
 
@@ -106,7 +103,6 @@ class SecurityEvent(Base):
     """Security event model"""
 
     __tablename__ = "security_events"
-
     id = Column(Integer, primary_key=True)
     event_id = Column(String(100), unique=True, nullable=False)
     event_type = Column(String(100), nullable=False)
@@ -120,7 +116,7 @@ class SecurityEvent(Base):
     decision = Column(String(50))
     trust_score = Column(Float)
     risk_score = Column(Float)
-    details = Column(Text)  # JSON
+    details = Column(Text)
     timestamp = Column(DateTime, default=datetime.utcnow)
     processed = Column(Boolean, default=False)
 
@@ -129,24 +125,22 @@ class DeviceFingerprint(Base):
     """Device fingerprint model"""
 
     __tablename__ = "device_fingerprints"
-
     id = Column(Integer, primary_key=True)
     device_id = Column(String(100), unique=True, nullable=False)
     user_id = Column(String(100))
     fingerprint_hash = Column(String(256), nullable=False)
-    device_info = Column(Text)  # JSON
+    device_info = Column(Text)
     first_seen = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
     trust_level = Column(String(50), default=TrustLevel.UNTRUSTED.name)
     is_trusted = Column(Boolean, default=False)
-    risk_indicators = Column(Text)  # JSON
+    risk_indicators = Column(Text)
 
 
 class UserBehavior(Base):
     """User behavior tracking"""
 
     __tablename__ = "user_behaviors"
-
     id = Column(Integer, primary_key=True)
     user_id = Column(String(100), nullable=False)
     session_id = Column(String(100))
@@ -154,20 +148,19 @@ class UserBehavior(Base):
     resource = Column(String(200))
     timestamp = Column(DateTime, default=datetime.utcnow)
     ip_address = Column(String(50))
-    location = Column(Text)  # JSON
+    location = Column(Text)
     device_id = Column(String(100))
     success = Column(Boolean)
     anomaly_score = Column(Float, default=0.0)
-    metadata = Column(Text)  # JSON
+    metadata = Column(Text)
 
 
 class ThreatIntelligence(Base):
     """Threat intelligence data"""
 
     __tablename__ = "threat_intelligence"
-
     id = Column(Integer, primary_key=True)
-    indicator_type = Column(String(50), nullable=False)  # ip, domain, hash, etc.
+    indicator_type = Column(String(50), nullable=False)
     indicator_value = Column(String(500), nullable=False)
     threat_type = Column(String(100))
     severity = Column(String(50))
@@ -176,20 +169,18 @@ class ThreatIntelligence(Base):
     first_seen = Column(DateTime, default=datetime.utcnow)
     last_seen = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
-    metadata = Column(Text)  # JSON
+    metadata = Column(Text)
 
 
 class ContextAnalyzer:
     """Analyzes security context for zero-trust decisions"""
 
     def __init__(
-        self, redis_client: redis.Redis, db_session, geoip_db_path: str = None
-    ):
+        self, redis_client: redis.Redis, db_session: Any, geoip_db_path: str = None
+    ) -> Any:
         self.redis_client = redis_client
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
-
-        # Initialize GeoIP database
         self.geoip_reader = None
         if geoip_db_path and os.path.exists(geoip_db_path):
             try:
@@ -202,40 +193,22 @@ class ContextAnalyzer:
     ) -> SecurityContext:
         """Analyze request context and generate security context"""
         try:
-            # Extract basic information
             ip_address = request_data.get("ip_address", "")
             user_agent = request_data.get("user_agent", "")
             session_id = request_data.get("session_id", "")
-
-            # Generate device fingerprint
             device_fingerprint = self._generate_device_fingerprint(request_data)
             device_id = hashlib.sha256(device_fingerprint.encode()).hexdigest()[:16]
-
-            # Get location information
             location = self._get_location_info(ip_address)
-
-            # Get network information
             network_info = self._analyze_network(ip_address)
-
-            # Calculate trust score
             trust_score = self._calculate_trust_score(
                 user_id, device_id, ip_address, location
             )
-
-            # Calculate risk score
             risk_score = self._calculate_risk_score(
                 user_id, ip_address, user_agent, location
             )
-
-            # Get authentication factors
             auth_factors = self._get_authentication_factors(user_id, session_id)
-
-            # Calculate behavioral score
             behavioral_score = self._calculate_behavioral_score(user_id, request_data)
-
-            # Get compliance status
             compliance_status = self._get_compliance_status(user_id, device_id)
-
             return SecurityContext(
                 user_id=user_id,
                 session_id=session_id,
@@ -252,10 +225,8 @@ class ContextAnalyzer:
                 behavioral_score=behavioral_score,
                 compliance_status=compliance_status,
             )
-
         except Exception as e:
             self.logger.error(f"Context analysis failed: {str(e)}")
-            # Return minimal context with low trust
             return SecurityContext(
                 user_id=user_id,
                 session_id=session_id or "",
@@ -287,7 +258,6 @@ class ContextAnalyzer:
             "canvas_fingerprint": request_data.get("canvas_fingerprint", ""),
             "webgl_fingerprint": request_data.get("webgl_fingerprint", ""),
         }
-
         fingerprint_string = json.dumps(fingerprint_data, sort_keys=True)
         return hashlib.sha256(fingerprint_string.encode()).hexdigest()
 
@@ -295,7 +265,6 @@ class ContextAnalyzer:
         """Get location information from IP address"""
         if not self.geoip_reader or not ip_address:
             return {}
-
         try:
             response = self.geoip_reader.city(ip_address)
             return {
@@ -332,7 +301,6 @@ class ContextAnalyzer:
             "asn": None,
             "organization": None,
         }
-
         try:
             ip = ipaddress.ip_address(ip_address)
             network_info.update(
@@ -344,15 +312,11 @@ class ContextAnalyzer:
                     "network_type": "ipv6" if ip.version == 6 else "ipv4",
                 }
             )
-
-            # Check against threat intelligence
             threat_info = self._check_threat_intelligence(ip_address)
             if threat_info:
                 network_info["threat_indicators"] = threat_info
-
         except Exception as e:
             self.logger.warning(f"Network analysis failed for {ip_address}: {str(e)}")
-
         return network_info
 
     def _calculate_trust_score(
@@ -360,26 +324,16 @@ class ContextAnalyzer:
     ) -> float:
         """Calculate trust score based on various factors"""
         trust_score = 0.0
-
         try:
-            # Device trust (40% weight)
             device_trust = self._get_device_trust(device_id, user_id)
             trust_score += device_trust * 0.4
-
-            # Location trust (20% weight)
             location_trust = self._get_location_trust(user_id, location)
             trust_score += location_trust * 0.2
-
-            # IP reputation (20% weight)
             ip_trust = self._get_ip_trust(ip_address)
             trust_score += ip_trust * 0.2
-
-            # Historical behavior (20% weight)
             behavior_trust = self._get_behavior_trust(user_id)
             trust_score += behavior_trust * 0.2
-
             return min(max(trust_score, 0.0), 1.0)
-
         except Exception as e:
             self.logger.error(f"Trust score calculation failed: {str(e)}")
             return 0.0
@@ -389,33 +343,21 @@ class ContextAnalyzer:
     ) -> float:
         """Calculate risk score based on various factors"""
         risk_score = 0.0
-
         try:
-            # Threat intelligence check (30% weight)
             threat_risk = self._get_threat_risk(ip_address)
             risk_score += threat_risk * 0.3
-
-            # Anomaly detection (25% weight)
             anomaly_risk = self._get_anomaly_risk(user_id, ip_address, location)
             risk_score += anomaly_risk * 0.25
-
-            # User agent analysis (15% weight)
             ua_risk = self._analyze_user_agent_risk(user_agent)
             risk_score += ua_risk * 0.15
-
-            # Geographic risk (15% weight)
             geo_risk = self._get_geographic_risk(location)
             risk_score += geo_risk * 0.15
-
-            # Time-based risk (15% weight)
             time_risk = self._get_time_based_risk(user_id)
             risk_score += time_risk * 0.15
-
             return min(max(risk_score, 0.0), 1.0)
-
         except Exception as e:
             self.logger.error(f"Risk score calculation failed: {str(e)}")
-            return 1.0  # Default to high risk on error
+            return 1.0
 
     def _get_device_trust(self, device_id: str, user_id: str) -> float:
         """Get device trust level"""
@@ -425,14 +367,10 @@ class ContextAnalyzer:
                 .filter_by(device_id=device_id, user_id=user_id)
                 .first()
             )
-
             if not device:
-                return 0.0  # Unknown device
-
+                return 0.0
             if device.is_trusted:
                 return 0.9
-
-            # Calculate based on usage history
             days_since_first_seen = (datetime.utcnow() - device.first_seen).days
             if days_since_first_seen > 30:
                 return 0.7
@@ -440,7 +378,6 @@ class ContextAnalyzer:
                 return 0.5
             else:
                 return 0.3
-
         except Exception as e:
             self.logger.error(f"Device trust calculation failed: {str(e)}")
             return 0.0
@@ -449,23 +386,17 @@ class ContextAnalyzer:
         """Get location trust level"""
         if not location:
             return 0.5
-
         try:
-            # Check if location is in user's typical locations
             cache_key = f"user_locations:{user_id}"
             typical_locations = self.redis_client.get(cache_key)
-
             if typical_locations:
                 typical_locations = json.loads(typical_locations)
                 current_country = location.get("country_code", "")
-
                 if current_country in typical_locations:
                     return 0.8
                 else:
-                    return 0.3  # New location
-
-            return 0.5  # No history
-
+                    return 0.3
+            return 0.5
         except Exception as e:
             self.logger.error(f"Location trust calculation failed: {str(e)}")
             return 0.5
@@ -473,7 +404,6 @@ class ContextAnalyzer:
     def _get_ip_trust(self, ip_address: str) -> float:
         """Get IP address trust level"""
         try:
-            # Check threat intelligence
             threat = (
                 self.db_session.query(ThreatIntelligence)
                 .filter_by(
@@ -481,7 +411,6 @@ class ContextAnalyzer:
                 )
                 .first()
             )
-
             if threat:
                 if threat.severity == "critical":
                     return 0.0
@@ -491,16 +420,11 @@ class ContextAnalyzer:
                     return 0.4
                 else:
                     return 0.6
-
-            # Check IP reputation cache
             cache_key = f"ip_reputation:{ip_address}"
             reputation = self.redis_client.get(cache_key)
-
             if reputation:
                 return float(reputation)
-
-            return 0.7  # Default for unknown IPs
-
+            return 0.7
         except Exception as e:
             self.logger.error(f"IP trust calculation failed: {str(e)}")
             return 0.5
@@ -508,7 +432,6 @@ class ContextAnalyzer:
     def _get_behavior_trust(self, user_id: str) -> float:
         """Get behavioral trust level"""
         try:
-            # Get recent behavior patterns
             recent_behaviors = (
                 self.db_session.query(UserBehavior)
                 .filter(
@@ -517,21 +440,15 @@ class ContextAnalyzer:
                 )
                 .all()
             )
-
             if not recent_behaviors:
                 return 0.5
-
-            # Calculate average anomaly score
             anomaly_scores = [
                 b.anomaly_score for b in recent_behaviors if b.anomaly_score is not None
             ]
-
             if anomaly_scores:
                 avg_anomaly = sum(anomaly_scores) / len(anomaly_scores)
                 return max(0.0, 1.0 - avg_anomaly)
-
             return 0.7
-
         except Exception as e:
             self.logger.error(f"Behavior trust calculation failed: {str(e)}")
             return 0.5
@@ -546,13 +463,10 @@ class ContextAnalyzer:
                 )
                 .first()
             )
-
             if threat:
                 severity_map = {"critical": 1.0, "high": 0.8, "medium": 0.6, "low": 0.4}
                 return severity_map.get(threat.severity, 0.5)
-
             return 0.0
-
         except Exception as e:
             self.logger.error(f"Threat risk calculation failed: {str(e)}")
             return 0.0
@@ -562,41 +476,27 @@ class ContextAnalyzer:
     ) -> float:
         """Get anomaly risk score"""
         risk_factors = []
-
         try:
-            # Check for unusual location
             if location:
                 cache_key = f"user_locations:{user_id}"
                 typical_locations = self.redis_client.get(cache_key)
-
                 if typical_locations:
                     typical_locations = json.loads(typical_locations)
                     current_country = location.get("country_code", "")
-
                     if current_country not in typical_locations:
-                        risk_factors.append(0.6)  # New location risk
-
-            # Check for unusual time
+                        risk_factors.append(0.6)
             current_hour = datetime.utcnow().hour
             cache_key = f"user_active_hours:{user_id}"
             typical_hours = self.redis_client.get(cache_key)
-
             if typical_hours:
                 typical_hours = json.loads(typical_hours)
                 if current_hour not in typical_hours:
-                    risk_factors.append(0.4)  # Unusual time risk
-
-            # Check for rapid requests
+                    risk_factors.append(0.4)
             cache_key = f"user_request_rate:{user_id}"
             request_count = self.redis_client.get(cache_key)
-
-            if (
-                request_count and int(request_count) > 100
-            ):  # More than 100 requests in window
-                risk_factors.append(0.8)  # High request rate risk
-
+            if request_count and int(request_count) > 100:
+                risk_factors.append(0.8)
             return min(sum(risk_factors), 1.0) if risk_factors else 0.0
-
         except Exception as e:
             self.logger.error(f"Anomaly risk calculation failed: {str(e)}")
             return 0.0
@@ -605,31 +505,22 @@ class ContextAnalyzer:
         """Analyze user agent for risk indicators"""
         if not user_agent:
             return 0.5
-
         try:
             ua = user_agents.parse(user_agent)
-
             risk_score = 0.0
-
-            # Check for automated tools
             if any(
-                bot in user_agent.lower()
-                for bot in ["bot", "crawler", "spider", "scraper"]
+                (
+                    bot in user_agent.lower()
+                    for bot in ["bot", "crawler", "spider", "scraper"]
+                )
             ):
                 risk_score += 0.6
-
-            # Check for outdated browsers
             if ua.browser.family and ua.browser.version_string:
-                # This is a simplified check - in production, maintain a database of vulnerable versions
                 if "Internet Explorer" in ua.browser.family:
                     risk_score += 0.4
-
-            # Check for suspicious patterns
             if len(user_agent) < 20 or len(user_agent) > 500:
                 risk_score += 0.3
-
             return min(risk_score, 1.0)
-
         except Exception as e:
             self.logger.error(f"User agent analysis failed: {str(e)}")
             return 0.0
@@ -638,25 +529,17 @@ class ContextAnalyzer:
         """Get geographic risk score"""
         if not location:
             return 0.3
-
         try:
             country_code = location.get("country_code", "")
-
-            # High-risk countries (this should be configurable)
-            high_risk_countries = ["CN", "RU", "KP", "IR"]  # Example list
-            medium_risk_countries = ["PK", "BD", "NG"]  # Example list
-
+            high_risk_countries = ["CN", "RU", "KP", "IR"]
+            medium_risk_countries = ["PK", "BD", "NG"]
             if country_code in high_risk_countries:
                 return 0.8
             elif country_code in medium_risk_countries:
                 return 0.5
-
-            # Check for anonymous proxy indicators
             if location.get("is_anonymous_proxy", False):
                 return 0.9
-
-            return 0.1  # Low risk for most countries
-
+            return 0.1
         except Exception as e:
             self.logger.error(f"Geographic risk calculation failed: {str(e)}")
             return 0.3
@@ -666,27 +549,20 @@ class ContextAnalyzer:
         try:
             current_time = datetime.utcnow()
             current_hour = current_time.hour
-
-            # Check user's typical active hours
             cache_key = f"user_active_hours:{user_id}"
             typical_hours = self.redis_client.get(cache_key)
-
             if typical_hours:
                 typical_hours = json.loads(typical_hours)
-
                 if current_hour in typical_hours:
-                    return 0.0  # Normal time
+                    return 0.0
                 else:
-                    return 0.4  # Unusual time
-
-            # Default business hours check
+                    return 0.4
             if 9 <= current_hour <= 17:
-                return 0.1  # Business hours
+                return 0.1
             elif 18 <= current_hour <= 22:
-                return 0.2  # Evening
+                return 0.2
             else:
-                return 0.5  # Night/early morning
-
+                return 0.5
         except Exception as e:
             self.logger.error(f"Time-based risk calculation failed: {str(e)}")
             return 0.0
@@ -696,12 +572,9 @@ class ContextAnalyzer:
         try:
             cache_key = f"session_auth_factors:{session_id}"
             factors = self.redis_client.get(cache_key)
-
             if factors:
                 return json.loads(factors)
-
-            return ["password"]  # Default
-
+            return ["password"]
         except Exception as e:
             self.logger.error(f"Authentication factors retrieval failed: {str(e)}")
             return []
@@ -711,7 +584,6 @@ class ContextAnalyzer:
     ) -> float:
         """Calculate behavioral score based on user patterns"""
         try:
-            # Get recent user behavior
             recent_behaviors = (
                 self.db_session.query(UserBehavior)
                 .filter(
@@ -720,28 +592,22 @@ class ContextAnalyzer:
                 )
                 .all()
             )
-
             if not recent_behaviors:
                 return 0.5
-
-            # Analyze patterns
             action_counts = {}
             for behavior in recent_behaviors:
                 action_counts[behavior.action_type] = (
                     action_counts.get(behavior.action_type, 0) + 1
                 )
-
-            # Check for unusual activity patterns
             total_actions = len(recent_behaviors)
-            if total_actions > 1000:  # Very high activity
+            if total_actions > 1000:
                 return 0.2
-            elif total_actions > 500:  # High activity
+            elif total_actions > 500:
                 return 0.4
-            elif total_actions < 5:  # Very low activity
+            elif total_actions < 5:
                 return 0.6
             else:
-                return 0.8  # Normal activity
-
+                return 0.8
         except Exception as e:
             self.logger.error(f"Behavioral score calculation failed: {str(e)}")
             return 0.5
@@ -756,8 +622,6 @@ class ContextAnalyzer:
                 "device_compliant": True,
                 "policy_violations": [],
             }
-
-            # Check device compliance
             device = (
                 self.db_session.query(DeviceFingerprint)
                 .filter_by(device_id=device_id)
@@ -768,9 +632,7 @@ class ContextAnalyzer:
                 if risk_indicators:
                     compliance_status["device_compliant"] = False
                     compliance_status["policy_violations"].extend(risk_indicators)
-
             return compliance_status
-
         except Exception as e:
             self.logger.error(f"Compliance status check failed: {str(e)}")
             return {"compliant": False, "error": str(e)}
@@ -785,7 +647,6 @@ class ContextAnalyzer:
                 )
                 .first()
             )
-
             if threat:
                 return {
                     "threat_type": threat.threat_type,
@@ -795,9 +656,7 @@ class ContextAnalyzer:
                     "first_seen": threat.first_seen.isoformat(),
                     "last_seen": threat.last_seen.isoformat(),
                 }
-
             return None
-
         except Exception as e:
             self.logger.error(f"Threat intelligence check failed: {str(e)}")
             return None
@@ -806,16 +665,15 @@ class ContextAnalyzer:
 class PolicyEngine:
     """Zero-trust policy engine"""
 
-    def __init__(self, redis_client: redis.Redis, db_session):
+    def __init__(self, redis_client: redis.Redis, db_session: Any) -> Any:
         self.redis_client = redis_client
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
         self.policies: List[PolicyRule] = []
         self._load_policies()
 
-    def _load_policies(self):
+    def _load_policies(self) -> Any:
         """Load policies from configuration"""
-        # Default policies
         default_policies = [
             PolicyRule(
                 rule_id="high_risk_deny",
@@ -866,7 +724,6 @@ class PolicyEngine:
                 metadata={},
             ),
         ]
-
         self.policies = default_policies
         self.logger.info(f"Loaded {len(self.policies)} policies")
 
@@ -875,27 +732,21 @@ class PolicyEngine:
     ) -> Tuple[AccessDecision, str]:
         """Evaluate access decision based on context and policies"""
         try:
-            # Sort policies by priority
             sorted_policies = sorted(self.policies, key=lambda p: p.priority)
-
             for policy in sorted_policies:
                 if not policy.enabled:
                     continue
-
                 if self._evaluate_conditions(
                     policy.conditions, context, resource, action
                 ):
                     self.logger.info(
                         f"Policy matched: {policy.name} -> {policy.action.value}"
                     )
-                    return policy.action, policy.name
-
-            # Default allow if no policies match
-            return AccessDecision.ALLOW, "default_allow"
-
+                    return (policy.action, policy.name)
+            return (AccessDecision.ALLOW, "default_allow")
         except Exception as e:
             self.logger.error(f"Policy evaluation failed: {str(e)}")
-            return AccessDecision.DENY, "evaluation_error"
+            return (AccessDecision.DENY, "evaluation_error")
 
     def _evaluate_conditions(
         self,
@@ -912,7 +763,6 @@ class PolicyEngine:
                 ):
                     return False
             return True
-
         except Exception as e:
             self.logger.error(f"Condition evaluation failed: {str(e)}")
             return False
@@ -928,15 +778,12 @@ class PolicyEngine:
         """Evaluate single condition"""
         operator = condition.get("operator")
         value = condition.get("value")
-
-        # Get field value from context
         if field == "risk_score":
             field_value = context.risk_score
         elif field == "trust_score":
             field_value = context.trust_score
         elif field == "device_trust":
-            # This would need to be calculated or stored in context
-            field_value = 0.0  # Placeholder
+            field_value = 0.0
         elif field == "threat_indicators":
             field_value = bool(context.network_info.get("threat_indicators"))
         elif field == "location_country":
@@ -945,8 +792,6 @@ class PolicyEngine:
             field_value = len(context.authentication_factors)
         else:
             return False
-
-        # Evaluate operator
         if operator == ">=":
             return field_value >= value
         elif operator == "<=":
@@ -968,18 +813,18 @@ class PolicyEngine:
         else:
             return False
 
-    def add_policy(self, policy: PolicyRule):
+    def add_policy(self, policy: PolicyRule) -> Any:
         """Add new policy"""
         self.policies.append(policy)
         self.policies.sort(key=lambda p: p.priority)
         self.logger.info(f"Added policy: {policy.name}")
 
-    def remove_policy(self, rule_id: str):
+    def remove_policy(self, rule_id: str) -> Any:
         """Remove policy by ID"""
         self.policies = [p for p in self.policies if p.rule_id != rule_id]
         self.logger.info(f"Removed policy: {rule_id}")
 
-    def update_policy(self, rule_id: str, updates: Dict[str, Any]):
+    def update_policy(self, rule_id: str, updates: Dict[str, Any]) -> Any:
         """Update existing policy"""
         for policy in self.policies:
             if policy.rule_id == rule_id:
@@ -995,17 +840,13 @@ class ZeroTrustFramework:
     """Main zero-trust framework"""
 
     def __init__(
-        self, redis_client: redis.Redis, db_session, geoip_db_path: str = None
-    ):
+        self, redis_client: redis.Redis, db_session: Any, geoip_db_path: str = None
+    ) -> Any:
         self.redis_client = redis_client
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
-
-        # Initialize components
         self.context_analyzer = ContextAnalyzer(redis_client, db_session, geoip_db_path)
         self.policy_engine = PolicyEngine(redis_client, db_session)
-
-        # Initialize database tables
         Base.metadata.create_all(bind=db_session.bind)
 
     def evaluate_request(
@@ -1013,32 +854,21 @@ class ZeroTrustFramework:
     ) -> Tuple[AccessDecision, SecurityContext, str]:
         """Evaluate request and return access decision"""
         try:
-            # Analyze security context
             context = self.context_analyzer.analyze_request_context(
                 user_id, request_data
             )
-
-            # Evaluate access policy
             decision, policy_name = self.policy_engine.evaluate_access(
                 context, resource, action
             )
-
-            # Log security event
             self._log_security_event(context, resource, action, decision, policy_name)
-
-            # Update user behavior tracking
             self._track_user_behavior(
                 context, resource, action, decision == AccessDecision.ALLOW
             )
-
-            # Update device fingerprint
             self._update_device_fingerprint(context)
-
-            return decision, context, policy_name
-
+            return (decision, context, policy_name)
         except Exception as e:
             self.logger.error(f"Request evaluation failed: {str(e)}")
-            return AccessDecision.DENY, None, "evaluation_error"
+            return (AccessDecision.DENY, None, "evaluation_error")
 
     def _log_security_event(
         self,
@@ -1047,7 +877,7 @@ class ZeroTrustFramework:
         action: str,
         decision: AccessDecision,
         policy_name: str,
-    ):
+    ) -> Any:
         """Log security event"""
         try:
             event = SecurityEvent(
@@ -1072,16 +902,14 @@ class ZeroTrustFramework:
                     }
                 ),
             )
-
             self.db_session.add(event)
             self.db_session.commit()
-
         except Exception as e:
             self.logger.error(f"Security event logging failed: {str(e)}")
 
     def _track_user_behavior(
         self, context: SecurityContext, resource: str, action: str, success: bool
-    ):
+    ) -> Any:
         """Track user behavior"""
         try:
             behavior = UserBehavior(
@@ -1101,14 +929,12 @@ class ZeroTrustFramework:
                     }
                 ),
             )
-
             self.db_session.add(behavior)
             self.db_session.commit()
-
         except Exception as e:
             self.logger.error(f"Behavior tracking failed: {str(e)}")
 
-    def _update_device_fingerprint(self, context: SecurityContext):
+    def _update_device_fingerprint(self, context: SecurityContext) -> Any:
         """Update device fingerprint information"""
         try:
             device = (
@@ -1116,7 +942,6 @@ class ZeroTrustFramework:
                 .filter_by(device_id=context.device_id)
                 .first()
             )
-
             if device:
                 device.last_seen = datetime.utcnow()
                 device.user_id = context.user_id
@@ -1136,16 +961,13 @@ class ZeroTrustFramework:
                     trust_level=TrustLevel.UNTRUSTED.name,
                 )
                 self.db_session.add(device)
-
             self.db_session.commit()
-
         except Exception as e:
             self.logger.error(f"Device fingerprint update failed: {str(e)}")
 
     def get_security_metrics(self) -> Dict[str, Any]:
         """Get security metrics"""
         try:
-            # Get recent events
             recent_events = (
                 self.db_session.query(SecurityEvent)
                 .filter(
@@ -1153,27 +975,22 @@ class ZeroTrustFramework:
                 )
                 .all()
             )
-
             total_requests = len(recent_events)
             allowed_requests = len([e for e in recent_events if e.decision == "allow"])
             denied_requests = len([e for e in recent_events if e.decision == "deny"])
             challenged_requests = len(
                 [e for e in recent_events if e.decision == "challenge"]
             )
-
-            # Calculate average scores
             trust_scores = [
                 e.trust_score for e in recent_events if e.trust_score is not None
             ]
             risk_scores = [
                 e.risk_score for e in recent_events if e.risk_score is not None
             ]
-
             avg_trust_score = (
                 sum(trust_scores) / len(trust_scores) if trust_scores else 0
             )
             avg_risk_score = sum(risk_scores) / len(risk_scores) if risk_scores else 0
-
             return {
                 "total_requests_24h": total_requests,
                 "allowed_requests": allowed_requests,
@@ -1192,7 +1009,6 @@ class ZeroTrustFramework:
                 "average_risk_score": avg_risk_score,
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
         except Exception as e:
             self.logger.error(f"Security metrics calculation failed: {str(e)}")
             return {"error": str(e)}
@@ -1202,31 +1018,19 @@ def create_zero_trust_framework(
     database_url: str, redis_url: str, geoip_db_path: str = None
 ) -> ZeroTrustFramework:
     """Factory function to create zero-trust framework"""
-
-    # Create database session
     engine = create_engine(database_url)
     Session = sessionmaker(bind=engine)
     db_session = Session()
-
-    # Create Redis client
     redis_client = redis.from_url(redis_url, decode_responses=True)
-
-    # Create framework
     framework = ZeroTrustFramework(redis_client, db_session, geoip_db_path)
-
     return framework
 
 
 if __name__ == "__main__":
-    # Example usage
     logging.basicConfig(level=logging.INFO)
-
-    # Create zero-trust framework
     framework = create_zero_trust_framework(
         database_url="sqlite:///zero_trust.db", redis_url="redis://localhost:6379/0"
     )
-
-    # Example request evaluation
     request_data = {
         "ip_address": "192.168.1.100",
         "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -1235,18 +1039,15 @@ if __name__ == "__main__":
         "screen_resolution": "1920x1080",
         "timezone": "America/New_York",
     }
-
     decision, context, policy = framework.evaluate_request(
         user_id="user_123",
         resource="/api/financial-data",
         action="read",
         request_data=request_data,
     )
-
     logger.info(f"Access Decision: {decision.value}")
     logger.info(f"Policy: {policy}")
     logger.info(f"Trust Score: {context.trust_score}")
     logger.info(f"Risk Score: {context.risk_score}")
-    # Get security metrics
     metrics = framework.get_security_metrics()
     logger.info(f"Security Metrics: {json.dumps(metrics, indent=2)}")

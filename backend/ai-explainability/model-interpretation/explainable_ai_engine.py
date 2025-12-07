@@ -10,38 +10,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
-
 import numpy as np
 
 warnings.filterwarnings("ignore")
-
 import lime
 import lime.lime_tabular
-
-# Explainability Libraries
 import shap
-
-# Machine Learning Libraries
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import partial_dependence, permutation_importance
 
-# Deep Learning Explainability
 try:
-    pass
-
     DEEP_LEARNING_AVAILABLE = True
 except ImportError:
     DEEP_LEARNING_AVAILABLE = False
-
-# Utilities
 import uuid
-
-# Visualization
 import matplotlib.pyplot as plt
 import redis
 import structlog
-
-# Database and Storage
 from sqlalchemy import (
     Boolean,
     Column,
@@ -61,8 +46,8 @@ Base = declarative_base()
 class ExplanationType(Enum):
     """Types of explanations"""
 
-    GLOBAL = "global"  # Model-level explanations
-    LOCAL = "local"  # Instance-level explanations
+    GLOBAL = "global"
+    LOCAL = "local"
     FEATURE_IMPORTANCE = "feature_importance"
     PARTIAL_DEPENDENCE = "partial_dependence"
     SHAP_VALUES = "shap_values"
@@ -87,14 +72,14 @@ class ModelType(Enum):
 class ComplianceStandard(Enum):
     """Regulatory compliance standards"""
 
-    GDPR = "gdpr"  # General Data Protection Regulation
-    CCPA = "ccpa"  # California Consumer Privacy Act
-    FCRA = "fcra"  # Fair Credit Reporting Act
-    ECOA = "ecoa"  # Equal Credit Opportunity Act
-    SOX = "sox"  # Sarbanes-Oxley Act
-    BASEL_III = "basel_iii"  # Basel III banking regulations
-    MiFID_II = "mifid_ii"  # Markets in Financial Instruments Directive
-    PCI_DSS = "pci_dss"  # Payment Card Industry Data Security Standard
+    GDPR = "gdpr"
+    CCPA = "ccpa"
+    FCRA = "fcra"
+    ECOA = "ecoa"
+    SOX = "sox"
+    BASEL_III = "basel_iii"
+    MiFID_II = "mifid_ii"
+    PCI_DSS = "pci_dss"
 
 
 @dataclass
@@ -107,9 +92,9 @@ class ExplanationRequest:
     feature_names: Optional[List[str]] = None
     target_class: Optional[Union[int, str]] = None
     compliance_standards: List[ComplianceStandard] = None
-    explanation_depth: str = "standard"  # basic, standard, detailed
+    explanation_depth: str = "standard"
     include_visualizations: bool = True
-    output_format: str = "json"  # json, html, pdf
+    output_format: str = "json"
 
 
 @dataclass
@@ -121,7 +106,7 @@ class ExplanationResult:
     explanation_type: ExplanationType
     timestamp: datetime
     explanations: Dict[str, Any]
-    visualizations: Dict[str, str]  # visualization_name -> file_path
+    visualizations: Dict[str, str]
     confidence_score: float
     compliance_status: Dict[ComplianceStandard, bool]
     metadata: Dict[str, Any]
@@ -131,17 +116,16 @@ class ModelExplanation(Base):
     """Model explanation storage"""
 
     __tablename__ = "model_explanations"
-
     id = Column(Integer, primary_key=True)
     explanation_id = Column(String(100), unique=True, nullable=False, index=True)
     model_id = Column(String(100), nullable=False, index=True)
     explanation_type = Column(String(50), nullable=False)
-    instance_id = Column(String(100))  # For local explanations
-    explanations = Column(Text)  # JSON
-    visualizations = Column(Text)  # JSON
+    instance_id = Column(String(100))
+    explanations = Column(Text)
+    visualizations = Column(Text)
     confidence_score = Column(Float)
-    compliance_status = Column(Text)  # JSON
-    metadata = Column(Text)  # JSON
+    compliance_status = Column(Text)
+    metadata = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -150,18 +134,17 @@ class ModelRegistry(Base):
     """Model registry for explainability"""
 
     __tablename__ = "model_registry"
-
     id = Column(Integer, primary_key=True)
     model_id = Column(String(100), unique=True, nullable=False, index=True)
     model_name = Column(String(200), nullable=False)
     model_type = Column(String(50), nullable=False)
     model_version = Column(String(50))
     model_path = Column(String(500))
-    feature_names = Column(Text)  # JSON
-    target_names = Column(Text)  # JSON
-    model_metadata = Column(Text)  # JSON
-    explainability_config = Column(Text)  # JSON
-    compliance_requirements = Column(Text)  # JSON
+    feature_names = Column(Text)
+    target_names = Column(Text)
+    model_metadata = Column(Text)
+    explainability_config = Column(Text)
+    compliance_requirements = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
@@ -170,7 +153,9 @@ class ModelRegistry(Base):
 class SHAPExplainer:
     """SHAP-based model explanations"""
 
-    def __init__(self, model, model_type: ModelType, feature_names: List[str]):
+    def __init__(
+        self, model: Any, model_type: ModelType, feature_names: List[str]
+    ) -> Any:
         self.model = model
         self.model_type = model_type
         self.feature_names = feature_names
@@ -178,7 +163,7 @@ class SHAPExplainer:
         self.explainer = None
         self._initialize_explainer()
 
-    def _initialize_explainer(self):
+    def _initialize_explainer(self) -> Any:
         """Initialize SHAP explainer based on model type"""
         try:
             if self.model_type in [
@@ -187,14 +172,11 @@ class SHAPExplainer:
                 ModelType.LIGHTGBM,
                 ModelType.CATBOOST,
             ]:
-                # Tree-based models
                 if hasattr(self.model, "predict_proba"):
                     self.explainer = shap.TreeExplainer(self.model)
                 else:
                     self.explainer = shap.Explainer(self.model)
-
             elif self.model_type == ModelType.TENSORFLOW:
-                # Deep learning models
                 if DEEP_LEARNING_AVAILABLE:
                     self.explainer = shap.DeepExplainer(
                         self.model, self._get_background_data()
@@ -203,9 +185,7 @@ class SHAPExplainer:
                     raise ImportError(
                         "TensorFlow not available for deep learning explanations"
                     )
-
             elif self.model_type == ModelType.PYTORCH:
-                # PyTorch models
                 if DEEP_LEARNING_AVAILABLE:
                     self.explainer = shap.DeepExplainer(
                         self.model, self._get_background_data()
@@ -214,30 +194,22 @@ class SHAPExplainer:
                     raise ImportError(
                         "PyTorch not available for deep learning explanations"
                     )
-
             else:
-                # Generic explainer
                 self.explainer = shap.Explainer(self.model)
-
             self.logger.info(f"Initialized SHAP explainer for {self.model_type.value}")
-
         except Exception as e:
             self.logger.error(f"Failed to initialize SHAP explainer: {str(e)}")
             raise
 
     def _get_background_data(self) -> np.ndarray:
         """Get background data for deep learning explainers"""
-        # In practice, this would be a representative sample of training data
-        # For now, return zeros as placeholder
         return np.zeros((100, len(self.feature_names)))
 
     def explain_global(self, X: np.ndarray) -> Dict[str, Any]:
         """Generate global explanations"""
         try:
             shap_values = self.explainer.shap_values(X)
-
             if isinstance(shap_values, list):
-                # Multi-class case
                 explanations = {}
                 for i, class_shap_values in enumerate(shap_values):
                     explanations[f"class_{i}"] = {
@@ -247,14 +219,11 @@ class SHAPExplainer:
                         "feature_names": self.feature_names,
                     }
             else:
-                # Binary or regression case
                 explanations = {
                     "feature_importance": np.abs(shap_values).mean(axis=0).tolist(),
                     "feature_names": self.feature_names,
                 }
-
             return explanations
-
         except Exception as e:
             self.logger.error(f"Global SHAP explanation failed: {str(e)}")
             return {}
@@ -264,12 +233,9 @@ class SHAPExplainer:
         try:
             if instance_idx >= len(X):
                 raise ValueError(f"Instance index {instance_idx} out of range")
-
             instance = X[instance_idx : instance_idx + 1]
             shap_values = self.explainer.shap_values(instance)
-
             if isinstance(shap_values, list):
-                # Multi-class case
                 explanations = {}
                 for i, class_shap_values in enumerate(shap_values):
                     explanations[f"class_{i}"] = {
@@ -278,15 +244,12 @@ class SHAPExplainer:
                         "feature_values": instance[0].tolist(),
                     }
             else:
-                # Binary or regression case
                 explanations = {
                     "shap_values": shap_values[0].tolist(),
                     "feature_names": self.feature_names,
                     "feature_values": instance[0].tolist(),
                 }
-
             return explanations
-
         except Exception as e:
             self.logger.error(f"Local SHAP explanation failed: {str(e)}")
             return {}
@@ -294,13 +257,9 @@ class SHAPExplainer:
     def generate_visualizations(self, X: np.ndarray, output_dir: str) -> Dict[str, str]:
         """Generate SHAP visualizations"""
         visualizations = {}
-
         try:
             os.makedirs(output_dir, exist_ok=True)
-
             shap_values = self.explainer.shap_values(X)
-
-            # Summary plot
             plt.figure(figsize=(10, 8))
             if isinstance(shap_values, list):
                 shap.summary_plot(
@@ -310,13 +269,10 @@ class SHAPExplainer:
                 shap.summary_plot(
                     shap_values, X, feature_names=self.feature_names, show=False
                 )
-
             summary_path = os.path.join(output_dir, "shap_summary.png")
             plt.savefig(summary_path, dpi=300, bbox_inches="tight")
             plt.close()
             visualizations["summary_plot"] = summary_path
-
-            # Feature importance plot
             plt.figure(figsize=(10, 6))
             if isinstance(shap_values, list):
                 shap.summary_plot(
@@ -334,13 +290,10 @@ class SHAPExplainer:
                     plot_type="bar",
                     show=False,
                 )
-
             importance_path = os.path.join(output_dir, "shap_importance.png")
             plt.savefig(importance_path, dpi=300, bbox_inches="tight")
             plt.close()
             visualizations["importance_plot"] = importance_path
-
-            # Waterfall plot for first instance
             if len(X) > 0:
                 plt.figure(figsize=(10, 8))
                 if isinstance(shap_values, list):
@@ -363,14 +316,11 @@ class SHAPExplainer:
                         ),
                         show=False,
                     )
-
                 waterfall_path = os.path.join(output_dir, "shap_waterfall.png")
                 plt.savefig(waterfall_path, dpi=300, bbox_inches="tight")
                 plt.close()
                 visualizations["waterfall_plot"] = waterfall_path
-
             return visualizations
-
         except Exception as e:
             self.logger.error(f"SHAP visualization generation failed: {str(e)}")
             return {}
@@ -381,12 +331,12 @@ class LIMEExplainer:
 
     def __init__(
         self,
-        model,
+        model: Any,
         model_type: ModelType,
         feature_names: List[str],
         training_data: np.ndarray,
         mode: str = "classification",
-    ):
+    ) -> Any:
         self.model = model
         self.model_type = model_type
         self.feature_names = feature_names
@@ -396,7 +346,7 @@ class LIMEExplainer:
         self.explainer = None
         self._initialize_explainer()
 
-    def _initialize_explainer(self):
+    def _initialize_explainer(self) -> Any:
         """Initialize LIME explainer"""
         try:
             self.explainer = lime.lime_tabular.LimeTabularExplainer(
@@ -405,9 +355,7 @@ class LIMEExplainer:
                 mode=self.mode,
                 discretize_continuous=True,
             )
-
             self.logger.info("Initialized LIME explainer")
-
         except Exception as e:
             self.logger.error(f"Failed to initialize LIME explainer: {str(e)}")
             raise
@@ -421,14 +369,10 @@ class LIMEExplainer:
                 predict_fn = self.model.predict_proba
             else:
                 predict_fn = self.model.predict
-
             explanation = self.explainer.explain_instance(
                 instance, predict_fn, num_features=num_features
             )
-
-            # Extract explanation data
             feature_importance = explanation.as_list()
-
             explanations = {
                 "feature_importance": feature_importance,
                 "score": explanation.score,
@@ -442,9 +386,7 @@ class LIMEExplainer:
                 ),
                 "right": explanation.right if hasattr(explanation, "right") else None,
             }
-
             return explanations
-
         except Exception as e:
             self.logger.error(f"Local LIME explanation failed: {str(e)}")
             return {}
@@ -454,45 +396,32 @@ class LIMEExplainer:
     ) -> Dict[str, str]:
         """Generate LIME visualizations"""
         visualizations = {}
-
         try:
             os.makedirs(output_dir, exist_ok=True)
-
             if hasattr(self.model, "predict_proba"):
                 predict_fn = self.model.predict_proba
             else:
                 predict_fn = self.model.predict
-
             explanation = self.explainer.explain_instance(
                 instance, predict_fn, num_features=num_features
             )
-
-            # Save as HTML
             html_path = os.path.join(output_dir, "lime_explanation.html")
             explanation.save_to_file(html_path)
             visualizations["html_explanation"] = html_path
-
-            # Create matplotlib visualization
             fig, ax = plt.subplots(figsize=(10, 6))
-
             feature_importance = explanation.as_list()
             features = [item[0] for item in feature_importance]
             values = [item[1] for item in feature_importance]
-
             colors = ["red" if v < 0 else "blue" for v in values]
-
             ax.barh(features, values, color=colors)
             ax.set_xlabel("Feature Importance")
             ax.set_title("LIME Local Explanation")
             ax.grid(True, alpha=0.3)
-
             plot_path = os.path.join(output_dir, "lime_plot.png")
             plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             plt.close()
             visualizations["importance_plot"] = plot_path
-
             return visualizations
-
         except Exception as e:
             self.logger.error(f"LIME visualization generation failed: {str(e)}")
             return {}
@@ -501,7 +430,7 @@ class LIMEExplainer:
 class PermutationImportanceExplainer:
     """Permutation importance-based explanations"""
 
-    def __init__(self, model, feature_names: List[str]):
+    def __init__(self, model: Any, feature_names: List[str]) -> Any:
         self.model = model
         self.feature_names = feature_names
         self.logger = structlog.get_logger(__name__)
@@ -518,16 +447,13 @@ class PermutationImportanceExplainer:
             perm_importance = permutation_importance(
                 self.model, X, y, scoring=scoring, n_repeats=n_repeats, random_state=42
             )
-
             explanations = {
                 "feature_importance": perm_importance.importances_mean.tolist(),
                 "feature_importance_std": perm_importance.importances_std.tolist(),
                 "feature_names": self.feature_names,
                 "scoring_metric": scoring,
             }
-
             return explanations
-
         except Exception as e:
             self.logger.error(f"Permutation importance explanation failed: {str(e)}")
             return {}
@@ -537,25 +463,18 @@ class PermutationImportanceExplainer:
     ) -> Dict[str, str]:
         """Generate permutation importance visualizations"""
         visualizations = {}
-
         try:
             os.makedirs(output_dir, exist_ok=True)
-
             perm_importance = permutation_importance(
                 self.model, X, y, scoring=scoring, n_repeats=10, random_state=42
             )
-
-            # Create visualization
             fig, ax = plt.subplots(figsize=(10, 8))
-
             indices = np.argsort(perm_importance.importances_mean)[::-1]
-
             ax.bar(
                 range(len(indices)),
                 perm_importance.importances_mean[indices],
                 yerr=perm_importance.importances_std[indices],
             )
-
             ax.set_xlabel("Features")
             ax.set_ylabel(f"Permutation Importance ({scoring})")
             ax.set_title("Feature Importance via Permutation")
@@ -564,14 +483,11 @@ class PermutationImportanceExplainer:
                 [self.feature_names[i] for i in indices], rotation=45, ha="right"
             )
             ax.grid(True, alpha=0.3)
-
             plot_path = os.path.join(output_dir, "permutation_importance.png")
             plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             plt.close()
             visualizations["importance_plot"] = plot_path
-
             return visualizations
-
         except Exception as e:
             self.logger.error(f"Permutation importance visualization failed: {str(e)}")
             return {}
@@ -580,7 +496,7 @@ class PermutationImportanceExplainer:
 class PartialDependenceExplainer:
     """Partial dependence plot explanations"""
 
-    def __init__(self, model, feature_names: List[str]):
+    def __init__(self, model: Any, feature_names: List[str]) -> Any:
         self.model = model
         self.feature_names = feature_names
         self.logger = structlog.get_logger(__name__)
@@ -591,25 +507,20 @@ class PartialDependenceExplainer:
         """Generate partial dependence explanations"""
         try:
             explanations = {}
-
             for feature in features:
                 if isinstance(feature, str):
                     feature_idx = self.feature_names.index(feature)
                 else:
                     feature_idx = feature
-
                 pdp_result = partial_dependence(
                     self.model, X, [feature_idx], kind="average"
                 )
-
                 explanations[self.feature_names[feature_idx]] = {
                     "values": pdp_result["values"][0].tolist(),
                     "average": pdp_result["average"][0].tolist(),
                     "feature_name": self.feature_names[feature_idx],
                 }
-
             return explanations
-
         except Exception as e:
             self.logger.error(f"Partial dependence explanation failed: {str(e)}")
             return {}
@@ -619,10 +530,8 @@ class PartialDependenceExplainer:
     ) -> Dict[str, str]:
         """Generate partial dependence visualizations"""
         visualizations = {}
-
         try:
             os.makedirs(output_dir, exist_ok=True)
-
             for feature in features:
                 if isinstance(feature, str):
                     feature_idx = self.feature_names.index(feature)
@@ -630,28 +539,20 @@ class PartialDependenceExplainer:
                 else:
                     feature_idx = feature
                     feature_name = self.feature_names[feature_idx]
-
                 pdp_result = partial_dependence(
                     self.model, X, [feature_idx], kind="average"
                 )
-
-                # Create visualization
                 fig, ax = plt.subplots(figsize=(10, 6))
-
                 ax.plot(pdp_result["values"][0], pdp_result["average"][0], linewidth=2)
                 ax.set_xlabel(feature_name)
                 ax.set_ylabel("Partial Dependence")
                 ax.set_title(f"Partial Dependence Plot - {feature_name}")
                 ax.grid(True, alpha=0.3)
-
                 plot_path = os.path.join(output_dir, f"pdp_{feature_name}.png")
                 plt.savefig(plot_path, dpi=300, bbox_inches="tight")
                 plt.close()
-
                 visualizations[f"pdp_{feature_name}"] = plot_path
-
             return visualizations
-
         except Exception as e:
             self.logger.error(f"Partial dependence visualization failed: {str(e)}")
             return {}
@@ -660,7 +561,7 @@ class PartialDependenceExplainer:
 class ComplianceChecker:
     """Regulatory compliance checker for AI explanations"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.logger = structlog.get_logger(__name__)
         self.compliance_rules = self._load_compliance_rules()
 
@@ -719,7 +620,6 @@ class ComplianceChecker:
     ) -> Dict[ComplianceStandard, bool]:
         """Check compliance against specified standards"""
         compliance_status = {}
-
         for standard in standards:
             try:
                 compliance_status[standard] = self._check_standard_compliance(
@@ -730,7 +630,6 @@ class ComplianceChecker:
                     f"Compliance check failed for {standard.value}: {str(e)}"
                 )
                 compliance_status[standard] = False
-
         return compliance_status
 
     def _check_standard_compliance(
@@ -738,47 +637,36 @@ class ComplianceChecker:
     ) -> bool:
         """Check compliance for a specific standard"""
         rules = self.compliance_rules.get(standard, {})
-
-        # Check if explanation is required
         if rules.get("requires_explanation", False):
             if not explanation_result.explanations:
                 return False
-
-        # Check explanation depth
         required_depth = rules.get("explanation_depth", "standard")
         if required_depth == "detailed":
-            # Check if detailed explanations are provided
             required_components = [
                 "feature_importance",
                 "local_explanations",
                 "global_explanations",
             ]
             if not all(
-                comp in explanation_result.explanations for comp in required_components
+                (
+                    comp in explanation_result.explanations
+                    for comp in required_components
+                )
             ):
                 return False
-
-        # Check for prohibited factors (ECOA)
         if standard == ComplianceStandard.ECOA:
             prohibited_factors = rules.get("prohibited_factors", [])
             feature_importance = explanation_result.explanations.get(
                 "feature_importance", {}
             )
-
             for factor in prohibited_factors:
                 if factor in feature_importance:
-                    # Check if prohibited factor has significant importance
                     importance = feature_importance.get(factor, 0)
-                    if abs(importance) > 0.1:  # Threshold for significance
+                    if abs(importance) > 0.1:
                         return False
-
-        # Check for audit trail (SOX)
         if standard == ComplianceStandard.SOX:
             if not explanation_result.metadata.get("audit_trail"):
                 return False
-
-        # Additional standard-specific checks can be added here
-
         return True
 
     def generate_compliance_report(
@@ -786,7 +674,6 @@ class ComplianceChecker:
     ) -> Dict[str, Any]:
         """Generate compliance report"""
         compliance_status = self.check_compliance(explanation_result, standards)
-
         report = {
             "explanation_id": explanation_result.explanation_id,
             "model_id": explanation_result.model_id,
@@ -803,7 +690,6 @@ class ComplianceChecker:
                 "metadata": explanation_result.metadata,
             },
         }
-
         return report
 
     def _generate_recommendations(
@@ -811,7 +697,6 @@ class ComplianceChecker:
     ) -> List[str]:
         """Generate recommendations for improving compliance"""
         recommendations = []
-
         for standard, is_compliant in compliance_status.items():
             if not is_compliant:
                 if standard == ComplianceStandard.GDPR:
@@ -830,44 +715,31 @@ class ComplianceChecker:
                 elif standard == ComplianceStandard.SOX:
                     recommendations.append("Implement comprehensive audit trail")
                     recommendations.append("Enhance model documentation")
-
         return recommendations
 
 
 class ExplainableAIEngine:
     """Main explainable AI engine"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> Any:
         self.config = config
         self.logger = structlog.get_logger(__name__)
-
-        # Initialize database
         db_url = config.get("database_url", "sqlite:///explainable_ai.db")
         self.db_engine = create_engine(db_url)
         Session = sessionmaker(bind=self.db_engine)
         self.db_session = Session()
-
-        # Create tables
         Base.metadata.create_all(bind=self.db_engine)
-
-        # Initialize Redis for caching
         redis_url = config.get("redis_url", "redis://localhost:6379/0")
         self.redis_client = redis.from_url(redis_url, decode_responses=True)
-
-        # Initialize compliance checker
         self.compliance_checker = ComplianceChecker()
-
-        # Model registry
         self.model_registry = {}
-
-        # Output directory for visualizations
         self.output_dir = config.get("output_dir", "/tmp/explainable_ai")
         os.makedirs(self.output_dir, exist_ok=True)
 
     def register_model(
         self,
         model_id: str,
-        model,
+        model: Any,
         model_type: ModelType,
         feature_names: List[str],
         target_names: List[str] = None,
@@ -876,7 +748,6 @@ class ExplainableAIEngine:
     ) -> bool:
         """Register a model for explainability"""
         try:
-            # Store model information
             model_info = {
                 "model": model,
                 "model_type": model_type,
@@ -885,10 +756,7 @@ class ExplainableAIEngine:
                 "training_data": training_data,
                 "compliance_requirements": compliance_requirements or [],
             }
-
             self.model_registry[model_id] = model_info
-
-            # Store in database
             model_record = ModelRegistry(
                 model_id=model_id,
                 model_name=f"Model_{model_id}",
@@ -896,16 +764,13 @@ class ExplainableAIEngine:
                 feature_names=json.dumps(feature_names),
                 target_names=json.dumps(target_names or []),
                 compliance_requirements=json.dumps(
-                    [req.value for req in (compliance_requirements or [])]
+                    [req.value for req in compliance_requirements or []]
                 ),
             )
-
             self.db_session.add(model_record)
             self.db_session.commit()
-
             self.logger.info(f"Registered model: {model_id}")
             return True
-
         except Exception as e:
             self.logger.error(f"Model registration failed: {str(e)}")
             self.db_session.rollback()
@@ -915,26 +780,19 @@ class ExplainableAIEngine:
         """Generate model explanation"""
         try:
             explanation_id = str(uuid.uuid4())
-
-            # Get model information
             if request.model_id not in self.model_registry:
                 raise ValueError(f"Model {request.model_id} not registered")
-
             model_info = self.model_registry[request.model_id]
             model = model_info["model"]
             model_type = model_info["model_type"]
             feature_names = model_info["feature_names"]
             training_data = model_info["training_data"]
-
-            # Generate explanations based on type
             explanations = {}
             visualizations = {}
-
             if request.explanation_type == ExplanationType.SHAP_VALUES:
                 explanations, visualizations = self._generate_shap_explanations(
                     model, model_type, feature_names, request, explanation_id
                 )
-
             elif request.explanation_type == ExplanationType.LIME_EXPLANATION:
                 explanations, visualizations = self._generate_lime_explanations(
                     model,
@@ -944,23 +802,19 @@ class ExplainableAIEngine:
                     request,
                     explanation_id,
                 )
-
             elif request.explanation_type == ExplanationType.FEATURE_IMPORTANCE:
                 explanations, visualizations = (
                     self._generate_feature_importance_explanations(
                         model, feature_names, request, explanation_id
                     )
                 )
-
             elif request.explanation_type == ExplanationType.PARTIAL_DEPENDENCE:
                 explanations, visualizations = (
                     self._generate_partial_dependence_explanations(
                         model, feature_names, request, explanation_id
                     )
                 )
-
             else:
-                # Generate comprehensive explanations
                 explanations, visualizations = (
                     self._generate_comprehensive_explanations(
                         model,
@@ -971,16 +825,10 @@ class ExplainableAIEngine:
                         explanation_id,
                     )
                 )
-
-            # Calculate confidence score
             confidence_score = self._calculate_confidence_score(explanations)
-
-            # Check compliance
             compliance_standards = (
                 request.compliance_standards or model_info["compliance_requirements"]
             )
-
-            # Create result
             result = ExplanationResult(
                 explanation_id=explanation_id,
                 model_id=request.model_id,
@@ -996,25 +844,19 @@ class ExplainableAIEngine:
                     "model_type": model_type.value,
                 },
             )
-
-            # Check compliance
             if compliance_standards:
                 result.compliance_status = self.compliance_checker.check_compliance(
                     result, compliance_standards
                 )
-
-            # Store explanation
             self._store_explanation(result)
-
             return result
-
         except Exception as e:
             self.logger.error(f"Model explanation failed: {str(e)}")
             raise
 
     def _generate_shap_explanations(
         self,
-        model,
+        model: Any,
         model_type: ModelType,
         feature_names: List[str],
         request: ExplanationRequest,
@@ -1022,24 +864,18 @@ class ExplainableAIEngine:
     ) -> Tuple[Dict[str, Any], Dict[str, str]]:
         """Generate SHAP explanations"""
         explainer = SHAPExplainer(model, model_type, feature_names)
-
         explanations = {}
         visualizations = {}
-
         if request.instance_data:
-            # Local explanation
             X = np.array([list(request.instance_data.values())])
             explanations = explainer.explain_local(X, 0)
-
-            # Generate visualizations
             viz_dir = os.path.join(self.output_dir, explanation_id, "shap")
             visualizations = explainer.generate_visualizations(X, viz_dir)
-
-        return explanations, visualizations
+        return (explanations, visualizations)
 
     def _generate_lime_explanations(
         self,
-        model,
+        model: Any,
         model_type: ModelType,
         feature_names: List[str],
         training_data: np.ndarray,
@@ -1049,26 +885,19 @@ class ExplainableAIEngine:
         """Generate LIME explanations"""
         if training_data is None:
             raise ValueError("Training data required for LIME explanations")
-
         explainer = LIMEExplainer(model, model_type, feature_names, training_data)
-
         explanations = {}
         visualizations = {}
-
         if request.instance_data:
-            # Local explanation
             instance = np.array(list(request.instance_data.values()))
             explanations = explainer.explain_local(instance)
-
-            # Generate visualizations
             viz_dir = os.path.join(self.output_dir, explanation_id, "lime")
             visualizations = explainer.generate_visualizations(instance, viz_dir)
-
-        return explanations, visualizations
+        return (explanations, visualizations)
 
     def _generate_feature_importance_explanations(
         self,
-        model,
+        model: Any,
         feature_names: List[str],
         request: ExplanationRequest,
         explanation_id: str,
@@ -1076,27 +905,19 @@ class ExplainableAIEngine:
         """Generate feature importance explanations"""
         explanations = {}
         visualizations = {}
-
-        # Try to get feature importance from model
         if hasattr(model, "feature_importances_"):
             explanations["feature_importance"] = {
                 "importances": model.feature_importances_.tolist(),
                 "feature_names": feature_names,
             }
-
-        # Generate visualizations
         if explanations:
             viz_dir = os.path.join(
                 self.output_dir, explanation_id, "feature_importance"
             )
             os.makedirs(viz_dir, exist_ok=True)
-
-            # Create feature importance plot
             fig, ax = plt.subplots(figsize=(10, 8))
-
             importances = explanations["feature_importance"]["importances"]
             indices = np.argsort(importances)[::-1]
-
             ax.bar(range(len(indices)), [importances[i] for i in indices])
             ax.set_xlabel("Features")
             ax.set_ylabel("Importance")
@@ -1106,18 +927,15 @@ class ExplainableAIEngine:
                 [feature_names[i] for i in indices], rotation=45, ha="right"
             )
             ax.grid(True, alpha=0.3)
-
             plot_path = os.path.join(viz_dir, "feature_importance.png")
             plt.savefig(plot_path, dpi=300, bbox_inches="tight")
             plt.close()
-
             visualizations["feature_importance_plot"] = plot_path
-
-        return explanations, visualizations
+        return (explanations, visualizations)
 
     def _generate_partial_dependence_explanations(
         self,
-        model,
+        model: Any,
         feature_names: List[str],
         request: ExplanationRequest,
         explanation_id: str,
@@ -1125,27 +943,20 @@ class ExplainableAIEngine:
         """Generate partial dependence explanations"""
         explanations = {}
         visualizations = {}
-
         if request.instance_data:
             X = np.array([list(request.instance_data.values())])
-
             explainer = PartialDependenceExplainer(model, feature_names)
-
-            # Generate for top features
-            top_features = feature_names[:5]  # Top 5 features
+            top_features = feature_names[:5]
             explanations = explainer.explain_feature_effects(X, top_features)
-
-            # Generate visualizations
             viz_dir = os.path.join(
                 self.output_dir, explanation_id, "partial_dependence"
             )
             visualizations = explainer.generate_visualizations(X, top_features, viz_dir)
-
-        return explanations, visualizations
+        return (explanations, visualizations)
 
     def _generate_comprehensive_explanations(
         self,
-        model,
+        model: Any,
         model_type: ModelType,
         feature_names: List[str],
         training_data: np.ndarray,
@@ -1155,82 +966,57 @@ class ExplainableAIEngine:
         """Generate comprehensive explanations using multiple methods"""
         explanations = {}
         visualizations = {}
-
         try:
-            # SHAP explanations
             shap_explainer = SHAPExplainer(model, model_type, feature_names)
-
             if request.instance_data:
                 X = np.array([list(request.instance_data.values())])
-
-                # Local SHAP explanations
                 shap_local = shap_explainer.explain_local(X, 0)
                 explanations["shap_local"] = shap_local
-
-                # Global SHAP explanations
                 shap_global = shap_explainer.explain_global(X)
                 explanations["shap_global"] = shap_global
-
-                # SHAP visualizations
                 viz_dir = os.path.join(
                     self.output_dir, explanation_id, "comprehensive", "shap"
                 )
                 shap_viz = shap_explainer.generate_visualizations(X, viz_dir)
                 visualizations.update(shap_viz)
-
-            # Feature importance
             if hasattr(model, "feature_importances_"):
                 explanations["feature_importance"] = {
                     "importances": model.feature_importances_.tolist(),
                     "feature_names": feature_names,
                 }
-
-            # LIME explanations (if training data available)
             if training_data is not None and request.instance_data:
                 lime_explainer = LIMEExplainer(
                     model, model_type, feature_names, training_data
                 )
                 instance = np.array(list(request.instance_data.values()))
-
                 lime_local = lime_explainer.explain_local(instance)
                 explanations["lime_local"] = lime_local
-
-                # LIME visualizations
                 viz_dir = os.path.join(
                     self.output_dir, explanation_id, "comprehensive", "lime"
                 )
                 lime_viz = lime_explainer.generate_visualizations(instance, viz_dir)
                 visualizations.update(lime_viz)
-
         except Exception as e:
             self.logger.error(f"Comprehensive explanation generation failed: {str(e)}")
-
-        return explanations, visualizations
+        return (explanations, visualizations)
 
     def _calculate_confidence_score(self, explanations: Dict[str, Any]) -> float:
         """Calculate confidence score for explanations"""
         try:
-            # Simple confidence calculation based on available explanations
             score = 0.0
-
             if "shap_local" in explanations:
                 score += 0.3
-
             if "shap_global" in explanations:
                 score += 0.3
-
             if "lime_local" in explanations:
                 score += 0.2
-
             if "feature_importance" in explanations:
                 score += 0.2
-
             return min(score, 1.0)
-
         except Exception:
-            return 0.5  # Default confidence
+            return 0.5
 
-    def _store_explanation(self, result: ExplanationResult):
+    def _store_explanation(self, result: ExplanationResult) -> Any:
         """Store explanation result in database"""
         try:
             explanation_record = ModelExplanation(
@@ -1245,10 +1031,8 @@ class ExplainableAIEngine:
                 ),
                 metadata=json.dumps(result.metadata),
             )
-
             self.db_session.add(explanation_record)
             self.db_session.commit()
-
         except Exception as e:
             self.logger.error(f"Explanation storage failed: {str(e)}")
             self.db_session.rollback()
@@ -1261,7 +1045,6 @@ class ExplainableAIEngine:
                 .filter_by(explanation_id=explanation_id)
                 .first()
             )
-
             if record:
                 return ExplanationResult(
                     explanation_id=record.explanation_id,
@@ -1277,9 +1060,7 @@ class ExplainableAIEngine:
                     },
                     metadata=json.loads(record.metadata),
                 )
-
             return None
-
         except Exception as e:
             self.logger.error(f"Explanation retrieval failed: {str(e)}")
             return None
@@ -1290,15 +1071,12 @@ class ExplainableAIEngine:
         """Generate compliance report for explanation"""
         try:
             explanation = self.get_explanation(explanation_id)
-
             if explanation:
                 standards = list(explanation.compliance_status.keys())
                 return self.compliance_checker.generate_compliance_report(
                     explanation, standards
                 )
-
             return None
-
         except Exception as e:
             self.logger.error(f"Compliance report generation failed: {str(e)}")
             return None
@@ -1310,7 +1088,6 @@ def create_explainable_ai_engine(config: Dict[str, Any]) -> ExplainableAIEngine:
 
 
 if __name__ == "__main__":
-    # Example usage
     import structlog
     from sklearn.datasets import make_classification
     from sklearn.ensemble import RandomForestClassifier
@@ -1333,32 +1110,21 @@ if __name__ == "__main__":
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
-
-    # Configuration
     config = {
         "database_url": "sqlite:///explainable_ai.db",
         "redis_url": "redis://localhost:6379/0",
         "output_dir": "/tmp/explainable_ai",
     }
-
-    # Create explainable AI engine
     engine = create_explainable_ai_engine(config)
-
-    # Create sample data
     X, y = make_classification(
         n_samples=1000, n_features=10, n_informative=5, random_state=42
     )
     feature_names = [f"feature_{i}" for i in range(X.shape[1])]
-
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
-
-    # Train model
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
-
-    # Register model
     engine.register_model(
         model_id="credit_risk_model",
         model=model,
@@ -1368,10 +1134,7 @@ if __name__ == "__main__":
         training_data=X_train,
         compliance_requirements=[ComplianceStandard.FCRA, ComplianceStandard.ECOA],
     )
-
-    # Create explanation request
     instance_data = {f"feature_{i}": X_test[0][i] for i in range(len(feature_names))}
-
     request = ExplanationRequest(
         model_id="credit_risk_model",
         explanation_type=ExplanationType.GLOBAL,
@@ -1380,14 +1143,10 @@ if __name__ == "__main__":
         explanation_depth="detailed",
         include_visualizations=True,
     )
-
-    # Generate explanation
     result = engine.explain_model(request)
-
     logger.info(f"Explanation ID: {result.explanation_id}")
     logger.info(f"Confidence Score: {result.confidence_score}")
     logger.info(f"Compliance Status: {result.compliance_status}")
     logger.info(f"Explanations: {json.dumps(result.explanations, indent=2)}")
-    # Generate compliance report
     compliance_report = engine.generate_compliance_report(result.explanation_id)
     logger.info(f"Compliance Report: {json.dumps(compliance_report, indent=2)}")

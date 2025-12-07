@@ -6,7 +6,6 @@ Implements comprehensive validation for financial data
 import re
 from decimal import Decimal, InvalidOperation
 from typing import Any, Dict
-
 import bleach
 from marshmallow import Schema, ValidationError, fields, post_load, pre_load, validate
 
@@ -17,12 +16,12 @@ class FinancialValidators:
     @staticmethod
     def validate_currency_code(value: str) -> str:
         """Validate ISO 4217 currency code"""
-        if not re.match(r"^[A-Z]{3}$", value):
+        if not re.match("^[A-Z]{3}$", value):
             raise ValidationError("Currency code must be a 3-letter ISO 4217 code")
         return value
 
     @staticmethod
-    def validate_amount(value) -> Decimal:
+    def validate_amount(value: Any) -> Decimal:
         """Validate monetary amount"""
         try:
             amount = Decimal(str(value))
@@ -39,29 +38,28 @@ class FinancialValidators:
     @staticmethod
     def validate_account_number(value: str) -> str:
         """Validate account number format"""
-        # Remove spaces and hyphens
-        clean_value = re.sub(r"[\s-]", "", value)
-        if not re.match(r"^[A-Z0-9]{8,20}$", clean_value):
+        clean_value = re.sub("[\\s-]", "", value)
+        if not re.match("^[A-Z0-9]{8,20}$", clean_value):
             raise ValidationError("Account number must be 8-20 alphanumeric characters")
         return clean_value
 
     @staticmethod
     def validate_routing_number(value: str) -> str:
         """Validate bank routing number"""
-        clean_value = re.sub(r"[\s-]", "", value)
-        if not re.match(r"^\d{9}$", clean_value):
+        clean_value = re.sub("[\\s-]", "", value)
+        if not re.match("^\\d{9}$", clean_value):
             raise ValidationError("Routing number must be 9 digits")
         return clean_value
 
     @staticmethod
     def validate_card_number(value: str) -> str:
         """Validate credit card number using Luhn algorithm"""
-        clean_value = re.sub(r"[\s-]", "", value)
-        if not re.match(r"^\d{13,19}$", clean_value):
+        clean_value = re.sub("[\\s-]", "", value)
+        if not re.match("^\\d{13,19}$", clean_value):
             raise ValidationError("Card number must be 13-19 digits")
 
-        # Luhn algorithm
         def luhn_check(card_num):
+
             def digits_of(n):
                 return [int(d) for d in str(n)]
 
@@ -75,13 +73,12 @@ class FinancialValidators:
 
         if not luhn_check(clean_value):
             raise ValidationError("Invalid card number")
-
         return clean_value
 
     @staticmethod
     def validate_email(value: str) -> str:
         """Enhanced email validation"""
-        email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        email_regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         if not re.match(email_regex, value):
             raise ValidationError("Invalid email format")
         return value.lower()
@@ -89,8 +86,8 @@ class FinancialValidators:
     @staticmethod
     def validate_phone(value: str) -> str:
         """Validate phone number"""
-        clean_value = re.sub(r"[\s\-\(\)\+]", "", value)
-        if not re.match(r"^\d{10,15}$", clean_value):
+        clean_value = re.sub("[\\s\\-\\(\\)\\+]", "", value)
+        if not re.match("^\\d{10,15}$", clean_value):
             raise ValidationError("Phone number must be 10-15 digits")
         return clean_value
 
@@ -99,13 +96,12 @@ class SanitizationMixin:
     """Mixin for input sanitization"""
 
     @pre_load
-    def sanitize_strings(self, data, **kwargs):
+    def sanitize_strings(self, data: Any, **kwargs) -> Any:
         """Sanitize string inputs"""
         if isinstance(data, dict):
             sanitized = {}
             for key, value in data.items():
                 if isinstance(value, str):
-                    # Remove HTML tags and potentially dangerous content
                     sanitized[key] = bleach.clean(value.strip(), tags=[], strip=True)
                 else:
                     sanitized[key] = value
@@ -113,7 +109,6 @@ class SanitizationMixin:
         return data
 
 
-# User validation schemas
 class UserRegistrationSchema(SanitizationMixin, Schema):
     email = fields.Email(required=True, validate=FinancialValidators.validate_email)
     password = fields.Str(required=True, validate=validate.Length(min=8, max=128))
@@ -135,7 +130,6 @@ class UserUpdateSchema(SanitizationMixin, Schema):
     company_name = fields.Str(required=False, validate=validate.Length(max=100))
 
 
-# Account validation schemas
 class AccountSchema(SanitizationMixin, Schema):
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     account_type = fields.Str(
@@ -149,7 +143,6 @@ class AccountSchema(SanitizationMixin, Schema):
     parent_account_id = fields.Int(required=False)
 
 
-# Transaction validation schemas
 class TransactionSchema(SanitizationMixin, Schema):
     amount = fields.Raw(required=True, validate=FinancialValidators.validate_amount)
     currency = fields.Str(
@@ -159,7 +152,7 @@ class TransactionSchema(SanitizationMixin, Schema):
     reference_number = fields.Str(required=False, validate=validate.Length(max=50))
 
     @post_load
-    def convert_amount(self, data, **kwargs):
+    def convert_amount(self, data: Any, **kwargs) -> Any:
         data["amount"] = Decimal(str(data["amount"]))
         return data
 
@@ -181,7 +174,7 @@ class JournalEntryLineSchema(SanitizationMixin, Schema):
     description = fields.Str(required=False, validate=validate.Length(max=500))
 
     @post_load
-    def convert_amounts(self, data, **kwargs):
+    def convert_amounts(self, data: Any, **kwargs) -> Any:
         if "debit_amount" in data and data["debit_amount"] is not None:
             data["debit_amount"] = Decimal(str(data["debit_amount"]))
         if "credit_amount" in data and data["credit_amount"] is not None:
@@ -189,7 +182,6 @@ class JournalEntryLineSchema(SanitizationMixin, Schema):
         return data
 
 
-# Payment method validation schemas
 class PaymentMethodSchema(SanitizationMixin, Schema):
     method_type = fields.Str(
         required=True,
@@ -209,7 +201,7 @@ class CreditCardSchema(PaymentMethodSchema):
     cardholder_name = fields.Str(
         required=True, validate=validate.Length(min=1, max=100)
     )
-    cvv = fields.Str(required=True, validate=validate.Regexp(r"^\d{3,4}$"))
+    cvv = fields.Str(required=True, validate=validate.Regexp("^\\d{3,4}$"))
 
 
 class BankAccountSchema(PaymentMethodSchema):
@@ -227,7 +219,6 @@ class BankAccountSchema(PaymentMethodSchema):
     )
 
 
-# AI/ML validation schemas
 class PredictionRequestSchema(SanitizationMixin, Schema):
     model_type = fields.Str(
         required=True,
@@ -241,8 +232,7 @@ class PredictionRequestSchema(SanitizationMixin, Schema):
     )
 
 
-# Validation helper functions
-def validate_request_data(schema_class, data: Dict[str, Any]) -> Dict[str, Any]:
+def validate_request_data(schema_class: Any, data: Dict[str, Any]) -> Dict[str, Any]:
     """Validate request data using specified schema"""
     schema = schema_class()
     try:
@@ -251,12 +241,11 @@ def validate_request_data(schema_class, data: Dict[str, Any]) -> Dict[str, Any]:
         raise ValidationError(f"Validation failed: {e.messages}")
 
 
-def validate_json_request(schema_class):
+def validate_json_request(schema_class: Any) -> Any:
     """Decorator for validating JSON request data"""
 
     def decorator(f):
         from functools import wraps
-
         from flask import jsonify, request
 
         @wraps(f)
@@ -267,20 +256,16 @@ def validate_json_request(schema_class):
                         jsonify({"error": "Content-Type must be application/json"}),
                         400,
                     )
-
                 data = request.get_json()
                 if data is None:
-                    return jsonify({"error": "Invalid JSON data"}), 400
-
+                    return (jsonify({"error": "Invalid JSON data"}), 400)
                 validated_data = validate_request_data(schema_class, data)
                 request.validated_data = validated_data
-
                 return f(*args, **kwargs)
-
             except ValidationError as e:
-                return jsonify({"error": "Validation failed", "details": str(e)}), 400
+                return (jsonify({"error": "Validation failed", "details": str(e)}), 400)
             except Exception:
-                return jsonify({"error": "Internal validation error"}), 500
+                return (jsonify({"error": "Internal validation error"}), 500)
 
         return decorated_function
 

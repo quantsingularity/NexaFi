@@ -1,49 +1,41 @@
 from typing import Any, Dict
 
 
-# Placeholder for BaseModel. The actual BaseModel is set in main.py
 class BaseModel:
     table_name = None
     db_manager = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> Any:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     @classmethod
-    def find_by_id(cls, id_value: Any):
-        # Placeholder for actual implementation
+    def find_by_id(cls: Any, id_value: Any) -> Any:
         pass
 
     @classmethod
-    def find_all(cls, where_clause: str = "", params: tuple = ()):
-        # Placeholder for actual implementation
+    def find_all(cls: Any, where_clause: str = "", params: tuple = ()) -> Any:
         pass
 
     @classmethod
-    def find_one(cls, where_clause: str, params: tuple = ()):
-        # Placeholder for actual implementation
+    def find_one(cls: Any, where_clause: str, params: tuple = ()) -> Any:
         pass
 
-    def save(self):
-        # Placeholder for actual implementation
+    def save(self) -> Any:
         pass
 
-    def delete(self):
-        # Placeholder for actual implementation
+    def delete(self) -> Any:
         pass
 
     def to_dict(self) -> Dict[str, Any]:
-        # Placeholder for actual implementation
         return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
 
 class PaymentMethod(BaseModel):
     table_name = "payment_methods"
 
-    def to_dict(self, include_sensitive=False):
+    def to_dict(self, include_sensitive: Any = False) -> Any:
         data = super().to_dict()
-        # Add masked details for security
         if data.get("details"):
             if data.get("type") == "card":
                 data["masked_details"] = {
@@ -63,19 +55,16 @@ class PaymentMethod(BaseModel):
                     "email": data["details"].get("email"),
                     "wallet_type": data["details"].get("wallet_type"),
                 }
-
         if not include_sensitive:
             data.pop("details", None)
-
         return data
 
 
 class Transaction(BaseModel):
     table_name = "transactions"
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
-        # Convert Decimal/float to string for JSON serialization
         data["amount"] = str(data.get("amount", 0))
         data["fees"] = str(data.get("fees", 0))
         data["net_amount"] = str(data.get("net_amount", 0))
@@ -85,9 +74,8 @@ class Transaction(BaseModel):
 class Wallet(BaseModel):
     table_name = "wallets"
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
-        # Convert Decimal/float to string for JSON serialization
         data["balance"] = str(data.get("balance", 0))
         data["available_balance"] = str(data.get("available_balance", 0))
         data["pending_balance"] = str(data.get("pending_balance", 0))
@@ -98,9 +86,8 @@ class Wallet(BaseModel):
 class WalletBalanceHistory(BaseModel):
     table_name = "wallet_balance_history"
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
-        # Convert Decimal/float to string for JSON serialization
         data["amount"] = str(data.get("amount", 0))
         data["balance_before"] = str(data.get("balance_before", 0))
         data["balance_after"] = str(data.get("balance_after", 0))
@@ -110,7 +97,7 @@ class WalletBalanceHistory(BaseModel):
 class PaymentProcessor(BaseModel):
     table_name = "payment_processors"
 
-    def to_dict(self, include_sensitive=False):
+    def to_dict(self, include_sensitive: Any = False) -> Any:
         data = super().to_dict()
         if not include_sensitive:
             data.pop("api_config", None)
@@ -120,9 +107,8 @@ class PaymentProcessor(BaseModel):
 class RecurringPayment(BaseModel):
     table_name = "recurring_payments"
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
-        # Convert Decimal/float to string for JSON serialization
         data["amount"] = str(data.get("amount", 0))
         return data
 
@@ -130,8 +116,7 @@ class RecurringPayment(BaseModel):
 class ExchangeRate(BaseModel):
     table_name = "exchange_rates"
 
-    def to_dict(self):
+    def to_dict(self) -> Any:
         data = super().to_dict()
-        # Convert Decimal/float to string for JSON serialization
         data["rate"] = str(data.get("rate", 0))
         return data

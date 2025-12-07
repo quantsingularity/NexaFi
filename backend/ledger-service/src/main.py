@@ -4,15 +4,11 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional, Tuple
-
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-# Add shared modules to path
 sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
-
 from logging.logger import get_logger, setup_request_logging
-
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
 from .models.user import (
@@ -39,147 +35,39 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "nexafi-ledger-service-secret-key-2024"
 )
-
-# Register blueprint
 app.register_blueprint(ledger_bp, url_prefix="/api/v1/ledger")
-
-# Enable CORS
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
-
-# Setup logging
 setup_request_logging(app)
 logger = get_logger("ledger_service")
-
-# Initialize database
 db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
-
-# Apply ledger-specific migrations
-# The migrations are already defined in this file, so we don't need to import them.
 LEDGER_MIGRATIONS = {
     "011_create_enhanced_accounts_table": {
         "description": "Create enhanced accounts table with multi-currency support",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS accounts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_code TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            account_type TEXT NOT NULL,
-            account_subtype TEXT,
-            parent_account_id INTEGER,
-            currency TEXT NOT NULL DEFAULT 'USD',
-            is_active BOOLEAN DEFAULT 1,
-            is_system BOOLEAN DEFAULT 0,
-            description TEXT,
-            opening_balance DECIMAL(15,2) DEFAULT 0.00,
-            current_balance DECIMAL(15,2) DEFAULT 0.00,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_account_id) REFERENCES accounts(id)
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_accounts_code ON accounts(account_code);
-        CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);
-        CREATE INDEX IF NOT EXISTS idx_accounts_parent ON accounts(parent_account_id);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS accounts (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            account_code TEXT UNIQUE NOT NULL,\n            name TEXT NOT NULL,\n            account_type TEXT NOT NULL,\n            account_subtype TEXT,\n            parent_account_id INTEGER,\n            currency TEXT NOT NULL DEFAULT 'USD',\n            is_active BOOLEAN DEFAULT 1,\n            is_system BOOLEAN DEFAULT 0,\n            description TEXT,\n            opening_balance DECIMAL(15,2) DEFAULT 0.00,\n            current_balance DECIMAL(15,2) DEFAULT 0.00,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (parent_account_id) REFERENCES accounts(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_accounts_code ON accounts(account_code);\n        CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);\n        CREATE INDEX IF NOT EXISTS idx_accounts_parent ON accounts(parent_account_id);\n        ",
     },
     "012_create_journal_entries_table": {
         "description": "Create journal entries table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS journal_entries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            entry_number TEXT UNIQUE NOT NULL,
-            description TEXT NOT NULL,
-            reference_number TEXT,
-            entry_date DATE NOT NULL,
-            posting_date DATE,
-            status TEXT NOT NULL DEFAULT 'draft',
-            total_debit DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-            total_credit DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-            currency TEXT NOT NULL DEFAULT 'USD',
-            exchange_rate DECIMAL(10,6) DEFAULT 1.000000,
-            created_by TEXT,
-            approved_by TEXT,
-            posted_by TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_journal_entries_number ON journal_entries(entry_number);
-        CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(entry_date);
-        CREATE INDEX IF NOT EXISTS idx_journal_entries_status ON journal_entries(status);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS journal_entries (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            entry_number TEXT UNIQUE NOT NULL,\n            description TEXT NOT NULL,\n            reference_number TEXT,\n            entry_date DATE NOT NULL,\n            posting_date DATE,\n            status TEXT NOT NULL DEFAULT 'draft',\n            total_debit DECIMAL(15,2) NOT NULL DEFAULT 0.00,\n            total_credit DECIMAL(15,2) NOT NULL DEFAULT 0.00,\n            currency TEXT NOT NULL DEFAULT 'USD',\n            exchange_rate DECIMAL(10,6) DEFAULT 1.000000,\n            created_by TEXT,\n            approved_by TEXT,\n            posted_by TEXT,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_journal_entries_number ON journal_entries(entry_number);\n        CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(entry_date);\n        CREATE INDEX IF NOT EXISTS idx_journal_entries_status ON journal_entries(status);\n        ",
     },
     "013_create_journal_entry_lines_table": {
         "description": "Create journal entry lines table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS journal_entry_lines (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            journal_entry_id INTEGER NOT NULL,
-            account_id INTEGER NOT NULL,
-            description TEXT,
-            debit_amount DECIMAL(15,2) DEFAULT 0.00,
-            credit_amount DECIMAL(15,2) DEFAULT 0.00,
-            line_number INTEGER NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE,
-            FOREIGN KEY (account_id) REFERENCES accounts(id)
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_journal_lines_entry_id ON journal_entry_lines(journal_entry_id);
-        CREATE INDEX IF NOT EXISTS idx_journal_lines_account_id ON journal_entry_lines(account_id);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS journal_entry_lines (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            journal_entry_id INTEGER NOT NULL,\n            account_id INTEGER NOT NULL,\n            description TEXT,\n            debit_amount DECIMAL(15,2) DEFAULT 0.00,\n            credit_amount DECIMAL(15,2) DEFAULT 0.00,\n            line_number INTEGER NOT NULL,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE,\n            FOREIGN KEY (account_id) REFERENCES accounts(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_journal_lines_entry_id ON journal_entry_lines(journal_entry_id);\n        CREATE INDEX IF NOT EXISTS idx_journal_lines_account_id ON journal_entry_lines(account_id);\n        ",
     },
     "014_create_exchange_rates_table": {
         "description": "Create exchange rates table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS exchange_rates (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            from_currency TEXT NOT NULL,
-            to_currency TEXT NOT NULL,
-            rate DECIMAL(10,6) NOT NULL,
-            rate_date DATE NOT NULL,
-            source TEXT DEFAULT 'manual',
-            is_active BOOLEAN DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_exchange_rates_currencies ON exchange_rates(from_currency, to_currency);
-        CREATE INDEX IF NOT EXISTS idx_exchange_rates_date ON exchange_rates(rate_date);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS exchange_rates (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            from_currency TEXT NOT NULL,\n            to_currency TEXT NOT NULL,\n            rate DECIMAL(10,6) NOT NULL,\n            rate_date DATE NOT NULL,\n            source TEXT DEFAULT 'manual',\n            is_active BOOLEAN DEFAULT 1,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_exchange_rates_currencies ON exchange_rates(from_currency, to_currency);\n        CREATE INDEX IF NOT EXISTS idx_exchange_rates_date ON exchange_rates(rate_date);\n        ",
     },
     "015_create_reconciliations_table": {
         "description": "Create reconciliations table",
-        "sql": """
-        CREATE TABLE IF NOT EXISTS reconciliations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_id INTEGER NOT NULL,
-            reconciliation_date DATE NOT NULL,
-            statement_balance DECIMAL(15,2) NOT NULL,
-            book_balance DECIMAL(15,2) NOT NULL,
-            difference DECIMAL(15,2) NOT NULL,
-            status TEXT NOT NULL DEFAULT 'pending',
-            reconciled_by TEXT,
-            reconciled_at TIMESTAMP,
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (account_id) REFERENCES accounts(id)
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_reconciliations_account ON reconciliations(account_id);
-        CREATE INDEX IF NOT EXISTS idx_reconciliations_date ON reconciliations(reconciliation_date);
-        """,
+        "sql": "\n        CREATE TABLE IF NOT EXISTS reconciliations (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            account_id INTEGER NOT NULL,\n            reconciliation_date DATE NOT NULL,\n            statement_balance DECIMAL(15,2) NOT NULL,\n            book_balance DECIMAL(15,2) NOT NULL,\n            difference DECIMAL(15,2) NOT NULL,\n            status TEXT NOT NULL DEFAULT 'pending',\n            reconciled_by TEXT,\n            reconciled_at TIMESTAMP,\n            notes TEXT,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (account_id) REFERENCES accounts(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_reconciliations_account ON reconciliations(account_id);\n        CREATE INDEX IF NOT EXISTS idx_reconciliations_date ON reconciliations(reconciliation_date);\n        ",
     },
 }
-
-# Apply migrations
 for version, migration in LEDGER_MIGRATIONS.items():
     migration_manager.apply_migration(
         version, migration["description"], migration["sql"]
     )
-
-# Set database manager for models
 BaseModel.set_db_manager(db_manager)
 
 
@@ -190,31 +78,18 @@ class Account(BaseModel):
         """Get account balance as of a specific date"""
         if as_of_date is None:
             return Decimal(str(self.current_balance))
-
-        # Calculate balance from journal entries up to the date
-        query = """
-        SELECT
-            COALESCE(SUM(debit_amount), 0) as total_debits,
-            COALESCE(SUM(credit_amount), 0) as total_credits
-        FROM journal_entry_lines jel
-        JOIN journal_entries je ON jel.journal_entry_id = je.id
-        WHERE jel.account_id = ? AND je.posting_date <= ? AND je.status = 'posted'
-        """
-
+        query = "\n        SELECT\n            COALESCE(SUM(debit_amount), 0) as total_debits,\n            COALESCE(SUM(credit_amount), 0) as total_credits\n        FROM journal_entry_lines jel\n        JOIN journal_entries je ON jel.journal_entry_id = je.id\n        WHERE jel.account_id = ? AND je.posting_date <= ? AND je.status = 'posted'\n        "
         rows = db_manager.execute_query(query, (self.id, as_of_date.date()))
         if rows:
             total_debits = Decimal(str(rows[0]["total_debits"]))
             total_credits = Decimal(str(rows[0]["total_credits"]))
-
-            # Calculate balance based on account type
             if self.account_type in ["asset", "expense"]:
                 return Decimal(str(self.opening_balance)) + total_debits - total_credits
-            else:  # liability, equity, revenue
+            else:
                 return Decimal(str(self.opening_balance)) + total_credits - total_debits
-
         return Decimal(str(self.opening_balance))
 
-    def update_balance(self):
+    def update_balance(self) -> Any:
         """Update current balance from journal entries"""
         self.current_balance = float(self.get_balance())
         self.save()
@@ -233,42 +108,32 @@ class JournalEntry(BaseModel):
         """Validate journal entry (debits = credits)"""
         lines = self.get_lines()
         if not lines:
-            return False, "Journal entry must have at least one line"
-
-        total_debits = sum(Decimal(str(line.debit_amount)) for line in lines)
-        total_credits = sum(Decimal(str(line.credit_amount)) for line in lines)
-
+            return (False, "Journal entry must have at least one line")
+        total_debits = sum((Decimal(str(line.debit_amount)) for line in lines))
+        total_credits = sum((Decimal(str(line.credit_amount)) for line in lines))
         if total_debits != total_credits:
             return (
                 False,
                 f"Debits ({total_debits}) do not equal credits ({total_credits})",
             )
+        return (True, "Entry is balanced")
 
-        return True, "Entry is balanced"
-
-    def post_entry(self, posted_by: str):
+    def post_entry(self, posted_by: str) -> Any:
         """Post journal entry and update account balances"""
         is_valid, message = self.validate_entry()
         if not is_valid:
             raise ValueError(message)
-
-        # Update entry status
         self.status = "posted"
         self.posting_date = datetime.utcnow().date()
         self.posted_by = posted_by
         self.save()
-
-        # Update account balances
         lines = self.get_lines()
         affected_accounts = set()
-
         for line in lines:
             account = Account.find_by_id(line.account_id)
             if account:
                 account.update_balance()
                 affected_accounts.add(account.id)
-
-        # Log posting
         audit_logger.log_event(
             AuditEventType.JOURNAL_ENTRY_POST,
             "journal_entry_posted",
@@ -294,34 +159,25 @@ class ExchangeRate(BaseModel):
 
     @classmethod
     def get_rate(
-        cls, from_currency: str, to_currency: str, rate_date: datetime = None
+        cls: Any, from_currency: str, to_currency: str, rate_date: datetime = None
     ) -> Decimal:
         """Get exchange rate for currency conversion"""
         if from_currency == to_currency:
             return Decimal("1.0")
-
         if rate_date is None:
             rate_date = datetime.utcnow()
-
-        # Find the most recent rate on or before the specified date
         rate_record = cls.find_one(
             "from_currency = ? AND to_currency = ? AND rate_date <= ? AND is_active = 1 ORDER BY rate_date DESC",
             (from_currency, to_currency, rate_date.date()),
         )
-
         if rate_record:
             return Decimal(str(rate_record.rate))
-
-        # Try inverse rate
         inverse_rate = cls.find_one(
             "from_currency = ? AND to_currency = ? AND rate_date <= ? AND is_active = 1 ORDER BY rate_date DESC",
             (to_currency, from_currency, rate_date.date()),
         )
-
         if inverse_rate:
             return Decimal("1.0") / Decimal(str(inverse_rate.rate))
-
-        # Default to 1.0 if no rate found (should be handled by external rate service)
         return Decimal("1.0")
 
 
@@ -329,7 +185,6 @@ class Reconciliation(BaseModel):
     table_name = "reconciliations"
 
 
-# Enhanced validation schemas
 class EnhancedAccountSchema(AccountSchema):
     account_code = fields.Str(required=True, validate=validate.Length(min=3, max=20))
     account_subtype = fields.Str(
@@ -367,7 +222,7 @@ class EnhancedJournalEntrySchema(JournalEntrySchema):
         required=False, validate=FinancialValidators.validate_currency_code
     )
     exchange_rate = fields.Decimal(
-        required=False, validate=validate.Range(min=0.000001, max=999999)
+        required=False, validate=validate.Range(min=1e-06, max=999999)
     )
 
 
@@ -378,9 +233,7 @@ class ExchangeRateSchema(SanitizationMixin, Schema):
     to_currency = fields.Str(
         required=True, validate=FinancialValidators.validate_currency_code
     )
-    rate = fields.Decimal(
-        required=True, validate=validate.Range(min=0.000001, max=999999)
-    )
+    rate = fields.Decimal(required=True, validate=validate.Range(min=1e-06, max=999999))
     rate_date = fields.Date(required=False)
 
 
@@ -393,9 +246,7 @@ class ReconciliationSchema(SanitizationMixin, Schema):
     notes = fields.Str(required=False, validate=validate.Length(max=1000))
 
 
-# Chart of Accounts initialization
 DEFAULT_CHART_OF_ACCOUNTS = {
-    # Assets
     "1000": {"name": "Cash and Cash Equivalents", "type": "asset", "subtype": "cash"},
     "1100": {
         "name": "Checking Account",
@@ -416,7 +267,6 @@ DEFAULT_CHART_OF_ACCOUNTS = {
     },
     "1400": {"name": "Inventory", "type": "asset", "subtype": "inventory"},
     "1500": {"name": "Fixed Assets", "type": "asset", "subtype": "fixed_assets"},
-    # Liabilities
     "2000": {"name": "Current Liabilities", "type": "liability"},
     "2100": {
         "name": "Accounts Payable",
@@ -435,7 +285,6 @@ DEFAULT_CHART_OF_ACCOUNTS = {
         "type": "liability",
         "subtype": "long_term_debt",
     },
-    # Equity
     "3000": {"name": "Equity", "type": "equity"},
     "3100": {
         "name": "Common Stock",
@@ -449,7 +298,6 @@ DEFAULT_CHART_OF_ACCOUNTS = {
         "subtype": "retained_earnings",
         "parent": "3000",
     },
-    # Revenue
     "4000": {"name": "Revenue", "type": "revenue"},
     "4100": {
         "name": "Sales Revenue",
@@ -463,7 +311,6 @@ DEFAULT_CHART_OF_ACCOUNTS = {
         "subtype": "service_revenue",
         "parent": "4000",
     },
-    # Expenses
     "5000": {
         "name": "Cost of Goods Sold",
         "type": "expense",
@@ -500,7 +347,7 @@ DEFAULT_CHART_OF_ACCOUNTS = {
 }
 
 
-def initialize_chart_of_accounts():
+def initialize_chart_of_accounts() -> Any:
     """Initialize default chart of accounts"""
     for account_code, account_data in DEFAULT_CHART_OF_ACCOUNTS.items():
         existing = Account.find_one("account_code = ?", (account_code,))
@@ -512,7 +359,6 @@ def initialize_chart_of_accounts():
                 )
                 if parent_account:
                     parent_id = parent_account.id
-
             account = Account(
                 account_code=account_code,
                 name=account_data["name"],
@@ -525,7 +371,7 @@ def initialize_chart_of_accounts():
 
 
 @app.route("/api/v1/health", methods=["GET"])
-def health_check():
+def health_check() -> Any:
     """Health check endpoint"""
     return jsonify(
         {
@@ -540,37 +386,28 @@ def health_check():
 @app.route("/api/v1/accounts", methods=["GET"])
 @require_auth
 @require_permission("account:read")
-def list_accounts():
+def list_accounts() -> Any:
     """List all accounts"""
     account_type = request.args.get("type")
     currency = request.args.get("currency")
     active_only = request.args.get("active_only", "true").lower() == "true"
-
     where_clause = "1=1"
     params = []
-
     if account_type:
         where_clause += " AND account_type = ?"
         params.append(account_type)
-
     if currency:
         where_clause += " AND currency = ?"
         params.append(currency)
-
     if active_only:
         where_clause += " AND is_active = 1"
-
     where_clause += " ORDER BY account_code"
-
     accounts = Account.find_all(where_clause, tuple(params))
-
-    # Add current balances
     account_data = []
     for account in accounts:
         data = account.to_dict()
         data["current_balance"] = str(account.get_balance())
         account_data.append(data)
-
     return jsonify({"accounts": account_data, "total": len(account_data)})
 
 
@@ -581,16 +418,12 @@ def list_accounts():
 @audit_action(
     AuditEventType.ACCOUNT_CREATE, "account_created", severity=AuditSeverity.MEDIUM
 )
-def create_account():
+def create_account() -> Any:
     """Create a new account"""
     data = request.validated_data
-
-    # Check if account code already exists
     existing = Account.find_one("account_code = ?", (data["account_code"],))
     if existing:
-        return jsonify({"error": "Account code already exists"}), 409
-
-    # Create account
+        return (jsonify({"error": "Account code already exists"}), 409)
     account = Account(
         account_code=data["account_code"],
         name=data["name"],
@@ -603,8 +436,6 @@ def create_account():
     )
     account.current_balance = account.opening_balance
     account.save()
-
-    # Log account creation
     audit_logger.log_event(
         AuditEventType.ACCOUNT_CREATE,
         "account_created",
@@ -618,7 +449,6 @@ def create_account():
             "currency": account.currency,
         },
     )
-
     return (
         jsonify(
             {"message": "Account created successfully", "account": account.to_dict()}
@@ -630,22 +460,18 @@ def create_account():
 @app.route("/api/v1/accounts/<int:account_id>/balance", methods=["GET"])
 @require_auth
 @require_permission("account:read")
-def get_account_balance(account_id):
+def get_account_balance(account_id: Any) -> Any:
     """Get account balance as of a specific date"""
     as_of_date = request.args.get("as_of_date")
-
     account = Account.find_by_id(account_id)
     if not account:
-        return jsonify({"error": "Account not found"}), 404
-
+        return (jsonify({"error": "Account not found"}), 404)
     if as_of_date:
         try:
             as_of_date = datetime.fromisoformat(as_of_date)
         except ValueError:
-            return jsonify({"error": "Invalid date format"}), 400
-
+            return (jsonify({"error": "Invalid date format"}), 400)
     balance = account.get_balance(as_of_date)
-
     return jsonify(
         {
             "account_id": account_id,
@@ -669,20 +495,15 @@ def get_account_balance(account_id):
     "journal_entry_created",
     severity=AuditSeverity.HIGH,
 )
-def create_journal_entry():
+def create_journal_entry() -> Any:
     """Create a new journal entry"""
     data = request.validated_data
     lines_data = request.get_json().get("lines", [])
-
     if not lines_data:
-        return jsonify({"error": "Journal entry must have at least one line"}), 400
-
-    # Generate entry number
+        return (jsonify({"error": "Journal entry must have at least one line"}), 400)
     entry_number = (
         f"JE-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
     )
-
-    # Create journal entry
     entry = JournalEntry(
         entry_number=entry_number,
         description=data["description"],
@@ -693,41 +514,34 @@ def create_journal_entry():
         created_by=g.current_user["user_id"],
     )
     entry.save()
-
-    # Create journal entry lines
     total_debits = Decimal("0")
     total_credits = Decimal("0")
-
     for i, line_data in enumerate(lines_data):
-        # Validate line data
         if "account_id" not in line_data:
-            return jsonify({"error": f"Line {i+1}: account_id is required"}), 400
-
+            return (jsonify({"error": f"Line {i + 1}: account_id is required"}), 400)
         account = Account.find_by_id(line_data["account_id"])
         if not account:
-            return jsonify({"error": f"Line {i+1}: Account not found"}), 400
-
+            return (jsonify({"error": f"Line {i + 1}: Account not found"}), 400)
         debit_amount = Decimal(str(line_data.get("debit_amount", 0)))
         credit_amount = Decimal(str(line_data.get("credit_amount", 0)))
-
         if debit_amount == 0 and credit_amount == 0:
             return (
                 jsonify(
                     {
-                        "error": f"Line {i+1}: Either debit or credit amount must be specified"
+                        "error": f"Line {i + 1}: Either debit or credit amount must be specified"
                     }
                 ),
                 400,
             )
-
         if debit_amount > 0 and credit_amount > 0:
             return (
                 jsonify(
-                    {"error": f"Line {i+1}: Cannot have both debit and credit amounts"}
+                    {
+                        "error": f"Line {i + 1}: Cannot have both debit and credit amounts"
+                    }
                 ),
                 400,
             )
-
         line = JournalEntryLine(
             journal_entry_id=entry.id,
             account_id=line_data["account_id"],
@@ -737,25 +551,17 @@ def create_journal_entry():
             line_number=i + 1,
         )
         line.save()
-
         total_debits += debit_amount
         total_credits += credit_amount
-
-    # Update entry totals
     entry.total_debit = float(total_debits)
     entry.total_credit = float(total_credits)
     entry.save()
-
-    # Validate entry
     is_valid, message = entry.validate_entry()
     if not is_valid:
-        # Delete the entry and its lines
         for line in entry.get_lines():
             line.delete()
         entry.delete()
-        return jsonify({"error": message}), 400
-
-    # Log journal entry creation
+        return (jsonify({"error": message}), 400)
     audit_logger.log_event(
         AuditEventType.JOURNAL_ENTRY_CREATE,
         "journal_entry_created",
@@ -769,7 +575,6 @@ def create_journal_entry():
             "line_count": len(lines_data),
         },
     )
-
     return (
         jsonify(
             {
@@ -790,18 +595,15 @@ def create_journal_entry():
     "journal_entry_posted",
     severity=AuditSeverity.HIGH,
 )
-def post_journal_entry(entry_id):
+def post_journal_entry(entry_id: Any) -> Any:
     """Post a journal entry"""
     entry = JournalEntry.find_by_id(entry_id)
     if not entry:
-        return jsonify({"error": "Journal entry not found"}), 404
-
+        return (jsonify({"error": "Journal entry not found"}), 404)
     if entry.status == "posted":
-        return jsonify({"error": "Journal entry is already posted"}), 400
-
+        return (jsonify({"error": "Journal entry is already posted"}), 400)
     try:
         entry.post_entry(g.current_user["user_id"])
-
         return jsonify(
             {
                 "message": "Journal entry posted successfully",
@@ -809,9 +611,8 @@ def post_journal_entry(entry_id):
                 "posting_date": entry.posting_date.isoformat(),
             }
         )
-
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return (jsonify({"error": str(e)}), 400)
 
 
 @app.route("/api/v1/exchange-rates", methods=["POST"])
@@ -823,11 +624,9 @@ def post_journal_entry(entry_id):
     "exchange_rate_updated",
     severity=AuditSeverity.MEDIUM,
 )
-def update_exchange_rate():
+def update_exchange_rate() -> Any:
     """Update exchange rate"""
     data = request.validated_data
-
-    # Deactivate existing rates for the same currency pair and date
     existing_rates = ExchangeRate.find_all(
         "from_currency = ? AND to_currency = ? AND rate_date = ?",
         (
@@ -836,12 +635,9 @@ def update_exchange_rate():
             data.get("rate_date", datetime.utcnow().date()),
         ),
     )
-
     for rate in existing_rates:
         rate.is_active = False
         rate.save()
-
-    # Create new rate
     exchange_rate = ExchangeRate(
         from_currency=data["from_currency"],
         to_currency=data["to_currency"],
@@ -850,8 +646,6 @@ def update_exchange_rate():
         source="manual",
     )
     exchange_rate.save()
-
-    # Log rate update
     audit_logger.log_event(
         AuditEventType.SYSTEM_CONFIG_CHANGE,
         "exchange_rate_updated",
@@ -865,7 +659,6 @@ def update_exchange_rate():
             "rate_date": str(data.get("rate_date", datetime.utcnow().date())),
         },
     )
-
     return (
         jsonify(
             {
@@ -886,22 +679,17 @@ def update_exchange_rate():
     "reconciliation_created",
     severity=AuditSeverity.MEDIUM,
 )
-def create_reconciliation():
+def create_reconciliation() -> Any:
     """Create account reconciliation"""
     data = request.validated_data
-
     account = Account.find_by_id(data["account_id"])
     if not account:
-        return jsonify({"error": "Account not found"}), 404
-
-    # Get book balance as of reconciliation date
+        return (jsonify({"error": "Account not found"}), 404)
     book_balance = account.get_balance(
         datetime.combine(data["reconciliation_date"], datetime.min.time())
     )
     statement_balance = Decimal(str(data["statement_balance"]))
     difference = statement_balance - book_balance
-
-    # Create reconciliation record
     reconciliation = Reconciliation(
         account_id=data["account_id"],
         reconciliation_date=data["reconciliation_date"],
@@ -911,14 +699,10 @@ def create_reconciliation():
         status="pending" if difference != 0 else "reconciled",
         notes=data.get("notes"),
     )
-
     if difference == 0:
         reconciliation.reconciled_by = g.current_user["user_id"]
         reconciliation.reconciled_at = datetime.utcnow()
-
     reconciliation.save()
-
-    # Log reconciliation
     audit_logger.log_event(
         AuditEventType.ACCOUNT_UPDATE,
         "reconciliation_created",
@@ -933,7 +717,6 @@ def create_reconciliation():
             "difference": str(difference),
         },
     )
-
     return (
         jsonify(
             {
@@ -949,39 +732,32 @@ def create_reconciliation():
 @app.route("/api/v1/reports/trial-balance", methods=["GET"])
 @require_auth
 @require_permission("report:read")
-def trial_balance():
+def trial_balance() -> Any:
     """Generate trial balance report"""
     as_of_date = request.args.get("as_of_date")
     currency = request.args.get("currency", "USD")
-
     if as_of_date:
         try:
             as_of_date = datetime.fromisoformat(as_of_date)
         except ValueError:
-            return jsonify({"error": "Invalid date format"}), 400
+            return (jsonify({"error": "Invalid date format"}), 400)
     else:
         as_of_date = datetime.utcnow()
-
-    # Get all active accounts
     accounts = Account.find_all(
         "is_active = 1 AND currency = ? ORDER BY account_code", (currency,)
     )
-
     trial_balance_data = []
     total_debits = Decimal("0")
     total_credits = Decimal("0")
-
     for account in accounts:
         balance = account.get_balance(as_of_date)
-
         if balance != 0:
             if account.account_type in ["asset", "expense"]:
                 debit_balance = balance if balance > 0 else Decimal("0")
                 credit_balance = abs(balance) if balance < 0 else Decimal("0")
-            else:  # liability, equity, revenue
+            else:
                 debit_balance = abs(balance) if balance < 0 else Decimal("0")
                 credit_balance = balance if balance > 0 else Decimal("0")
-
             trial_balance_data.append(
                 {
                     "account_code": account.account_code,
@@ -991,10 +767,8 @@ def trial_balance():
                     "credit_balance": str(credit_balance),
                 }
             )
-
             total_debits += debit_balance
             total_credits += credit_balance
-
     return jsonify(
         {
             "report_type": "trial_balance",
@@ -1014,20 +788,17 @@ def trial_balance():
 @app.route("/api/v1/reports/balance-sheet", methods=["GET"])
 @require_auth
 @require_permission("report:read")
-def balance_sheet():
+def balance_sheet() -> Any:
     """Generate balance sheet report"""
     as_of_date = request.args.get("as_of_date")
     currency = request.args.get("currency", "USD")
-
     if as_of_date:
         try:
             as_of_date = datetime.fromisoformat(as_of_date)
         except ValueError:
-            return jsonify({"error": "Invalid date format"}), 400
+            return (jsonify({"error": "Invalid date format"}), 400)
     else:
         as_of_date = datetime.utcnow()
-
-    # Get accounts by type
     assets = Account.find_all(
         "account_type = 'asset' AND is_active = 1 AND currency = ? ORDER BY account_code",
         (currency,),
@@ -1055,12 +826,11 @@ def balance_sheet():
                     }
                 )
                 total += balance
-        return formatted, total
+        return (formatted, total)
 
     assets_data, total_assets = format_accounts(assets)
     liabilities_data, total_liabilities = format_accounts(liabilities)
     equity_data, total_equity = format_accounts(equity)
-
     return jsonify(
         {
             "report_type": "balance_sheet",
@@ -1073,17 +843,12 @@ def balance_sheet():
             },
             "equity": {"accounts": equity_data, "total": str(total_equity)},
             "total_liabilities_and_equity": str(total_liabilities + total_equity),
-            "is_balanced": total_assets == (total_liabilities + total_equity),
+            "is_balanced": total_assets == total_liabilities + total_equity,
         }
     )
 
 
 if __name__ == "__main__":
-    # Ensure data directory exists
     os.makedirs(os.path.join(os.path.dirname(__file__), "database"), exist_ok=True)
-
-    # Initialize chart of accounts
     initialize_chart_of_accounts()
-
-    # Development server
     app.run(host="0.0.0.0", port=5007, debug=True)

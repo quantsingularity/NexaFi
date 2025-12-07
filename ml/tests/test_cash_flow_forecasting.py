@@ -1,14 +1,13 @@
 import unittest
-
 import pandas as pd
-
 from NexaFi.ml.models.cash_flow_forecasting.cash_flow_forecasting import (
     CashFlowForecaster,
 )
 
 
 class TestCashFlowForecaster(unittest.TestCase):
-    def setUp(self):
+
+    def setUp(self) -> Any:
         self.forecaster = CashFlowForecaster()
         self.data = {
             "date": pd.to_datetime(
@@ -18,20 +17,20 @@ class TestCashFlowForecaster(unittest.TestCase):
         }
         self.df = pd.DataFrame(self.data)
 
-    def test_preprocess_data(self):
+    def test_preprocess_data(self) -> Any:
         processed_df = self.forecaster.preprocess_data(self.df.copy())
         self.assertIsInstance(processed_df, pd.Series)
         self.assertEqual(processed_df.index.freq, "M")
         self.assertFalse(processed_df.isnull().any())
 
-    def test_train_and_predict(self):
+    def test_train_and_predict(self) -> Any:
         processed_data = self.forecaster.preprocess_data(self.df.copy())
         self.forecaster.train(processed_data)
         predictions = self.forecaster.predict(3)
         self.assertEqual(len(predictions), 3)
         self.assertIsInstance(predictions, pd.Series)
 
-    def test_predict_before_train(self):
+    def test_predict_before_train(self) -> Any:
         with self.assertRaises(ValueError):
             self.forecaster.predict(1)
 

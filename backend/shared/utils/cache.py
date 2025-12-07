@@ -6,16 +6,14 @@ import hashlib
 import json
 from functools import wraps
 from typing import Any, Optional
-
 import redis
-
 from ..config.infrastructure import InfrastructureConfig
 
 
 class CacheManager:
     """Redis-based cache manager"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.redis_client = redis.Redis(**InfrastructureConfig.get_redis_config())
         self.default_timeout = InfrastructureConfig.CACHE_DEFAULT_TIMEOUT
         self.key_prefix = InfrastructureConfig.CACHE_KEY_PREFIX
@@ -84,32 +82,26 @@ class CacheManager:
             return False
 
 
-# Global cache instance
 cache = CacheManager()
 
 
-def cached(timeout: Optional[int] = None, key_func: Optional[callable] = None):
+def cached(timeout: Optional[int] = None, key_func: Optional[callable] = None) -> Any:
     """Decorator for caching function results"""
 
     def decorator(func):
+
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Generate cache key
             if key_func:
                 cache_key = key_func(*args, **kwargs)
             else:
-                # Default key generation
                 key_parts = [func.__name__]
-                key_parts.extend(str(arg) for arg in args)
-                key_parts.extend(f"{k}:{v}" for k, v in sorted(kwargs.items()))
+                key_parts.extend((str(arg) for arg in args))
+                key_parts.extend((f"{k}:{v}" for k, v in sorted(kwargs.items())))
                 cache_key = hashlib.md5(":".join(key_parts).encode()).hexdigest()
-
-            # Try to get from cache
             cached_result = cache.get(cache_key)
             if cached_result is not None:
                 return cached_result
-
-            # Execute function and cache result
             result = func(*args, **kwargs)
             cache.set(cache_key, result, timeout)
             return result
@@ -122,6 +114,6 @@ def cached(timeout: Optional[int] = None, key_func: Optional[callable] = None):
 def cache_key_for_user(user_id: str, *args, **kwargs) -> str:
     """Generate cache key for user-specific data"""
     key_parts = [str(user_id)]
-    key_parts.extend(str(arg) for arg in args)
-    key_parts.extend(f"{k}:{v}" for k, v in sorted(kwargs.items()))
+    key_parts.extend((str(arg) for arg in args))
+    key_parts.extend((f"{k}:{v}" for k, v in sorted(kwargs.items())))
     return hashlib.md5(":".join(key_parts).encode()).hexdigest()

@@ -15,7 +15,6 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
-
 import redis
 import requests
 import schedule
@@ -27,12 +26,9 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, create_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urllib3.util.retry import Retry
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
-
-# Metrics for monitoring
 INTEGRATION_REQUESTS = Counter(
     "integration_requests_total", "Total integration requests", ["system", "operation"]
 )
@@ -79,14 +75,14 @@ class IntegrationConfig:
     credentials: Dict[str, Any]
     timeout: int = 30
     retry_attempts: int = 3
-    rate_limit: int = 100  # requests per minute
+    rate_limit: int = 100
     batch_size: int = 100
-    sync_interval: int = 300  # seconds
+    sync_interval: int = 300
     encryption_key: Optional[str] = None
     custom_headers: Dict[str, str] = None
     webhook_url: Optional[str] = None
     enable_caching: bool = True
-    cache_ttl: int = 3600  # seconds
+    cache_ttl: int = 3600
     enable_circuit_breaker: bool = True
     circuit_breaker_threshold: int = 5
     enable_monitoring: bool = True
@@ -119,7 +115,6 @@ class IntegrationLog(Base):
     """Integration log model"""
 
     __tablename__ = "integration_logs"
-
     id = Column(Integer, primary_key=True)
     system_name = Column(String(100), nullable=False)
     operation = Column(String(100), nullable=False)
@@ -138,7 +133,6 @@ class IntegrationState(Base):
     """Integration state tracking"""
 
     __tablename__ = "integration_states"
-
     id = Column(Integer, primary_key=True)
     system_name = Column(String(100), nullable=False)
     entity_type = Column(String(100), nullable=False)
@@ -146,8 +140,8 @@ class IntegrationState(Base):
     last_sync_status = Column(String(50))
     last_sync_record_count = Column(Integer)
     next_sync_time = Column(DateTime)
-    sync_token = Column(String(500))  # For incremental sync
-    configuration = Column(Text)  # JSON configuration
+    sync_token = Column(String(500))
+    configuration = Column(Text)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -156,7 +150,7 @@ class IntegrationState(Base):
 class SecurityManager:
     """Security manager for enterprise integrations"""
 
-    def __init__(self, encryption_key: str = None):
+    def __init__(self, encryption_key: str = None) -> Any:
         self.encryption_key = encryption_key or os.getenv("INTEGRATION_ENCRYPTION_KEY")
         if self.encryption_key:
             self.cipher = Fernet(self.encryption_key.encode())
@@ -171,7 +165,6 @@ class SecurityManager:
                 "No encryption key provided, storing credentials in plain text"
             )
             return json.dumps(credentials)
-
         try:
             credentials_json = json.dumps(credentials)
             encrypted = self.cipher.encrypt(credentials_json.encode())
@@ -184,7 +177,6 @@ class SecurityManager:
         """Decrypt sensitive credentials"""
         if not self.cipher:
             return json.loads(encrypted_credentials)
-
         try:
             decrypted = self.cipher.decrypt(encrypted_credentials.encode())
             return json.loads(decrypted.decode())
@@ -198,12 +190,10 @@ class SecurityManager:
         """Generate API signature for secure requests"""
         if not timestamp:
             timestamp = str(int(datetime.utcnow().timestamp()))
-
         message = f"{method}\n{url}\n{body}\n{timestamp}"
         signature = hashlib.hmac.new(
             secret.encode(), message.encode(), hashlib.sha256
         ).hexdigest()
-
         return signature
 
     def validate_webhook_signature(
@@ -213,42 +203,32 @@ class SecurityManager:
         expected_signature = hashlib.hmac.new(
             secret.encode(), payload.encode(), hashlib.sha256
         ).hexdigest()
-
         return signature == expected_signature
 
 
 class RateLimiter:
     """Rate limiter for API requests"""
 
-    def __init__(self, redis_client: redis.Redis, rate_limit: int = 100):
+    def __init__(self, redis_client: redis.Redis, rate_limit: int = 100) -> Any:
         self.redis_client = redis_client
-        self.rate_limit = rate_limit  # requests per minute
-        self.window_size = 60  # seconds
+        self.rate_limit = rate_limit
+        self.window_size = 60
 
     def is_allowed(self, key: str) -> bool:
         """Check if request is allowed under rate limit"""
         try:
             current_time = int(time.time())
             window_start = current_time - self.window_size
-
-            # Remove old entries
             self.redis_client.zremrangebyscore(key, 0, window_start)
-
-            # Count current requests
             current_requests = self.redis_client.zcard(key)
-
             if current_requests >= self.rate_limit:
                 return False
-
-            # Add current request
             self.redis_client.zadd(key, {str(current_time): current_time})
             self.redis_client.expire(key, self.window_size)
-
             return True
-
         except Exception as e:
             logging.error(f"Rate limiter error: {str(e)}")
-            return True  # Allow request on error
+            return True
 
 
 class DataTransformer:
@@ -261,12 +241,10 @@ class DataTransformer:
         """Apply field mapping to data"""
         if not mapping:
             return data
-
         transformed = {}
         for source_field, target_field in mapping.items():
             if source_field in data:
                 transformed[target_field] = data[source_field]
-
         return transformed
 
     @staticmethod
@@ -276,7 +254,6 @@ class DataTransformer:
         """Apply field transformations"""
         if not transformations:
             return data
-
         transformed = data.copy()
         for field, transform_func in transformations.items():
             if field in transformed:
@@ -284,7 +261,6 @@ class DataTransformer:
                     transformed[field] = transform_func(transformed[field])
                 except Exception as e:
                     logging.error(f"Transformation error for field {field}: {str(e)}")
-
         return transformed
 
     @staticmethod
@@ -293,7 +269,6 @@ class DataTransformer:
         if isinstance(date_value, datetime):
             return date_value.strftime(target_format)
         elif isinstance(date_value, str):
-            # Try to parse common date formats
             formats = ["%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S"]
             for fmt in formats:
                 try:
@@ -301,7 +276,6 @@ class DataTransformer:
                     return parsed_date.strftime(target_format)
                 except ValueError:
                     continue
-
         return str(date_value)
 
     @staticmethod
@@ -310,7 +284,6 @@ class DataTransformer:
         sanitized = {}
         for key, value in data.items():
             if isinstance(value, str):
-                # Remove potentially dangerous characters
                 sanitized[key] = value.replace("<", "&lt;").replace(">", "&gt;")
             elif isinstance(value, dict):
                 sanitized[key] = DataTransformer.sanitize_data(value)
@@ -325,27 +298,27 @@ class DataTransformer:
                 ]
             else:
                 sanitized[key] = value
-
         return sanitized
 
 
 class BaseIntegration(ABC):
     """Base class for all enterprise integrations"""
 
-    def __init__(self, config: IntegrationConfig, db_session=None, redis_client=None):
+    def __init__(
+        self,
+        config: IntegrationConfig,
+        db_session: Any = None,
+        redis_client: Any = None,
+    ) -> Any:
         self.config = config
         self.db_session = db_session
         self.redis_client = redis_client
         self.logger = logging.getLogger(f"{__name__}.{config.system_name}")
-
-        # Initialize components
         self.security_manager = SecurityManager(config.encryption_key)
         self.rate_limiter = (
             RateLimiter(redis_client, config.rate_limit) if redis_client else None
         )
         self.data_transformer = DataTransformer()
-
-        # Circuit breaker
         if config.enable_circuit_breaker:
             self.circuit_breaker = CircuitBreaker(
                 failure_threshold=config.circuit_breaker_threshold,
@@ -354,8 +327,6 @@ class BaseIntegration(ABC):
             )
         else:
             self.circuit_breaker = None
-
-        # HTTP session with retry strategy
         self.session = requests.Session()
         retry_strategy = Retry(
             total=config.retry_attempts,
@@ -365,26 +336,20 @@ class BaseIntegration(ABC):
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
-
-        # Set default headers
         if config.custom_headers:
             self.session.headers.update(config.custom_headers)
-
-        # Initialize state tracking
         self._initialize_state()
 
-    def _initialize_state(self):
+    def _initialize_state(self) -> Any:
         """Initialize integration state"""
         if not self.db_session:
             return
-
         try:
             state = (
                 self.db_session.query(IntegrationState)
                 .filter_by(system_name=self.config.system_name)
                 .first()
             )
-
             if not state:
                 state = IntegrationState(
                     system_name=self.config.system_name,
@@ -393,7 +358,6 @@ class BaseIntegration(ABC):
                 )
                 self.db_session.add(state)
                 self.db_session.commit()
-
         except Exception as e:
             self.logger.error(f"Failed to initialize state: {str(e)}")
 
@@ -418,38 +382,25 @@ class BaseIntegration(ABC):
         headers: Dict[str, str] = None,
     ) -> requests.Response:
         """Make authenticated request to enterprise system"""
-
-        # Check rate limit
         if self.rate_limiter:
             rate_limit_key = f"rate_limit:{self.config.system_name}"
             if not self.rate_limiter.is_allowed(rate_limit_key):
                 raise Exception("Rate limit exceeded")
-
-        # Prepare request
         url = f"{self.config.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
         request_headers = headers or {}
-
-        # Add authentication headers
         auth_headers = self._get_auth_headers()
         request_headers.update(auth_headers)
-
-        # Make request with circuit breaker
         if self.circuit_breaker:
             response = self.circuit_breaker(self._execute_request)(
                 method, url, data, params, request_headers
             )
         else:
             response = self._execute_request(method, url, data, params, request_headers)
-
-        # Log request
         self._log_request(method, endpoint, data, response)
-
-        # Update metrics
         if self.config.enable_monitoring:
             INTEGRATION_REQUESTS.labels(
                 system=self.config.system_name, operation=endpoint
             ).inc()
-
         return response
 
     def _execute_request(
@@ -462,7 +413,6 @@ class BaseIntegration(ABC):
     ) -> requests.Response:
         """Execute HTTP request"""
         start_time = time.time()
-
         try:
             response = self.session.request(
                 method=method,
@@ -472,27 +422,19 @@ class BaseIntegration(ABC):
                 headers=headers,
                 timeout=self.config.timeout,
             )
-
             duration = time.time() - start_time
-
-            # Update metrics
             if self.config.enable_monitoring:
                 INTEGRATION_DURATION.labels(
                     system=self.config.system_name, operation=url.split("/")[-1]
                 ).observe(duration)
-
             response.raise_for_status()
             return response
-
         except Exception as e:
             duration = time.time() - start_time
-
-            # Update error metrics
             if self.config.enable_monitoring:
                 INTEGRATION_ERRORS.labels(
                     system=self.config.system_name, error_type=type(e).__name__
                 ).inc()
-
             self.logger.error(f"Request failed: {str(e)}")
             raise
 
@@ -506,25 +448,22 @@ class BaseIntegration(ABC):
         endpoint: str,
         data: Dict[str, Any],
         response: requests.Response,
-    ):
+    ) -> Any:
         """Log request details"""
         if not self.db_session:
             return
-
         try:
             log_entry = IntegrationLog(
                 system_name=self.config.system_name,
                 operation=f"{method} {endpoint}",
                 status="success" if response.status_code < 400 else "error",
                 request_data=json.dumps(data) if data else None,
-                response_data=response.text[:1000],  # Truncate large responses
+                response_data=response.text[:1000],
                 duration_ms=int(response.elapsed.total_seconds() * 1000),
                 correlation_id=response.headers.get("X-Correlation-ID"),
             )
-
             self.db_session.add(log_entry)
             self.db_session.commit()
-
         except Exception as e:
             self.logger.error(f"Failed to log request: {str(e)}")
 
@@ -532,45 +471,39 @@ class BaseIntegration(ABC):
         """Get data from cache"""
         if not self.redis_client or not self.config.enable_caching:
             return None
-
         try:
             cached_data = self.redis_client.get(cache_key)
             if cached_data:
                 return json.loads(cached_data)
         except Exception as e:
             self.logger.error(f"Cache retrieval error: {str(e)}")
-
         return None
 
-    def set_cached_data(self, cache_key: str, data: Any, ttl: int = None):
+    def set_cached_data(self, cache_key: str, data: Any, ttl: int = None) -> Any:
         """Set data in cache"""
         if not self.redis_client or not self.config.enable_caching:
             return
-
         try:
             ttl = ttl or self.config.cache_ttl
             self.redis_client.setex(cache_key, ttl, json.dumps(data, default=str))
         except Exception as e:
             self.logger.error(f"Cache storage error: {str(e)}")
 
-    def update_sync_state(self, entity_type: str, sync_result: SyncResult):
+    def update_sync_state(self, entity_type: str, sync_result: SyncResult) -> Any:
         """Update synchronization state"""
         if not self.db_session:
             return
-
         try:
             state = (
                 self.db_session.query(IntegrationState)
                 .filter_by(system_name=self.config.system_name, entity_type=entity_type)
                 .first()
             )
-
             if not state:
                 state = IntegrationState(
                     system_name=self.config.system_name, entity_type=entity_type
                 )
                 self.db_session.add(state)
-
             state.last_sync_time = sync_result.end_time
             state.last_sync_status = "success" if sync_result.success else "error"
             state.last_sync_record_count = sync_result.records_processed
@@ -578,21 +511,17 @@ class BaseIntegration(ABC):
                 seconds=self.config.sync_interval
             )
             state.updated_at = datetime.utcnow()
-
             self.db_session.commit()
-
-            # Update monitoring metrics
             if self.config.enable_monitoring:
                 INTEGRATION_SYNC_STATUS.labels(
                     system=self.config.system_name, entity=entity_type
                 ).set(1 if sync_result.success else 0)
-
         except Exception as e:
             self.logger.error(f"Failed to update sync state: {str(e)}")
 
-    def schedule_sync(self, entity_type: str, interval_minutes: int = None):
+    def schedule_sync(self, entity_type: str, interval_minutes: int = None) -> Any:
         """Schedule periodic synchronization"""
-        interval = interval_minutes or (self.config.sync_interval // 60)
+        interval = interval_minutes or self.config.sync_interval // 60
 
         def sync_job():
             try:
@@ -607,7 +536,6 @@ class BaseIntegration(ABC):
     def process_webhook(self, payload: Dict[str, Any], signature: str = None) -> bool:
         """Process incoming webhook"""
         try:
-            # Validate signature if provided
             if signature and hasattr(self.config.credentials, "webhook_secret"):
                 if not self.security_manager.validate_webhook_signature(
                     json.dumps(payload),
@@ -616,25 +544,20 @@ class BaseIntegration(ABC):
                 ):
                     self.logger.warning("Invalid webhook signature")
                     return False
-
-            # Process webhook data
             self._process_webhook_data(payload)
             return True
-
         except Exception as e:
             self.logger.error(f"Webhook processing failed: {str(e)}")
             return False
 
     @abstractmethod
-    def _process_webhook_data(self, payload: Dict[str, Any]):
+    def _process_webhook_data(self, payload: Dict[str, Any]) -> Any:
         """Process webhook data (to be implemented by subclasses)"""
 
     def get_integration_status(self) -> Dict[str, Any]:
         """Get integration status and health"""
         try:
             connection_ok = self.test_connection()
-
-            # Get last sync status
             last_sync_status = None
             if self.db_session:
                 state = (
@@ -657,7 +580,6 @@ class BaseIntegration(ABC):
                             else None
                         ),
                     }
-
             return {
                 "system_name": self.config.system_name,
                 "status": (
@@ -675,7 +597,6 @@ class BaseIntegration(ABC):
                 },
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
         except Exception as e:
             self.logger.error(f"Failed to get integration status: {str(e)}")
             return {
@@ -689,7 +610,7 @@ class BaseIntegration(ABC):
 class IntegrationManager:
     """Manager for multiple enterprise integrations"""
 
-    def __init__(self, db_session=None, redis_client=None):
+    def __init__(self, db_session: Any = None, redis_client: Any = None) -> Any:
         self.db_session = db_session
         self.redis_client = redis_client
         self.integrations: Dict[str, BaseIntegration] = {}
@@ -697,7 +618,7 @@ class IntegrationManager:
         self.scheduler_thread = None
         self.is_running = False
 
-    def register_integration(self, integration: BaseIntegration):
+    def register_integration(self, integration: BaseIntegration) -> Any:
         """Register an integration"""
         self.integrations[integration.config.system_name] = integration
         self.logger.info(f"Registered integration: {integration.config.system_name}")
@@ -706,11 +627,10 @@ class IntegrationManager:
         """Get integration by system name"""
         return self.integrations.get(system_name)
 
-    def start_scheduler(self):
+    def start_scheduler(self) -> Any:
         """Start the integration scheduler"""
         if self.is_running:
             return
-
         self.is_running = True
 
         def run_scheduler():
@@ -722,7 +642,7 @@ class IntegrationManager:
         self.scheduler_thread.start()
         self.logger.info("Integration scheduler started")
 
-    def stop_scheduler(self):
+    def stop_scheduler(self) -> Any:
         """Stop the integration scheduler"""
         self.is_running = False
         if self.scheduler_thread:
@@ -732,17 +652,14 @@ class IntegrationManager:
     def sync_all(self, entity_type: str = None) -> Dict[str, SyncResult]:
         """Sync all integrations"""
         results = {}
-
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_to_system = {}
-
             for system_name, integration in self.integrations.items():
                 if entity_type:
                     future = executor.submit(integration.sync_data, entity_type)
                 else:
                     future = executor.submit(integration.sync_data, "default")
                 future_to_system[future] = system_name
-
             for future in as_completed(future_to_system):
                 system_name = future_to_system[future]
                 try:
@@ -762,16 +679,13 @@ class IntegrationManager:
                         duration_seconds=0,
                         error_message=str(e),
                     )
-
         return results
 
     def get_all_status(self) -> Dict[str, Dict[str, Any]]:
         """Get status of all integrations"""
         status = {}
-
         for system_name, integration in self.integrations.items():
             status[system_name] = integration.get_integration_status()
-
         return status
 
     def health_check(self) -> Dict[str, Any]:
@@ -779,7 +693,6 @@ class IntegrationManager:
         healthy_count = 0
         total_count = len(self.integrations)
         system_status = {}
-
         for system_name, integration in self.integrations.items():
             try:
                 is_healthy = integration.test_connection()
@@ -788,13 +701,11 @@ class IntegrationManager:
                     healthy_count += 1
             except Exception as e:
                 system_status[system_name] = f"error: {str(e)}"
-
         overall_health = (
             "healthy"
             if healthy_count == total_count
             else "degraded" if healthy_count > 0 else "unhealthy"
         )
-
         return {
             "overall_health": overall_health,
             "healthy_systems": healthy_count,
@@ -804,11 +715,9 @@ class IntegrationManager:
         }
 
 
-# Utility functions
 def create_integration_config_from_env(system_name: str) -> IntegrationConfig:
     """Create integration config from environment variables"""
     prefix = f"{system_name.upper()}_"
-
     return IntegrationConfig(
         system_name=system_name,
         base_url=os.getenv(f"{prefix}BASE_URL"),
@@ -837,7 +746,7 @@ def create_integration_config_from_env(system_name: str) -> IntegrationConfig:
     )
 
 
-def setup_database(database_url: str):
+def setup_database(database_url: str) -> Any:
     """Setup database for integration logging"""
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)
@@ -846,19 +755,9 @@ def setup_database(database_url: str):
 
 
 if __name__ == "__main__":
-    # Example usage
     logging.basicConfig(level=logging.INFO)
-
-    # Create database session
     db_session = setup_database("sqlite:///integrations.db")
-
-    # Create Redis client
     redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
-
-    # Create integration manager
     manager = IntegrationManager(db_session, redis_client)
-
-    # Start scheduler
     manager.start_scheduler()
-
     logger.info("Enterprise Integration Framework initialized")

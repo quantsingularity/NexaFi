@@ -1,12 +1,11 @@
 import unittest
-
 import pandas as pd
-
 from NexaFi.ml.models.recommendation.recommendation import ProductRecommender
 
 
 class TestProductRecommender(unittest.TestCase):
-    def setUp(self):
+
+    def setUp(self) -> Any:
         self.recommender = ProductRecommender()
         self.products_data = [
             {
@@ -28,17 +27,17 @@ class TestProductRecommender(unittest.TestCase):
         ]
         self.recommender.load_products(self.products_data)
 
-    def test_load_products(self):
+    def test_load_products(self) -> Any:
         self.assertIsInstance(self.recommender.products_df, pd.DataFrame)
         self.assertEqual(len(self.recommender.products_df), len(self.products_data))
         self.assertIn("description", self.recommender.products_df.columns)
 
-    def test_train(self):
+    def test_train(self) -> Any:
         self.recommender.train()
         self.assertIsNotNone(self.recommender.tfidf_matrix)
         self.assertIsNotNone(self.recommender.tfidf_vectorizer)
 
-    def test_recommend_products(self):
+    def test_recommend_products(self) -> Any:
         self.recommender.train()
         user_pref = "savings account"
         recommendations = self.recommender.recommend_products(
@@ -46,7 +45,6 @@ class TestProductRecommender(unittest.TestCase):
         )
         self.assertEqual(len(recommendations), 1)
         self.assertEqual(recommendations.index[0], "P001")
-
         user_pref_2 = "Looking for a credit card."
         recommendations_2 = self.recommender.recommend_products(
             user_pref_2, num_recommendations=1
@@ -54,13 +52,14 @@ class TestProductRecommender(unittest.TestCase):
         self.assertEqual(len(recommendations_2), 1)
         self.assertTrue(
             any(
-                keyword in recommendations_2["description"].iloc[0].lower()
-                for keyword in ["credit", "card", "travel", "rewards"]
+                (
+                    keyword in recommendations_2["description"].iloc[0].lower()
+                    for keyword in ["credit", "card", "travel", "rewards"]
+                )
             )
         )
 
-    def test_recommend_before_train(self):
-        # Reset recommender to ensure it's not trained
+    def test_recommend_before_train(self) -> Any:
         self.recommender = ProductRecommender()
         self.recommender.load_products(self.products_data)
         with self.assertRaises(ValueError):

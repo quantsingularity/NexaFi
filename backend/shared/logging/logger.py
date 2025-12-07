@@ -10,7 +10,6 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
-
 from flask import g, has_request_context, request
 from pythonjsonlogger import jsonlogger
 
@@ -18,21 +17,17 @@ from pythonjsonlogger import jsonlogger
 class CorrelationIdFilter(logging.Filter):
     """Add correlation ID to log records"""
 
-    def filter(self, record):
-        # Try to get correlation ID from Flask g object
+    def filter(self, record: Any) -> Any:
         correlation_id = None
-
         if has_request_context():
             correlation_id = getattr(g, "correlation_id", None)
             if not correlation_id:
                 correlation_id = str(uuid.uuid4())
                 g.correlation_id = correlation_id
-
         if not correlation_id:
             correlation_id = getattr(
                 threading.current_thread(), "correlation_id", str(uuid.uuid4())
             )
-
         record.correlation_id = correlation_id
         return True
 
@@ -40,8 +35,7 @@ class CorrelationIdFilter(logging.Filter):
 class SecurityFilter(logging.Filter):
     """Filter for security-related log events"""
 
-    def filter(self, record):
-        # Add security context if available
+    def filter(self, record: Any) -> Any:
         if has_request_context():
             record.ip_address = request.environ.get(
                 "HTTP_X_FORWARDED_FOR", request.remote_addr
@@ -49,35 +43,24 @@ class SecurityFilter(logging.Filter):
             record.user_agent = request.headers.get("User-Agent", "")
             record.endpoint = request.endpoint
             record.method = request.method
-
-            # Add user context if available
             if hasattr(g, "current_user"):
                 record.user_id = g.current_user.get("user_id")
                 record.user_email = g.current_user.get("email")
                 record.user_roles = g.current_user.get("roles", [])
-
         return True
 
 
 class NexaFiFormatter(jsonlogger.JsonFormatter):
     """Custom JSON formatter for NexaFi logs"""
 
-    def add_fields(self, log_record, record, message_dict):
+    def add_fields(self, log_record: Any, record: Any, message_dict: Any) -> Any:
         super().add_fields(log_record, record, message_dict)
-
-        # Add timestamp in ISO format
         log_record["timestamp"] = datetime.now(timezone.utc).isoformat()
-
-        # Add service information
         log_record["service"] = os.environ.get("SERVICE_NAME", "unknown")
         log_record["version"] = os.environ.get("SERVICE_VERSION", "1.0.0")
-
-        # Add request context if available
         if has_request_context():
             log_record["request_id"] = getattr(g, "request_id", None)
             log_record["session_id"] = getattr(g, "session_id", None)
-
-        # Ensure level is included
         if "level" not in log_record:
             log_record["level"] = record.levelname
 
@@ -85,25 +68,18 @@ class NexaFiFormatter(jsonlogger.JsonFormatter):
 class LoggerManager:
     """Centralized logger management for NexaFi"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.loggers = {}
         self.setup_root_logger()
 
-    def setup_root_logger(self):
+    def setup_root_logger(self) -> Any:
         """Setup root logger configuration"""
-        # Create logs directory
         log_dir = "/home/ubuntu/nexafi_backend_refactored/logs"
         os.makedirs(log_dir, exist_ok=True)
-
-        # Root logger configuration
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)
-
-        # Remove default handlers
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
-
-        # Console handler for development
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
         console_formatter = NexaFiFormatter(
@@ -112,8 +88,6 @@ class LoggerManager:
         console_handler.setFormatter(console_formatter)
         console_handler.addFilter(CorrelationIdFilter())
         console_handler.addFilter(SecurityFilter())
-
-        # File handler for all logs
         file_handler = logging.FileHandler(f"{log_dir}/nexafi.log")
         file_handler.setLevel(logging.INFO)
         file_formatter = NexaFiFormatter(
@@ -122,27 +96,19 @@ class LoggerManager:
         file_handler.setFormatter(file_formatter)
         file_handler.addFilter(CorrelationIdFilter())
         file_handler.addFilter(SecurityFilter())
-
-        # Error file handler
         error_handler = logging.FileHandler(f"{log_dir}/error.log")
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(file_formatter)
         error_handler.addFilter(CorrelationIdFilter())
         error_handler.addFilter(SecurityFilter())
-
-        # Security events handler
         security_handler = logging.FileHandler(f"{log_dir}/security.log")
         security_handler.setLevel(logging.WARNING)
         security_handler.setFormatter(file_formatter)
         security_handler.addFilter(CorrelationIdFilter())
         security_handler.addFilter(SecurityFilter())
-
-        # Add handlers to root logger
         root_logger.addHandler(console_handler)
         root_logger.addHandler(file_handler)
         root_logger.addHandler(error_handler)
-
-        # Setup security logger
         security_logger = logging.getLogger("security")
         security_logger.addHandler(security_handler)
         security_logger.setLevel(logging.WARNING)
@@ -153,10 +119,9 @@ class LoggerManager:
         if name not in self.loggers:
             logger = logging.getLogger(name)
             self.loggers[name] = logger
-
         return self.loggers[name]
 
-    def log_request_start(self, logger: logging.Logger):
+    def log_request_start(self, logger: logging.Logger) -> Any:
         """Log request start"""
         if has_request_context():
             logger.info(
@@ -172,7 +137,7 @@ class LoggerManager:
 
     def log_request_end(
         self, logger: logging.Logger, status_code: int, response_time: float
-    ):
+    ) -> Any:
         """Log request end"""
         if has_request_context():
             logger.info(
@@ -186,7 +151,7 @@ class LoggerManager:
 
     def log_security_event(
         self, event_type: str, message: str, details: Optional[Dict[str, Any]] = None
-    ):
+    ) -> Any:
         """Log security event"""
         security_logger = logging.getLogger("security")
         security_logger.warning(
@@ -205,7 +170,7 @@ class LoggerManager:
         currency: str,
         transaction_id: str,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Any:
         """Log financial transaction"""
         logger.info(
             f"Financial transaction: {transaction_type}",
@@ -226,7 +191,7 @@ class LoggerManager:
         table: str,
         record_id: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Any:
         """Log database operation"""
         logger.info(
             f"Database operation: {operation} on {table}",
@@ -247,7 +212,7 @@ class LoggerManager:
         method: str,
         status_code: int,
         response_time: float,
-    ):
+    ) -> Any:
         """Log external API call"""
         logger.info(
             f"External API call: {method} {service}{endpoint}",
@@ -262,11 +227,9 @@ class LoggerManager:
         )
 
 
-# Global logger manager instance
 logger_manager = LoggerManager()
 
 
-# Convenience functions
 def get_logger(name: str) -> logging.Logger:
     """Get logger instance"""
     return logger_manager.get_logger(name)
@@ -274,7 +237,7 @@ def get_logger(name: str) -> logging.Logger:
 
 def log_security_event(
     event_type: str, message: str, details: Optional[Dict[str, Any]] = None
-):
+) -> Any:
     """Log security event"""
     logger_manager.log_security_event(event_type, message, details)
 
@@ -285,7 +248,7 @@ def log_financial_transaction(
     currency: str,
     transaction_id: str,
     details: Optional[Dict[str, Any]] = None,
-):
+) -> Any:
     """Log financial transaction"""
     logger = get_logger("financial")
     logger_manager.log_financial_transaction(
@@ -293,15 +256,13 @@ def log_financial_transaction(
     )
 
 
-# Flask middleware for request logging
-def setup_request_logging(app):
+def setup_request_logging(app: Any) -> Any:
     """Setup request logging middleware for Flask app"""
 
     @app.before_request
     def before_request():
         g.request_start_time = datetime.now()
         g.request_id = str(uuid.uuid4())
-
         logger = get_logger("requests")
         logger_manager.log_request_start(logger)
 
@@ -309,19 +270,16 @@ def setup_request_logging(app):
     def after_request(response):
         if hasattr(g, "request_start_time"):
             response_time = (datetime.now() - g.request_start_time).total_seconds()
-
             logger = get_logger("requests")
             logger_manager.log_request_end(logger, response.status_code, response_time)
-
         return response
 
     return app
 
 
-# Decorator for function logging
 def log_function_call(
     logger_name: str = None, log_args: bool = False, log_result: bool = False
-):
+) -> Any:
     """Decorator to log function calls"""
 
     def decorator(f):
@@ -330,25 +288,17 @@ def log_function_call(
         @wraps(f)
         def decorated_function(*args, **kwargs):
             logger = get_logger(logger_name or f.__module__)
-
-            # Prepare log data
             log_data = {"function": f.__name__, "module": f.__module__}
-
             if log_args:
                 log_data["args"] = str(args)
                 log_data["kwargs"] = str(kwargs)
-
             logger.info(f"Function call: {f.__name__}", extra=log_data)
-
             try:
                 result = f(*args, **kwargs)
-
                 if log_result:
                     log_data["result"] = str(result)
-
                 logger.info(f"Function completed: {f.__name__}", extra=log_data)
                 return result
-
             except Exception as e:
                 log_data["error"] = str(e)
                 logger.error(f"Function failed: {f.__name__}", extra=log_data)

@@ -5,9 +5,7 @@ Shared message queue utilities for NexaFi services
 import json
 import logging
 from typing import Any, Callable, Dict, Optional
-
 import pika
-
 from ..config.infrastructure import InfrastructureConfig
 
 logger = logging.getLogger(__name__)
@@ -16,12 +14,12 @@ logger = logging.getLogger(__name__)
 class MessageQueue:
     """RabbitMQ message queue manager"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.connection = None
         self.channel = None
         self.config = InfrastructureConfig.get_rabbitmq_config()
 
-    def connect(self):
+    def connect(self) -> Any:
         """Establish connection to RabbitMQ"""
         try:
             credentials = pika.PlainCredentials(
@@ -41,25 +39,25 @@ class MessageQueue:
             logger.error(f"Failed to connect to RabbitMQ: {e}")
             raise
 
-    def disconnect(self):
+    def disconnect(self) -> Any:
         """Close connection to RabbitMQ"""
-        if self.connection and not self.connection.is_closed:
+        if self.connection and (not self.connection.is_closed):
             self.connection.close()
             logger.info("Disconnected from RabbitMQ")
 
-    def declare_queue(self, queue_name: str, durable: bool = True):
+    def declare_queue(self, queue_name: str, durable: bool = True) -> Any:
         """Declare a queue"""
         if not self.channel:
             self.connect()
-
         self.channel.queue_declare(queue=queue_name, durable=durable)
         logger.info(f"Declared queue: {queue_name}")
 
-    def declare_exchange(self, exchange_name: str, exchange_type: str = "direct"):
+    def declare_exchange(
+        self, exchange_name: str, exchange_type: str = "direct"
+    ) -> Any:
         """Declare an exchange"""
         if not self.channel:
             self.connect()
-
         self.channel.exchange_declare(
             exchange=exchange_name, exchange_type=exchange_type, durable=True
         )
@@ -71,25 +69,22 @@ class MessageQueue:
         message: Dict[str, Any],
         exchange: str = "",
         routing_key: Optional[str] = None,
-    ):
+    ) -> Any:
         """Publish a message to a queue"""
         if not self.channel:
             self.connect()
-
         routing_key = routing_key or queue_name
-
         self.channel.basic_publish(
             exchange=exchange,
             routing_key=routing_key,
             body=json.dumps(message),
             properties=pika.BasicProperties(
-                delivery_mode=2,  # Make message persistent
-                content_type="application/json",
+                delivery_mode=2, content_type="application/json"
             ),
         )
         logger.info(f"Published message to {queue_name}: {message}")
 
-    def consume_messages(self, queue_name: str, callback: Callable):
+    def consume_messages(self, queue_name: str, callback: Callable) -> Any:
         """Consume messages from a queue"""
         if not self.channel:
             self.connect()
@@ -104,16 +99,13 @@ class MessageQueue:
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
         self.channel.basic_consume(queue=queue_name, on_message_callback=wrapper)
-
         logger.info(f"Started consuming from {queue_name}")
         self.channel.start_consuming()
 
 
-# Global message queue instance
 mq = MessageQueue()
 
 
-# Queue names
 class Queues:
     REPORT_GENERATION = "report_generation"
     EMAIL_NOTIFICATIONS = "email_notifications"
@@ -124,7 +116,7 @@ class Queues:
     AUDIT_LOGGING = "audit_logging"
 
 
-def publish_task(queue_name: str, task_data: Dict[str, Any]):
+def publish_task(queue_name: str, task_data: Dict[str, Any]) -> Any:
     """Publish a task to a queue"""
     try:
         mq.publish_message(queue_name, task_data)
@@ -134,7 +126,7 @@ def publish_task(queue_name: str, task_data: Dict[str, Any]):
         return False
 
 
-def setup_queues():
+def setup_queues() -> Any:
     """Setup all required queues"""
     queues = [
         Queues.REPORT_GENERATION,
@@ -145,7 +137,6 @@ def setup_queues():
         Queues.PAYMENT_PROCESSING,
         Queues.AUDIT_LOGGING,
     ]
-
     try:
         mq.connect()
         for queue in queues:

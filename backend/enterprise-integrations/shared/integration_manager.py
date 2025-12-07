@@ -12,21 +12,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type
-
 import redis
 import schedule
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
-
 from .base_integration import BaseIntegration, SyncResult, setup_database
 
-# Import specific integrations
 try:
     from ..sap.sap_integration import SAPIntegration, create_sap_integration
 except ImportError:
     SAPIntegration = None
-
 try:
     from ..oracle.oracle_integration import OracleIntegration, create_oracle_integration
 except ImportError:
@@ -50,39 +46,27 @@ class EnterpriseIntegrationManager:
 
     def __init__(
         self, config_file: str = None, database_url: str = None, redis_url: str = None
-    ):
+    ) -> Any:
         self.logger = logging.getLogger(__name__)
         self.integrations: Dict[str, BaseIntegration] = {}
         self.registry: Dict[str, IntegrationRegistry] = {}
         self.scheduler_thread = None
         self.is_running = False
         self.config = {}
-
-        # Initialize database
         if database_url:
             self.db_session = setup_database(database_url)
         else:
             self.db_session = None
-
-        # Initialize Redis
         if redis_url:
             self.redis_client = redis.from_url(redis_url, decode_responses=True)
         else:
             self.redis_client = None
-
-        # Load configuration
         if config_file and os.path.exists(config_file):
             self._load_config(config_file)
-
-        # Register available integrations
         self._register_integrations()
-
-        # Initialize Flask app for webhooks and API
         self.app = Flask(__name__)
         CORS(self.app)
         self._setup_routes()
-
-        # Metrics
         self.sync_counter = Counter(
             "integration_syncs_total", "Total syncs", ["system", "entity", "status"]
         )
@@ -98,7 +82,7 @@ class EnterpriseIntegrationManager:
             ["system", "entity"],
         )
 
-    def _load_config(self, config_file: str):
+    def _load_config(self, config_file: str) -> Any:
         """Load configuration from file"""
         try:
             with open(config_file, "r") as f:
@@ -107,10 +91,8 @@ class EnterpriseIntegrationManager:
         except Exception as e:
             self.logger.error(f"Failed to load configuration: {str(e)}")
 
-    def _register_integrations(self):
+    def _register_integrations(self) -> Any:
         """Register available integrations"""
-
-        # SAP Integration
         if SAPIntegration:
             self.registry["sap"] = IntegrationRegistry(
                 name="SAP",
@@ -125,8 +107,6 @@ class EnterpriseIntegrationManager:
                 ],
                 required_config=["base_url", "username", "password", "client"],
             )
-
-        # Oracle Integration
         if OracleIntegration:
             self.registry["oracle"] = IntegrationRegistry(
                 name="Oracle",
@@ -141,7 +121,6 @@ class EnterpriseIntegrationManager:
                 ],
                 required_config=["base_url", "username", "password"],
             )
-
         self.logger.info(f"Registered {len(self.registry)} integration types")
 
     def create_integration(
@@ -151,17 +130,12 @@ class EnterpriseIntegrationManager:
         try:
             if integration_type not in self.registry:
                 raise ValueError(f"Unknown integration type: {integration_type}")
-
             registry_entry = self.registry[integration_type]
-
-            # Validate required configuration
             for required_field in registry_entry.required_config:
                 if required_field not in config:
                     raise ValueError(
                         f"Missing required configuration: {required_field}"
                     )
-
-            # Create integration using factory function
             if integration_type == "sap":
                 integration = registry_entry.factory_function(
                     config.get("system_type", "S4HANA")
@@ -172,18 +146,12 @@ class EnterpriseIntegrationManager:
                 )
             else:
                 integration = registry_entry.factory_function()
-
-            # Test connection
             if not integration.test_connection():
                 raise Exception("Integration connection test failed")
-
-            # Register integration
             self.integrations[system_name] = integration
             self.active_integrations.set(len(self.integrations))
-
             self.logger.info(f"Created integration: {system_name} ({integration_type})")
             return True
-
         except Exception as e:
             self.logger.error(f"Failed to create integration {system_name}: {str(e)}")
             return False
@@ -199,7 +167,6 @@ class EnterpriseIntegrationManager:
             else:
                 self.logger.warning(f"Integration not found: {system_name}")
                 return False
-
         except Exception as e:
             self.logger.error(f"Failed to remove integration {system_name}: {str(e)}")
             return False
@@ -211,15 +178,11 @@ class EnterpriseIntegrationManager:
         if system_name not in self.integrations:
             self.logger.error(f"Integration not found: {system_name}")
             return None
-
         integration = self.integrations[system_name]
-
         try:
             start_time = time.time()
             result = integration.sync_data(entity_type, **kwargs)
             duration = time.time() - start_time
-
-            # Update metrics
             status = "success" if result.success else "error"
             self.sync_counter.labels(
                 system=system_name, entity=entity_type, status=status
@@ -230,9 +193,7 @@ class EnterpriseIntegrationManager:
             self.last_sync_time.labels(system=system_name, entity=entity_type).set(
                 time.time()
             )
-
             return result
-
         except Exception as e:
             self.logger.error(f"Sync failed for {system_name}.{entity_type}: {str(e)}")
             self.sync_counter.labels(
@@ -243,22 +204,18 @@ class EnterpriseIntegrationManager:
     def sync_all(self, entity_type: str = None) -> Dict[str, SyncResult]:
         """Sync all integrations"""
         results = {}
-
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_to_system = {}
-
             for system_name, integration in self.integrations.items():
                 if entity_type:
                     future = executor.submit(
                         self.sync_integration, system_name, entity_type
                     )
                 else:
-                    # Sync default entity for each system
                     future = executor.submit(
                         self.sync_integration, system_name, "default"
                     )
                 future_to_system[future] = system_name
-
             for future in as_completed(future_to_system):
                 system_name = future_to_system[future]
                 try:
@@ -267,12 +224,11 @@ class EnterpriseIntegrationManager:
                         results[system_name] = result
                 except Exception as e:
                     self.logger.error(f"Sync failed for {system_name}: {str(e)}")
-
         return results
 
     def schedule_sync(
         self, system_name: str, entity_type: str, interval_minutes: int, **kwargs
-    ):
+    ) -> Any:
         """Schedule periodic sync for an integration"""
 
         def sync_job():
@@ -291,11 +247,10 @@ class EnterpriseIntegrationManager:
             f"Scheduled sync for {system_name}.{entity_type} every {interval_minutes} minutes"
         )
 
-    def start_scheduler(self):
+    def start_scheduler(self) -> Any:
         """Start the integration scheduler"""
         if self.is_running:
             return
-
         self.is_running = True
 
         def run_scheduler():
@@ -307,7 +262,7 @@ class EnterpriseIntegrationManager:
         self.scheduler_thread.start()
         self.logger.info("Integration scheduler started")
 
-    def stop_scheduler(self):
+    def stop_scheduler(self) -> Any:
         """Stop the integration scheduler"""
         self.is_running = False
         if self.scheduler_thread:
@@ -332,7 +287,6 @@ class EnterpriseIntegrationManager:
         healthy_count = 0
         total_count = len(self.integrations)
         system_status = {}
-
         for system_name, integration in self.integrations.items():
             try:
                 is_healthy = integration.test_connection()
@@ -341,13 +295,11 @@ class EnterpriseIntegrationManager:
                     healthy_count += 1
             except Exception as e:
                 system_status[system_name] = f"error: {str(e)}"
-
         overall_health = (
             "healthy"
             if healthy_count == total_count
             else "degraded" if healthy_count > 0 else "unhealthy"
         )
-
         return {
             "overall_health": overall_health,
             "healthy_systems": healthy_count,
@@ -356,7 +308,7 @@ class EnterpriseIntegrationManager:
             "timestamp": datetime.utcnow().isoformat(),
         }
 
-    def _setup_routes(self):
+    def _setup_routes(self) -> Any:
         """Setup Flask routes for API and webhooks"""
 
         @self.app.route("/health", methods=["GET"])
@@ -391,15 +343,12 @@ class EnterpriseIntegrationManager:
             system_name = data.get("system_name")
             integration_type = data.get("integration_type")
             config = data.get("config", {})
-
             if not system_name or not integration_type:
                 return (
                     jsonify({"error": "Missing system_name or integration_type"}),
                     400,
                 )
-
             success = self.create_integration(system_name, integration_type, config)
-
             if success:
                 return jsonify(
                     {"message": f"Integration {system_name} created successfully"}
@@ -413,7 +362,6 @@ class EnterpriseIntegrationManager:
         @self.app.route("/integrations/<system_name>", methods=["DELETE"])
         def delete_integration(system_name):
             success = self.remove_integration(system_name)
-
             if success:
                 return jsonify(
                     {"message": f"Integration {system_name} removed successfully"}
@@ -430,13 +378,12 @@ class EnterpriseIntegrationManager:
             system_name = data.get("system_name")
             entity_type = data.get("entity_type", "default")
             kwargs = data.get("parameters", {})
-
             if system_name:
                 result = self.sync_integration(system_name, entity_type, **kwargs)
                 if result:
                     return jsonify(asdict(result))
                 else:
-                    return jsonify({"error": "Sync failed"}), 500
+                    return (jsonify({"error": "Sync failed"}), 500)
             else:
                 results = self.sync_all(entity_type)
                 return jsonify(
@@ -446,46 +393,47 @@ class EnterpriseIntegrationManager:
         @self.app.route("/webhook/<system_name>", methods=["POST"])
         def webhook(system_name):
             if system_name not in self.integrations:
-                return jsonify({"error": f"Integration not found: {system_name}"}), 404
-
+                return (
+                    jsonify({"error": f"Integration not found: {system_name}"}),
+                    404,
+                )
             integration = self.integrations[system_name]
             payload = request.get_json()
             signature = request.headers.get("X-Signature")
-
             try:
                 success = integration.process_webhook(payload, signature)
                 if success:
                     return jsonify({"message": "Webhook processed successfully"})
                 else:
-                    return jsonify({"error": "Webhook processing failed"}), 500
+                    return (jsonify({"error": "Webhook processing failed"}), 500)
             except Exception as e:
                 self.logger.error(f"Webhook processing error: {str(e)}")
-                return jsonify({"error": str(e)}), 500
+                return (jsonify({"error": str(e)}), 500)
 
         @self.app.route("/metrics", methods=["GET"])
         def metrics():
-            return generate_latest(), 200, {"Content-Type": "text/plain; charset=utf-8"}
+            return (
+                generate_latest(),
+                200,
+                {"Content-Type": "text/plain; charset=utf-8"},
+            )
 
     def run_api_server(
         self, host: str = "0.0.0.0", port: int = 5000, debug: bool = False
-    ):
+    ) -> Any:
         """Run the Flask API server"""
         self.logger.info(f"Starting API server on {host}:{port}")
         self.app.run(host=host, port=port, debug=debug)
 
-    def load_integrations_from_config(self):
+    def load_integrations_from_config(self) -> Any:
         """Load integrations from configuration file"""
         if not self.config.get("integrations"):
             return
-
         for integration_config in self.config["integrations"]:
             system_name = integration_config["system_name"]
             integration_type = integration_config["type"]
             config = integration_config["config"]
-
             self.create_integration(system_name, integration_type, config)
-
-            # Schedule syncs if configured
             if "schedules" in integration_config:
                 for schedule_config in integration_config["schedules"]:
                     self.schedule_sync(
@@ -504,7 +452,6 @@ class EnterpriseIntegrationManager:
                 "total_integrations": len(self.integrations),
             },
         }
-
         for system_name, integration in self.integrations.items():
             status = integration.get_integration_status()
             config["integrations"].append(
@@ -517,10 +464,9 @@ class EnterpriseIntegrationManager:
                     "last_sync": status.get("last_sync"),
                 }
             )
-
         return config
 
-    def backup_integration_data(self, backup_path: str):
+    def backup_integration_data(self, backup_path: str) -> Any:
         """Backup integration data and configuration"""
         try:
             backup_data = {
@@ -528,27 +474,20 @@ class EnterpriseIntegrationManager:
                 "health_status": self.health_check(),
                 "backup_timestamp": datetime.utcnow().isoformat(),
             }
-
             with open(backup_path, "w") as f:
                 json.dump(backup_data, f, indent=2)
-
             self.logger.info(f"Integration data backed up to {backup_path}")
-
         except Exception as e:
             self.logger.error(f"Backup failed: {str(e)}")
 
-    def restore_integration_data(self, backup_path: str):
+    def restore_integration_data(self, backup_path: str) -> Any:
         """Restore integration data from backup"""
         try:
             with open(backup_path, "r") as f:
                 backup_data = json.load(f)
-
-            # Restore configuration
             self.config = backup_data.get("configuration", {})
             self.load_integrations_from_config()
-
             self.logger.info(f"Integration data restored from {backup_path}")
-
         except Exception as e:
             self.logger.error(f"Restore failed: {str(e)}")
 
@@ -557,31 +496,17 @@ def create_enterprise_integration_manager(
     config_file: str = None,
 ) -> EnterpriseIntegrationManager:
     """Factory function to create enterprise integration manager"""
-
-    # Get configuration from environment
     database_url = os.getenv("INTEGRATION_DATABASE_URL", "sqlite:///integrations.db")
     redis_url = os.getenv("INTEGRATION_REDIS_URL", "redis://localhost:6379/0")
-
-    # Create manager
     manager = EnterpriseIntegrationManager(
         config_file=config_file, database_url=database_url, redis_url=redis_url
     )
-
-    # Load integrations from config
     manager.load_integrations_from_config()
-
     return manager
 
 
 if __name__ == "__main__":
-    # Example usage
     logging.basicConfig(level=logging.INFO)
-
-    # Create integration manager
     manager = create_enterprise_integration_manager("integration_config.json")
-
-    # Start scheduler
     manager.start_scheduler()
-
-    # Run API server
     manager.run_api_server(port=5000, debug=True)

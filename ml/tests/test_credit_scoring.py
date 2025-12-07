@@ -1,12 +1,11 @@
 import unittest
-
 import pandas as pd
-
 from NexaFi.ml.models.credit_scoring.credit_scoring import CreditScorer
 
 
 class TestCreditScorer(unittest.TestCase):
-    def setUp(self):
+
+    def setUp(self) -> Any:
         self.scorer = CreditScorer()
         self.data = {
             "age": [25, 30, 35, 40, 45, 50, 55, 60, 28, 33],
@@ -65,13 +64,13 @@ class TestCreditScorer(unittest.TestCase):
         self.X = self.processed_df.drop("credit_score_label", axis=1)
         self.y = self.processed_df["credit_score_label"]
 
-    def test_preprocess_data(self):
+    def test_preprocess_data(self) -> Any:
         processed_df = self.scorer.preprocess_data(self.df.copy())
         self.assertIn("education_university", processed_df.columns)
         self.assertIn("marital_status_single", processed_df.columns)
         self.assertFalse(processed_df.isnull().any().any())
 
-    def test_train_and_predict(self):
+    def test_train_and_predict(self) -> Any:
         self.scorer.train(self.X, self.y)
         new_applicant_data = {
             "age": [32],
@@ -82,19 +81,16 @@ class TestCreditScorer(unittest.TestCase):
         }
         new_applicant_df = pd.DataFrame(new_applicant_data)
         processed_new_applicant_df = self.scorer.preprocess_data(new_applicant_df)
-
-        # Align columns for prediction
         train_cols = self.X.columns
         missing_cols = set(train_cols) - set(processed_new_applicant_df.columns)
         for c in missing_cols:
             processed_new_applicant_df[c] = 0
         processed_new_applicant_df = processed_new_applicant_df[train_cols]
-
         predictions = self.scorer.predict(processed_new_applicant_df)
         self.assertEqual(len(predictions), 1)
         self.assertIsInstance(predictions[0], float)
 
-    def test_predict_before_train(self):
+    def test_predict_before_train(self) -> Any:
         with self.assertRaises(ValueError):
             self.scorer.predict(self.X.iloc[:1])
 

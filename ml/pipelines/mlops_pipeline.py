@@ -10,7 +10,6 @@ import os
 import pickle
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Tuple
-
 import boto3
 import docker
 import mlflow
@@ -21,7 +20,6 @@ from kubernetes import client, config
 from mlflow.tracking import MlflowClient
 from sklearn.base import BaseEstimator
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -56,7 +54,7 @@ class ModelMetadata:
 class DeploymentConfig:
     """Deployment configuration for models"""
 
-    environment: str  # dev, staging, prod
+    environment: str
     replicas: int
     cpu_request: str
     cpu_limit: str
@@ -80,7 +78,7 @@ class DeploymentConfig:
 class ModelRegistry:
     """Enterprise model registry with versioning and metadata management"""
 
-    def __init__(self, registry_uri: str, s3_bucket: str = None):
+    def __init__(self, registry_uri: str, s3_bucket: str = None) -> Any:
         self.registry_uri = registry_uri
         self.s3_bucket = s3_bucket
         self.client = MlflowClient(registry_uri)
@@ -95,29 +93,21 @@ class ModelRegistry:
     ) -> str:
         """Register a new model version with comprehensive metadata"""
         try:
-            # Start MLflow run
             with mlflow.start_run(
                 run_name=f"{metadata.model_name}_v{metadata.version}"
             ):
-                # Log model
                 model_uri = mlflow.sklearn.log_model(
                     model, "model", registered_model_name=metadata.model_name
                 )
-
-                # Log metadata
                 mlflow.log_params(metadata.hyperparameters)
                 mlflow.log_metrics(metadata.performance_metrics)
                 mlflow.log_dict(asdict(metadata), "metadata.json")
-
-                # Log additional artifacts
                 if model_artifacts:
                     for name, artifact in model_artifacts.items():
                         if isinstance(artifact, dict):
                             mlflow.log_dict(artifact, f"{name}.json")
                         else:
                             mlflow.log_artifact(artifact, name)
-
-                # Set model version tags
                 model_version = self.client.create_model_version(
                     name=metadata.model_name,
                     source=model_uri.model_uri,
@@ -129,16 +119,12 @@ class ModelRegistry:
                         "framework": metadata.framework,
                     },
                 )
-
-                # Store in S3 if configured
                 if self.s3_client:
                     self._store_model_s3(model, metadata)
-
                 self.logger.info(
                     f"Model {metadata.model_name} v{metadata.version} registered successfully"
                 )
                 return model_version.version
-
         except Exception as e:
             self.logger.error(f"Failed to register model: {str(e)}")
             raise
@@ -154,20 +140,12 @@ class ModelRegistry:
                 )[0]
             else:
                 model_version = self.client.get_model_version(model_name, version)
-
-            # Load model
             model_uri = f"models:/{model_name}/{model_version.version}"
             model = mlflow.sklearn.load_model(model_uri)
-
-            # Load metadata
             run = self.client.get_run(model_version.run_id)
             f"{run.info.artifact_uri}/metadata.json"
-
-            # Reconstruct metadata
             metadata = self._load_metadata(model_version, run)
-
-            return model, metadata
-
+            return (model, metadata)
         except Exception as e:
             self.logger.error(f"Failed to retrieve model: {str(e)}")
             raise
@@ -196,26 +174,21 @@ class ModelRegistry:
             self.logger.error(f"Failed to archive model: {str(e)}")
             return False
 
-    def _store_model_s3(self, model: BaseEstimator, metadata: ModelMetadata):
+    def _store_model_s3(self, model: BaseEstimator, metadata: ModelMetadata) -> Any:
         """Store model artifacts in S3"""
         model_key = f"models/{metadata.model_name}/v{metadata.version}/model.pkl"
         metadata_key = f"models/{metadata.model_name}/v{metadata.version}/metadata.json"
-
-        # Serialize and upload model
         model_bytes = pickle.dumps(model)
         self.s3_client.put_object(
             Bucket=self.s3_bucket, Key=model_key, Body=model_bytes
         )
-
-        # Upload metadata
         metadata_json = json.dumps(asdict(metadata), default=str)
         self.s3_client.put_object(
             Bucket=self.s3_bucket, Key=metadata_key, Body=metadata_json
         )
 
-    def _load_metadata(self, model_version, run) -> ModelMetadata:
+    def _load_metadata(self, model_version: Any, run: Any) -> ModelMetadata:
         """Load metadata from MLflow run"""
-        # This is a simplified version - in practice, you'd reconstruct from stored artifacts
         return ModelMetadata(
             model_id=model_version.run_id,
             model_name=model_version.name,
@@ -244,7 +217,7 @@ class ModelRegistry:
 class ModelValidator:
     """Comprehensive model validation for financial compliance"""
 
-    def __init__(self):
+    def __init__(self) -> Any:
         self.logger = logging.getLogger(__name__)
         self.validation_rules = self._load_validation_rules()
 
@@ -271,8 +244,6 @@ class ModelValidator:
             "issues": [],
             "recommendations": [],
         }
-
-        # Calculate overall score and determine pass/fail
         scores = [
             v.get("score", 0)
             for v in validation_results.values()
@@ -280,7 +251,6 @@ class ModelValidator:
         ]
         validation_results["overall_score"] = np.mean(scores) if scores else 0.0
         validation_results["passed"] = validation_results["overall_score"] >= 0.8
-
         return validation_results
 
     def _validate_performance(
@@ -289,7 +259,6 @@ class ModelValidator:
         """Validate model performance metrics"""
         try:
             predictions = model.predict(test_data)
-
             metrics = {
                 "accuracy": accuracy_score(test_labels, predictions),
                 "precision": precision_score(
@@ -298,20 +267,16 @@ class ModelValidator:
                 "recall": recall_score(test_labels, predictions, average="weighted"),
                 "f1_score": f1_score(test_labels, predictions, average="weighted"),
             }
-
-            # Performance thresholds for financial models
             thresholds = {
                 "accuracy": 0.85,
-                "precision": 0.80,
+                "precision": 0.8,
                 "recall": 0.75,
-                "f1_score": 0.80,
+                "f1_score": 0.8,
             }
-
             passed_metrics = sum(
-                1 for metric, value in metrics.items() if value >= thresholds[metric]
+                (1 for metric, value in metrics.items() if value >= thresholds[metric])
             )
             score = passed_metrics / len(thresholds)
-
             return {
                 "metrics": metrics,
                 "thresholds": thresholds,
@@ -323,7 +288,6 @@ class ModelValidator:
                     if value < thresholds[metric]
                 ],
             }
-
         except Exception as e:
             self.logger.error(f"Performance validation failed: {str(e)}")
             return {"score": 0.0, "passed": False, "error": str(e)}
@@ -333,13 +297,9 @@ class ModelValidator:
     ) -> Dict[str, Any]:
         """Validate model for bias and fairness"""
         try:
-            # Simplified bias detection - in practice, use specialized libraries like Fairlearn
             predictions = model.predict(test_data)
-
-            # Check for demographic parity (if demographic features are available)
             bias_metrics = {}
-            protected_attributes = ["gender", "age_group", "ethnicity"]  # Example
-
+            protected_attributes = ["gender", "age_group", "ethnicity"]
             for attr in protected_attributes:
                 if attr in test_data.columns:
                     groups = test_data[attr].unique()
@@ -349,15 +309,11 @@ class ModelValidator:
                         if mask.sum() > 0:
                             group_rate = predictions[mask].mean()
                             group_rates[str(group)] = group_rate
-
                     if len(group_rates) > 1:
                         rates = list(group_rates.values())
                         bias_metrics[f"{attr}_disparity"] = max(rates) - min(rates)
-
-            # Calculate bias score
             max_disparity = max(bias_metrics.values()) if bias_metrics else 0.0
             score = max(0.0, 1.0 - max_disparity)
-
             return {
                 "bias_metrics": bias_metrics,
                 "max_disparity": max_disparity,
@@ -369,7 +325,6 @@ class ModelValidator:
                     if disp > 0.1
                 ],
             }
-
         except Exception as e:
             self.logger.error(f"Bias validation failed: {str(e)}")
             return {"score": 0.0, "passed": False, "error": str(e)}
@@ -379,37 +334,26 @@ class ModelValidator:
     ) -> Dict[str, Any]:
         """Validate model stability and robustness"""
         try:
-            # Test with noisy data
             noise_levels = [0.01, 0.05, 0.1]
             stability_scores = []
-
             original_predictions = model.predict(test_data)
-
             for noise_level in noise_levels:
-                # Add Gaussian noise to numerical features
                 noisy_data = test_data.copy()
                 numerical_cols = test_data.select_dtypes(include=[np.number]).columns
-
                 for col in numerical_cols:
                     noise = np.random.normal(
                         0, noise_level * test_data[col].std(), len(test_data)
                     )
                     noisy_data[col] = test_data[col] + noise
-
                 noisy_predictions = model.predict(noisy_data)
-
-                # Calculate prediction stability
                 if hasattr(model, "predict_proba"):
                     original_proba = model.predict_proba(test_data)
                     noisy_proba = model.predict_proba(noisy_data)
                     stability = 1.0 - np.mean(np.abs(original_proba - noisy_proba))
                 else:
                     stability = np.mean(original_predictions == noisy_predictions)
-
                 stability_scores.append(stability)
-
             avg_stability = np.mean(stability_scores)
-
             return {
                 "stability_scores": dict(zip(noise_levels, stability_scores)),
                 "average_stability": avg_stability,
@@ -421,7 +365,6 @@ class ModelValidator:
                     else ["Model shows instability with noisy inputs"]
                 ),
             }
-
         except Exception as e:
             self.logger.error(f"Stability validation failed: {str(e)}")
             return {"score": 0.0, "passed": False, "error": str(e)}
@@ -438,10 +381,8 @@ class ModelValidator:
             "risk_assessment": metadata.risk_level in ["low", "medium", "high"],
             "audit_trail": metadata.created_by is not None,
         }
-
         passed_checks = sum(compliance_checks.values())
         score = passed_checks / len(compliance_checks)
-
         return {
             "compliance_checks": compliance_checks,
             "score": score,
@@ -456,15 +397,13 @@ class ModelValidator:
     def _validate_security(self, model: BaseEstimator) -> Dict[str, Any]:
         """Validate model security aspects"""
         security_checks = {
-            "no_hardcoded_secrets": True,  # Would implement actual checks
+            "no_hardcoded_secrets": True,
             "input_sanitization": True,
             "output_validation": True,
             "access_control": True,
             "encryption_support": True,
         }
-
         score = sum(security_checks.values()) / len(security_checks)
-
         return {
             "security_checks": security_checks,
             "score": score,
@@ -475,24 +414,17 @@ class ModelValidator:
     def _validate_interpretability(self, model: BaseEstimator) -> Dict[str, Any]:
         """Validate model interpretability for regulatory requirements"""
         interpretability_score = 0.0
-
-        # Check if model has feature importance
         if hasattr(model, "feature_importances_"):
             interpretability_score += 0.4
-
-        # Check if model has coefficients (linear models)
         if hasattr(model, "coef_"):
             interpretability_score += 0.4
-
-        # Check if model is inherently interpretable
         interpretable_models = [
             "LinearRegression",
             "LogisticRegression",
             "DecisionTree",
         ]
-        if any(model_type in str(type(model)) for model_type in interpretable_models):
+        if any((model_type in str(type(model)) for model_type in interpretable_models)):
             interpretability_score += 0.2
-
         return {
             "interpretability_score": interpretability_score,
             "score": interpretability_score,
@@ -507,14 +439,12 @@ class ModelValidator:
     def _validate_data_quality(self, test_data: pd.DataFrame) -> Dict[str, Any]:
         """Validate data quality for model testing"""
         quality_metrics = {
-            "completeness": 1.0 - (test_data.isnull().sum().sum() / test_data.size),
+            "completeness": 1.0 - test_data.isnull().sum().sum() / test_data.size,
             "uniqueness": len(test_data.drop_duplicates()) / len(test_data),
-            "consistency": 1.0,  # Would implement actual consistency checks
-            "validity": 1.0,  # Would implement actual validity checks
+            "consistency": 1.0,
+            "validity": 1.0,
         }
-
         score = np.mean(list(quality_metrics.values()))
-
         return {
             "quality_metrics": quality_metrics,
             "score": score,
@@ -527,7 +457,7 @@ class ModelValidator:
         return {
             "performance_thresholds": {
                 "accuracy": 0.85,
-                "precision": 0.80,
+                "precision": 0.8,
                 "recall": 0.75,
             },
             "bias_thresholds": {"max_disparity": 0.1},
@@ -538,7 +468,7 @@ class ModelValidator:
 class ModelDeployer:
     """Automated model deployment with Kubernetes and Docker"""
 
-    def __init__(self, registry_url: str, namespace: str = "nexafi-ml"):
+    def __init__(self, registry_url: str, namespace: str = "nexafi-ml") -> Any:
         self.registry_url = registry_url
         self.namespace = namespace
         self.docker_client = docker.from_env()
@@ -550,24 +480,15 @@ class ModelDeployer:
     ) -> bool:
         """Deploy model to Kubernetes cluster"""
         try:
-            # Build Docker image
             image_tag = self._build_model_image(model_name, version)
-
-            # Create Kubernetes manifests
             manifests = self._create_k8s_manifests(
                 model_name, version, image_tag, config
             )
-
-            # Deploy to Kubernetes
             self._deploy_to_k8s(manifests)
-
-            # Setup monitoring
             if config.monitoring_enabled:
                 self._setup_monitoring(model_name, version)
-
             self.logger.info(f"Model {model_name} v{version} deployed successfully")
             return True
-
         except Exception as e:
             self.logger.error(f"Deployment failed: {str(e)}")
             return False
@@ -576,25 +497,17 @@ class ModelDeployer:
         """Rollback to previous model version"""
         try:
             deployment_name = f"{model_name}-deployment"
-
-            # Get deployment
             apps_v1 = client.AppsV1Api()
             deployment = apps_v1.read_namespaced_deployment(
                 name=deployment_name, namespace=self.namespace
             )
-
-            # Update image to previous version
             previous_image = f"{self.registry_url}/{model_name}:{previous_version}"
             deployment.spec.template.spec.containers[0].image = previous_image
-
-            # Apply update
             apps_v1.patch_namespaced_deployment(
                 name=deployment_name, namespace=self.namespace, body=deployment
             )
-
             self.logger.info(f"Rolled back {model_name} to version {previous_version}")
             return True
-
         except Exception as e:
             self.logger.error(f"Rollback failed: {str(e)}")
             return False
@@ -602,61 +515,25 @@ class ModelDeployer:
     def _build_model_image(self, model_name: str, version: str) -> str:
         """Build Docker image for model"""
         dockerfile_content = self._generate_dockerfile(model_name, version)
-
-        # Create temporary directory for build context
         import tempfile
 
         with tempfile.TemporaryDirectory() as temp_dir:
             dockerfile_path = os.path.join(temp_dir, "Dockerfile")
             with open(dockerfile_path, "w") as f:
                 f.write(dockerfile_content)
-
-            # Build image
             image_tag = f"{self.registry_url}/{model_name}:{version}"
             self.docker_client.images.build(path=temp_dir, tag=image_tag, rm=True)
-
-            # Push to registry
             self.docker_client.images.push(image_tag)
-
             return image_tag
 
     def _generate_dockerfile(self, model_name: str, version: str) -> str:
         """Generate Dockerfile for model serving"""
-        return f"""
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy model serving code
-COPY model_server.py .
-COPY model_loader.py .
-
-# Set environment variables
-ENV MODEL_NAME={model_name}
-ENV MODEL_VERSION={version}
-ENV PYTHONPATH=/app
-
-# Expose port
-EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \\
-    CMD curl -f http://localhost:8080/health || exit 1
-
-# Run model server
-CMD ["python", "model_server.py"]
-"""
+        return f'\nFROM python:3.11-slim\n\nWORKDIR /app\n\n# Install dependencies\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\n# Copy model serving code\nCOPY model_server.py .\nCOPY model_loader.py .\n\n# Set environment variables\nENV MODEL_NAME={model_name}\nENV MODEL_VERSION={version}\nENV PYTHONPATH=/app\n\n# Expose port\nEXPOSE 8080\n\n# Health check\nHEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \\\n    CMD curl -f http://localhost:8080/health || exit 1\n\n# Run model server\nCMD ["python", "model_server.py"]\n'
 
     def _create_k8s_manifests(
         self, model_name: str, version: str, image_tag: str, config: DeploymentConfig
     ) -> Dict[str, Any]:
         """Create Kubernetes deployment manifests"""
-
-        # Deployment manifest
         deployment = {
             "apiVersion": "apps/v1",
             "kind": "Deployment",
@@ -727,8 +604,6 @@ CMD ["python", "model_server.py"]
                 "strategy": config.rolling_update_strategy,
             },
         }
-
-        # Service manifest
         service = {
             "apiVersion": "v1",
             "kind": "Service",
@@ -743,8 +618,6 @@ CMD ["python", "model_server.py"]
                 "type": "ClusterIP",
             },
         }
-
-        # HPA manifest (if auto-scaling enabled)
         hpa = None
         if config.auto_scaling:
             hpa = {
@@ -773,27 +646,22 @@ CMD ["python", "model_server.py"]
                     ],
                 },
             }
-
         manifests = {"deployment": deployment, "service": service}
-
         if hpa:
             manifests["hpa"] = hpa
-
         return manifests
 
-    def _deploy_to_k8s(self, manifests: Dict[str, Any]):
+    def _deploy_to_k8s(self, manifests: Dict[str, Any]) -> Any:
         """Deploy manifests to Kubernetes"""
         apps_v1 = client.AppsV1Api()
         core_v1 = client.CoreV1Api()
         autoscaling_v2 = client.AutoscalingV2Api()
-
-        # Deploy deployment
         try:
             apps_v1.create_namespaced_deployment(
                 namespace=self.namespace, body=manifests["deployment"]
             )
         except client.ApiException as e:
-            if e.status == 409:  # Already exists
+            if e.status == 409:
                 apps_v1.patch_namespaced_deployment(
                     name=manifests["deployment"]["metadata"]["name"],
                     namespace=self.namespace,
@@ -801,14 +669,12 @@ CMD ["python", "model_server.py"]
                 )
             else:
                 raise
-
-        # Deploy service
         try:
             core_v1.create_namespaced_service(
                 namespace=self.namespace, body=manifests["service"]
             )
         except client.ApiException as e:
-            if e.status == 409:  # Already exists
+            if e.status == 409:
                 core_v1.patch_namespaced_service(
                     name=manifests["service"]["metadata"]["name"],
                     namespace=self.namespace,
@@ -816,15 +682,13 @@ CMD ["python", "model_server.py"]
                 )
             else:
                 raise
-
-        # Deploy HPA if present
         if "hpa" in manifests:
             try:
                 autoscaling_v2.create_namespaced_horizontal_pod_autoscaler(
                     namespace=self.namespace, body=manifests["hpa"]
                 )
             except client.ApiException as e:
-                if e.status == 409:  # Already exists
+                if e.status == 409:
                     autoscaling_v2.patch_namespaced_horizontal_pod_autoscaler(
                         name=manifests["hpa"]["metadata"]["name"],
                         namespace=self.namespace,
@@ -833,13 +697,11 @@ CMD ["python", "model_server.py"]
                 else:
                     raise
 
-    def _setup_monitoring(self, model_name: str, version: str):
+    def _setup_monitoring(self, model_name: str, version: str) -> Any:
         """Setup monitoring for deployed model"""
-        # This would integrate with Prometheus/Grafana
-        # For now, just log the setup
         self.logger.info(f"Setting up monitoring for {model_name} v{version}")
 
-    def _init_k8s_client(self):
+    def _init_k8s_client(self) -> Any:
         """Initialize Kubernetes client"""
         try:
             config.load_incluster_config()
@@ -851,7 +713,7 @@ CMD ["python", "model_server.py"]
 class ModelMonitor:
     """Comprehensive model monitoring and alerting"""
 
-    def __init__(self, metrics_backend: str = "prometheus"):
+    def __init__(self, metrics_backend: str = "prometheus") -> Any:
         self.metrics_backend = metrics_backend
         self.logger = logging.getLogger(__name__)
         self.alert_thresholds = self._load_alert_thresholds()
@@ -878,18 +740,11 @@ class ModelMonitor:
             ),
             "alerts": [],
         }
-
-        # Check for alerts
         alerts = self._check_alerts(monitoring_results)
         monitoring_results["alerts"] = alerts
-
-        # Log metrics
         self._log_metrics(monitoring_results)
-
-        # Send alerts if necessary
         if alerts:
             self._send_alerts(alerts)
-
         return monitoring_results
 
     def _analyze_predictions(self, predictions: np.ndarray) -> Dict[str, float]:
@@ -907,21 +762,15 @@ class ModelMonitor:
 
     def _detect_data_drift(self, features: pd.DataFrame) -> Dict[str, Any]:
         """Detect data drift in input features"""
-        # Simplified drift detection - in practice, use specialized libraries
         drift_results = {}
-
         for column in features.select_dtypes(include=[np.number]).columns:
             current_mean = features[column].mean()
             current_std = features[column].std()
-
-            # Compare with baseline (would be stored from training)
-            # For now, use simple statistical checks
-            drift_score = abs(current_mean) / (current_std + 1e-8)
+            drift_score = abs(current_mean) / (current_std + 1e-08)
             drift_results[column] = {
                 "drift_score": float(drift_score),
-                "drifted": drift_score > 2.0,  # Simple threshold
+                "drifted": drift_score > 2.0,
             }
-
         return drift_results
 
     def _calculate_performance_metrics(
@@ -930,9 +779,7 @@ class ModelMonitor:
         """Calculate performance metrics when ground truth is available"""
         if len(predictions) != len(actuals):
             return {}
-
-        # For classification
-        if len(np.unique(actuals)) <= 10:  # Assume classification
+        if len(np.unique(actuals)) <= 10:
             return {
                 "accuracy": float(accuracy_score(actuals, predictions)),
                 "precision": float(
@@ -941,7 +788,7 @@ class ModelMonitor:
                 "recall": float(recall_score(actuals, predictions, average="weighted")),
                 "f1_score": float(f1_score(actuals, predictions, average="weighted")),
             }
-        else:  # Regression
+        else:
             from sklearn.metrics import (
                 mean_absolute_error,
                 mean_squared_error,
@@ -957,8 +804,6 @@ class ModelMonitor:
     def _check_alerts(self, monitoring_results: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Check for alert conditions"""
         alerts = []
-
-        # Check prediction distribution alerts
         pred_stats = monitoring_results["prediction_stats"]
         if pred_stats["std"] > self.alert_thresholds["prediction_std_threshold"]:
             alerts.append(
@@ -969,8 +814,6 @@ class ModelMonitor:
                     "threshold": self.alert_thresholds["prediction_std_threshold"],
                 }
             )
-
-        # Check data drift alerts
         if monitoring_results["data_drift"]:
             drifted_features = [
                 col
@@ -986,8 +829,6 @@ class ModelMonitor:
                         "features": drifted_features,
                     }
                 )
-
-        # Check performance degradation alerts
         if monitoring_results["performance_metrics"]:
             perf_metrics = monitoring_results["performance_metrics"]
             if "accuracy" in perf_metrics:
@@ -1000,21 +841,18 @@ class ModelMonitor:
                             "threshold": self.alert_thresholds["min_accuracy"],
                         }
                     )
-
         return alerts
 
-    def _log_metrics(self, monitoring_results: Dict[str, Any]):
+    def _log_metrics(self, monitoring_results: Dict[str, Any]) -> Any:
         """Log metrics to monitoring backend"""
-        # In practice, this would send metrics to Prometheus, CloudWatch, etc.
         self.logger.info(
             f"Model monitoring metrics: {json.dumps(monitoring_results, indent=2)}"
         )
 
-    def _send_alerts(self, alerts: List[Dict[str, Any]]):
+    def _send_alerts(self, alerts: List[Dict[str, Any]]) -> Any:
         """Send alerts to notification channels"""
         for alert in alerts:
             self.logger.warning(f"Model Alert: {alert['message']}")
-            # In practice, this would send to Slack, email, PagerDuty, etc.
 
     def _load_alert_thresholds(self) -> Dict[str, float]:
         """Load alert thresholds from configuration"""
@@ -1029,7 +867,7 @@ class ModelMonitor:
 class MLOpsPipeline:
     """Main MLOps pipeline orchestrator"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> Any:
         self.config = config
         self.registry = ModelRegistry(config["mlflow_uri"], config.get("s3_bucket"))
         self.validator = ModelValidator()
@@ -1049,27 +887,21 @@ class MLOpsPipeline:
     ) -> bool:
         """Complete MLOps pipeline: train, validate, register, and deploy"""
         try:
-            # Step 1: Validate model
             self.logger.info(
                 f"Validating model {metadata.model_name} v{metadata.version}"
             )
             validation_results = self.validator.validate_model(
                 model, metadata, test_data, test_labels
             )
-
             if not validation_results["passed"]:
                 self.logger.error(
                     f"Model validation failed: {validation_results['issues']}"
                 )
                 return False
-
-            # Step 2: Register model
             self.logger.info(
                 f"Registering model {metadata.model_name} v{metadata.version}"
             )
             self.registry.register_model(model, metadata)
-
-            # Step 3: Deploy model (if approved)
             if metadata.approval_status == "approved":
                 self.logger.info(
                     f"Deploying model {metadata.model_name} v{metadata.version}"
@@ -1077,14 +909,10 @@ class MLOpsPipeline:
                 deployment_success = self.deployer.deploy_model(
                     metadata.model_name, metadata.version, deployment_config
                 )
-
                 if deployment_success:
-                    # Step 4: Setup monitoring
                     self.logger.info(
                         f"Setting up monitoring for {metadata.model_name} v{metadata.version}"
                     )
-                    # Monitoring is set up as part of deployment
-
                     self.logger.info(
                         f"MLOps pipeline completed successfully for {metadata.model_name} v{metadata.version}"
                     )
@@ -1099,7 +927,6 @@ class MLOpsPipeline:
                     f"Model {metadata.model_name} v{metadata.version} registered but not deployed (approval required)"
                 )
                 return True
-
         except Exception as e:
             self.logger.error(f"MLOps pipeline failed: {str(e)}")
             return False
@@ -1107,11 +934,8 @@ class MLOpsPipeline:
     def promote_model_to_production(self, model_name: str, version: str) -> bool:
         """Promote model from staging to production"""
         try:
-            # Promote in registry
             success = self.registry.promote_model(model_name, version, "Production")
-
             if success:
-                # Update deployment to production configuration
                 prod_config = DeploymentConfig(
                     environment="prod",
                     replicas=3,
@@ -1136,11 +960,9 @@ class MLOpsPipeline:
                     logging_level="INFO",
                     feature_flags={},
                 )
-
                 deployment_success = self.deployer.deploy_model(
                     model_name, version, prod_config
                 )
-
                 if deployment_success:
                     self.logger.info(
                         f"Model {model_name} v{version} promoted to production"
@@ -1153,7 +975,6 @@ class MLOpsPipeline:
                     return False
             else:
                 return False
-
         except Exception as e:
             self.logger.error(f"Failed to promote model to production: {str(e)}")
             return False
@@ -1161,11 +982,8 @@ class MLOpsPipeline:
     def rollback_model(self, model_name: str, target_version: str) -> bool:
         """Rollback model to previous version"""
         try:
-            # Rollback deployment
             success = self.deployer.rollback_deployment(model_name, target_version)
-
             if success:
-                # Update registry
                 self.registry.promote_model(model_name, target_version, "Production")
                 self.logger.info(
                     f"Model {model_name} rolled back to version {target_version}"
@@ -1173,13 +991,11 @@ class MLOpsPipeline:
                 return True
             else:
                 return False
-
         except Exception as e:
             self.logger.error(f"Failed to rollback model: {str(e)}")
             return False
 
 
-# Example usage and configuration
 def create_mlops_config() -> Dict[str, Any]:
     """Create default MLOps configuration"""
     return {
@@ -1197,9 +1013,6 @@ def create_mlops_config() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    # Example usage
     config = create_mlops_config()
     pipeline = MLOpsPipeline(config)
-
-    # This would be integrated with actual model training workflows
     logger.info("MLOps Pipeline initialized successfully")

@@ -1,15 +1,14 @@
 import pytesseract
 import spacy
 from PIL import Image
-
 from core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
 class DocumentProcessor:
-    def __init__(self):
-        # Load a pre-trained spaCy model for entity recognition
+
+    def __init__(self) -> Any:
         try:
             self.nlp = spacy.load("en_core_web_sm")
         except OSError:
@@ -17,7 +16,7 @@ class DocumentProcessor:
             spacy.cli.download("en_core_web_sm")
             self.nlp = spacy.load("en_core_web_sm")
 
-    def extract_text_from_image(self, image_path):
+    def extract_text_from_image(self, image_path: Any) -> Any:
         try:
             text = pytesseract.image_to_string(Image.open(image_path))
             return text
@@ -25,10 +24,9 @@ class DocumentProcessor:
             logger.info(f"Error during OCR: {e}")
             return None
 
-    def analyze_text(self, text):
+    def analyze_text(self, text: Any) -> Any:
         if text is None:
             return {"entities": [], "summary": ""}
-
         doc = self.nlp(text)
         entities = [
             {
@@ -39,20 +37,13 @@ class DocumentProcessor:
             }
             for ent in doc.ents
         ]
-
-        # Simple summarization (first few sentences)
         sentences = [sent.text for sent in doc.sents]
         summary = " ".join(sentences[:3]) if sentences else ""
-
         return {"entities": entities, "summary": summary}
 
 
 if __name__ == "__main__":
-    # Example Usage:
     processor = DocumentProcessor()
-
-    # For demonstration, let's create a dummy image file
-    # In a real scenario, you would have actual image files (e.g., scanned invoices)
     try:
         from PIL import Image, ImageDraw, ImageFont
 
@@ -70,7 +61,6 @@ if __name__ == "__main__":
             font=fnt,
         )
         img.save(img_path)
-
         logger.info(f"Dummy image saved to {img_path}")
         extracted_text = processor.extract_text_from_image(img_path)
         logger.info("\nExtracted Text:\n", extracted_text)
@@ -83,7 +73,6 @@ if __name__ == "__main__":
         logger.info("Please install Pillow (pip install Pillow) to run the example.")
     except Exception as e:
         logger.info(f"An error occurred during example execution: {e}")
-    # Clean up dummy image
     import os
 
     if os.path.exists(img_path):
