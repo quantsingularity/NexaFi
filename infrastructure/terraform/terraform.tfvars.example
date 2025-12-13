@@ -1,0 +1,34 @@
+# Example Terraform variables file
+# Copy this file to terraform.tfvars and customize for your environment
+# DO NOT commit terraform.tfvars to version control
+
+# Environment configuration
+environment = "prod"  # Options: prod, staging, dev
+
+# AWS Regions
+primary_region   = "us-west-2"
+secondary_region = "us-east-1"
+
+# VPC Configuration
+vpc_cidr_primary   = "10.0.0.0/16"
+vpc_cidr_secondary = "10.1.0.0/16"
+
+# Network Configuration
+enable_nat_gateway = true
+enable_vpn_gateway = false
+
+# EKS Configuration
+eks_cluster_version = "1.28"
+
+# Node Group Instance Types
+node_group_instance_types = ["m5.large", "m5.xlarge"]
+
+# Financial Services Node Group (dedicated for PCI-DSS workloads)
+financial_node_group_instance_types = ["c5.xlarge", "c5.2xlarge"]
+
+# Additional Tags
+tags = {
+  CostCenter = "FinTech"
+  Owner      = "DevOps Team"
+  Backup     = "Daily"
+}

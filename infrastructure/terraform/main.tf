@@ -1,43 +1,4 @@
-# Enhanced Terraform configuration for NexaFi infrastructure
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.20"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.10"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "~> 4.0"
-    }
-  }
-
-  backend "s3" {
-    bucket         = "nexafi-terraform-state"
-    key            = "infrastructure/terraform.tfstate"
-    region         = "us-west-2"
-    encrypt        = true
-    dynamodb_table = "nexafi-terraform-locks"
-
-    # Enhanced security for state file
-    kms_key_id = "alias/nexafi-terraform-state"
-
-    # Versioning and lifecycle
-    versioning = true
-  }
-}
+# Main infrastructure configuration - see versions.tf for terraform block
 
 # Provider configurations
 provider "aws" {
@@ -74,7 +35,9 @@ provider "aws" {
   }
 }
 
-provider "kubernetes" {
+# Kubernetes provider configuration - configure after EKS cluster is created
+# Uncomment and run terraform apply again after initial infrastructure creation
+# provider "kubernetes" {
   host                   = module.eks_primary.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
 
@@ -85,7 +48,9 @@ provider "kubernetes" {
   }
 }
 
-provider "helm" {
+# Helm provider configuration - configure after EKS cluster is created
+# Uncomment and run terraform apply again after initial infrastructure creation
+# provider "helm" {
   kubernetes {
     host                   = module.eks_primary.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
@@ -418,104 +383,5 @@ resource "aws_iam_role_policy_attachment" "config" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/ConfigRole"
 }
 
-# Variables
-variable "environment" {
-  description = "Environment name (e.g., prod, staging, dev)"
-  type        = string
-  default     = "prod"
-}
 
-variable "primary_region" {
-  description = "Primary AWS region"
-  type        = string
-  default     = "us-west-2"
-}
 
-variable "secondary_region" {
-  description = "Secondary AWS region for disaster recovery"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "vpc_cidr_primary" {
-  description = "CIDR block for primary VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "vpc_cidr_secondary" {
-  description = "CIDR block for secondary VPC"
-  type        = string
-  default     = "10.1.0.0/16"
-}
-
-variable "enable_nat_gateway" {
-  description = "Enable NAT Gateway for private subnets"
-  type        = bool
-  default     = true
-}
-
-variable "enable_vpn_gateway" {
-  description = "Enable VPN Gateway"
-  type        = bool
-  default     = false
-}
-
-variable "eks_cluster_version" {
-  description = "Kubernetes version for EKS cluster"
-  type        = string
-  default     = "1.27"
-}
-
-variable "node_group_instance_types" {
-  description = "Instance types for EKS node groups"
-  type        = list(string)
-  default     = ["m5.large", "m5.xlarge"]
-}
-
-variable "financial_node_group_instance_types" {
-  description = "Instance types for financial services node group"
-  type        = list(string)
-  default     = ["c5.xlarge", "c5.2xlarge"]
-}
-
-# Outputs
-output "primary_vpc_id" {
-  description = "ID of the primary VPC"
-  value       = module.vpc_primary.vpc_id
-}
-
-output "secondary_vpc_id" {
-  description = "ID of the secondary VPC"
-  value       = module.vpc_secondary.vpc_id
-}
-
-output "primary_eks_cluster_id" {
-  description = "ID of the primary EKS cluster"
-  value       = module.eks_primary.cluster_id
-}
-
-output "secondary_eks_cluster_id" {
-  description = "ID of the secondary EKS cluster"
-  value       = module.eks_secondary.cluster_id
-}
-
-output "primary_eks_cluster_endpoint" {
-  description = "Endpoint of the primary EKS cluster"
-  value       = module.eks_primary.cluster_endpoint
-}
-
-output "kms_key_id" {
-  description = "ID of the primary KMS key"
-  value       = aws_kms_key.nexafi_primary.key_id
-}
-
-output "cloudtrail_arn" {
-  description = "ARN of the CloudTrail"
-  value       = aws_cloudtrail.nexafi_audit.arn
-}
-
-output "audit_logs_bucket" {
-  description = "Name of the audit logs S3 bucket"
-  value       = aws_s3_bucket.audit_logs.bucket
-}

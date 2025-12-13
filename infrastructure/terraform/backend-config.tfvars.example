@@ -1,0 +1,12 @@
+# Terraform Backend Configuration Example
+# Copy this file to backend-config.tfvars and fill in your values
+# Usage: terraform init -backend-config=backend-config.tfvars
+
+bucket         = "YOUR-TERRAFORM-STATE-BUCKET-NAME"  # e.g., "nexafi-terraform-state-prod"
+key            = "infrastructure/terraform.tfstate"
+region         = "us-west-2"  # Change to your preferred region
+encrypt        = true
+dynamodb_table = "YOUR-TERRAFORM-LOCKS-TABLE-NAME"  # e.g., "nexafi-terraform-locks"
+kms_key_id     = "alias/YOUR-TERRAFORM-STATE-KMS-ALIAS"  # e.g., "alias/nexafi-terraform-state"
+
+# Note: Ensure the S3 bucket, DynamoDB table, and KMS key exist before running terraform init

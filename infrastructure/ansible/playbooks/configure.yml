@@ -1,0 +1,21 @@
+---
+# Sample Ansible playbook for NexaFi infrastructure
+# This is a placeholder - implement actual automation as needed
+
+- name: Configure NexaFi Infrastructure
+  hosts: nexafi_cluster
+  become: yes
+
+  tasks:
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - docker.io
+          - kubectl
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Display cluster information
+      debug:
+        msg: "Configuring {{ inventory_hostname }} for {{ environment }}"

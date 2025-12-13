@@ -1,12 +1,12 @@
-# NexaFi Infrastructure - Enhanced Financial-Grade Implementation
+# NexaFi Infrastructure - Production-Ready Implementation
 
 ## Overview
 
-This directory contains a comprehensive, production-ready infrastructure implementation for NexaFi, designed to meet the highest financial industry standards including PCI DSS, SOC 2, GDPR, SOX, and other regulatory requirements.
+This directory contains production-ready infrastructure code for NexaFi, meeting financial industry standards including PCI DSS, SOC 2, GDPR, and other regulatory requirements.
 
 ## 🏗️ Architecture
 
-The infrastructure is built on modern cloud-native principles with a focus on:
+The infrastructure is built on modern cloud-native principles:
 
 - **Security First**: Multi-layered security controls and compliance frameworks
 - **High Availability**: Redundant systems across multiple availability zones
@@ -17,181 +17,349 @@ The infrastructure is built on modern cloud-native principles with a focus on:
 
 ## 📁 Directory Structure
 
-```
+````
 infrastructure/
-├── design_document.md          # Comprehensive architecture documentation
-├── terraform/                  # Infrastructure as Code
-│   ├── main.tf                # Main Terraform configuration
-│   ├── vpc.tf                 # VPC and networking configuration
-│   ├── eks.tf                 # EKS cluster configuration
-│   └── security.tf            # Security and compliance resources
-├── kubernetes/                 # Kubernetes manifests
-│   ├── security/              # Security policies and RBAC
-│   ├── compliance/            # Compliance monitoring services
-│   ├── monitoring/            # Prometheus, Grafana, AlertManager
-│   ├── backup-recovery/       # Backup and disaster recovery
-│   └── infrastructure-components/ # Redis, RabbitMQ, etc.
-├── docker/                    # Container configurations
-│   └── financial-services/   # Optimized Dockerfile for financial services
-├── helm/                      # Helm charts for application deployment
-│   └── nexafi-financial-services/ # Financial services Helm chart
-└── scripts/                   # Deployment and testing scripts
-    ├── deploy-all.sh          # Comprehensive deployment script
-    ├── test-infrastructure.sh # Infrastructure testing framework
-    ├── validate-compliance.sh # Compliance validation script
-    └── security-test.sh       # Security testing and assessment
-```
+├── README.md                    # This file
+├── .gitignore                   # Git ignore patterns
+├── terraform/                   # Infrastructure as Code
+│   ├── versions.tf              # Terraform and provider versions
+│   ├── variables.tf             # Input variables
+│   ├── outputs.tf               # Output values
+│   ├── main.tf                  # Main infrastructure configuration
+│   ├── vpc.tf                   # VPC and networking
+│   ├── eks.tf                   # EKS cluster configuration
+│   ├── security.tf              # Security resources
+│   ├── terraform.tfvars.example # Example variables file
+│   └── backend-config.tfvars.example  # Example backend config
+├── kubernetes/                  # Kubernetes manifests
+│   ├── namespaces.yaml          # Namespace definitions
+│   ├── secrets.example.yaml     # Secrets template (DO NOT commit real secrets)
+│   ├── security/                # Security policies and RBAC
+│   ├── compliance/              # Compliance monitoring services
+│   ├── monitoring/              # Prometheus, Grafana, AlertManager
+│   ├── backup-recovery/         # Backup and disaster recovery
+│   ├── infrastructure-components/  # Redis, RabbitMQ, etc.
+│   ├── core-services/           # Application services
+│   ├── ingress/                 # Ingress controllers
+│   └── storage/                 # Persistent volumes
+├── ci-cd/                       # CI/CD workflows
+│   ├── cicd.yml                 # Main CI/CD pipeline
+│   └── *.yml                    # Additional workflows
+├── docker/                      # Container configurations
+│   └── financial-services/      # Financial services Dockerfile
+├── helm/                        # Helm charts
+│   └── nexafi-financial-services/  # Main application chart
+├── ansible/                     # Ansible automation
+│   ├── playbooks/               # Ansible playbooks
+│   ├── roles/                   # Ansible roles
+│   └── inventory/               # Inventory examples
+├── scripts/                     # Deployment and testing scripts
+│   ├── deploy-all.sh            # Complete deployment
+│   ├── test-infrastructure.sh   # Infrastructure testing
+│   ├── validate-compliance.sh   # Compliance validation
+│   ├── security-test.sh         # Security testing
+│   └── deployment/              # Deployment utilities
+└── docs/                        # Documentation
+    └── design_document.md       # Architecture documentation
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- AWS CLI configured with appropriate permissions
-- Terraform >= 1.5.0
-- kubectl
-- Helm 3.x
-- Docker
+Ensure you have the following tools installed:
 
-### Environment Setup
+- **Terraform** >= 1.5.0
+  ```bash
+  terraform --version
+````
 
-```bash
-# Set required environment variables
-export ENVIRONMENT=prod
-export AWS_REGION=us-west-2
-export TF_VAR_environment=prod
+- **kubectl** >= 1.27
 
-# Optional: Set secondary region for disaster recovery
-export SECONDARY_REGION=us-east-1
-```
+  ```bash
+  kubectl version --client
+  ```
+
+- **Helm** >= 3.12
+
+  ```bash
+  helm version
+  ```
+
+- **AWS CLI** >= 2.13
+
+  ```bash
+  aws --version
+  ```
+
+- **Python** >= 3.10 (for scripts)
+
+  ```bash
+  python3 --version
+  ```
+
+- **yamllint** (for YAML validation)
+  ```bash
+  pip install yamllint
+  ```
+
+### Initial Setup
+
+1. **Configure AWS Credentials**
+
+   ```bash
+   aws configure
+   # OR use environment variables
+   export AWS_ACCESS_KEY_ID="your-access-key"
+   export AWS_SECRET_ACCESS_KEY="your-secret-key"
+   export AWS_DEFAULT_REGION="us-west-2"
+   ```
+
+2. **Set Environment Variables**
+
+   ```bash
+   export ENVIRONMENT=prod  # or staging, dev
+   export AWS_REGION=us-west-2
+   export TF_VAR_environment=prod
+   ```
+
+3. **Create Terraform Backend Resources**  
+   Before running terraform, create the S3 bucket and DynamoDB table for state management:
+
+   ```bash
+   # Create S3 bucket for terraform state
+   aws s3api create-bucket \
+     --bucket nexafi-terraform-state-prod \
+     --region us-west-2 \
+     --create-bucket-configuration LocationConstraint=us-west-2
+
+   # Enable versioning
+   aws s3api put-bucket-versioning \
+     --bucket nexafi-terraform-state-prod \
+     --versioning-configuration Status=Enabled
+
+   # Create DynamoDB table for state locking
+   aws dynamodb create-table \
+     --table-name nexafi-terraform-locks \
+     --attribute-definitions AttributeName=LockID,AttributeType=S \
+     --key-schema AttributeName=LockID,KeyType=HASH \
+     --billing-mode PAY_PER_REQUEST \
+     --region us-west-2
+   ```
+
+4. **Configure Terraform Backend**
+
+   ```bash
+   cd terraform
+   cp backend-config.tfvars.example backend-config.tfvars
+   # Edit backend-config.tfvars with your values
+   vi backend-config.tfvars
+   ```
+
+5. **Configure Terraform Variables**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your environment-specific values
+   vi terraform.tfvars
+   ```
 
 ### Deployment
 
-1. **Deploy Infrastructure**
+#### Option 1: Automated Deployment (Recommended)
 
-   ```bash
-   cd scripts
-   ./deploy-all.sh
-   ```
+```bash
+cd scripts
+./deploy-all.sh
+```
 
-2. **Validate Deployment**
+This script will:
 
-   ```bash
-   ./test-infrastructure.sh
-   ```
+- Validate prerequisites
+- Initialize and apply Terraform
+- Configure kubectl
+- Deploy Kubernetes resources
+- Run validation tests
 
-3. **Validate Compliance**
+#### Option 2: Manual Step-by-Step Deployment
 
-   ```bash
-   ./validate-compliance.sh
-   ```
+**Step 1: Deploy Infrastructure with Terraform**
 
-4. **Run Security Assessment**
-   ```bash
-   ./security-test.sh
-   ```
+```bash
+cd terraform
 
-## 🔒 Security Features
+# Initialize Terraform with backend configuration
+terraform init -backend-config=backend-config.tfvars
 
-### Multi-layered Security Architecture
+# Format code
+terraform fmt -recursive
 
-- **Network Security**: VPC with private subnets, network policies, WAF
-- **Container Security**: Non-root containers, read-only filesystems, dropped capabilities
-- **Access Control**: RBAC, Pod Security Standards, service accounts
-- **Data Protection**: Encryption at rest and in transit, Vault integration
-- **Monitoring**: Comprehensive audit logging and security monitoring
+# Validate configuration
+terraform validate
 
-### Compliance Frameworks
+# Plan infrastructure changes
+terraform plan -out=plan.out -var-file=terraform.tfvars
 
-- **PCI DSS**: Payment card industry data security standard compliance
-- **SOC 2**: Service organization control 2 compliance
-- **GDPR**: General data protection regulation compliance
-- **SOX**: Sarbanes-Oxley Act compliance
-- **GLBA**: Gramm-Leach-Bliley Act compliance
-- **FFIEC**: Federal Financial Institutions Examination Council guidelines
+# Apply changes (review plan first!)
+terraform apply plan.out
 
-## 🏦 Financial Industry Features
+# Save outputs
+terraform output > ../outputs.txt
+```
 
-### Dedicated Financial Services Infrastructure
+**Step 2: Configure Kubernetes Access**
 
-- **Isolated Node Groups**: Dedicated nodes for financial workloads with taints and tolerations
-- **Enhanced Monitoring**: Financial-specific metrics and alerting
-- **Audit Trail**: Comprehensive audit logging for all financial transactions
-- **Data Retention**: 7-year data retention for regulatory compliance
-- **Backup & Recovery**: Automated backups with cross-region replication
+```bash
+# Update kubeconfig for EKS cluster
+aws eks update-kubeconfig \
+  --region us-west-2 \
+  --name nexafi-prod-primary
 
-### Compliance Monitoring
+# Verify connection
+kubectl cluster-info
+kubectl get nodes
+```
 
-- **Real-time Compliance Monitoring**: Continuous compliance validation
-- **Automated Reporting**: Compliance reports generated automatically
-- **Audit Service**: Dedicated audit service for financial transactions
-- **Data Loss Prevention**: DLP controls for sensitive financial data
+**Step 3: Deploy Kubernetes Resources**
 
-## 📊 Monitoring & Observability
+```bash
+cd ../kubernetes
 
-### Monitoring Stack
+# Create namespaces first
+kubectl apply -f namespaces.yaml
 
-- **Prometheus**: Metrics collection and storage
-- **Grafana**: Visualization and dashboards
-- **AlertManager**: Intelligent alerting and notification
-- **Jaeger**: Distributed tracing for microservices
-- **ELK Stack**: Centralized logging and log analysis
+# Deploy security policies and RBAC
+kubectl apply -f security/
 
-### Key Metrics
+# Create secrets (use external secret management in production)
+# Copy secrets.example.yaml to secrets.yaml and fill in values
+cp secrets.example.yaml secrets.yaml
+# Edit secrets.yaml with actual base64-encoded values
+kubectl apply -f secrets.yaml
 
-- **Financial Metrics**: Transaction volumes, processing times, error rates
-- **Security Metrics**: Failed login attempts, privilege escalations, policy violations
-- **Compliance Metrics**: Audit trail completeness, data retention compliance
-- **Infrastructure Metrics**: Resource utilization, availability, performance
+# Deploy infrastructure components
+kubectl apply -f infrastructure-components/
 
-## 🔄 Backup & Disaster Recovery
+# Deploy core services
+kubectl apply -f core-services/
 
-### Automated Backup Strategy
+# Deploy monitoring stack
+kubectl apply -f monitoring/
 
-- **Financial Database**: Every 4 hours with 7-year retention
-- **User Database**: Daily backups with 3-year retention
-- **Vault Data**: Daily encrypted snapshots
-- **Kubernetes etcd**: Daily cluster state backups
+# Deploy ingress
+kubectl apply -f ingress/
 
-### Disaster Recovery
+# Verify deployments
+kubectl get all -n nexafi
+kubectl get all -n nexafi-infra
+kubectl get all -n monitoring
+```
 
-- **RTO Target**: 60 minutes (Recovery Time Objective)
-- **RPO Target**: 15 minutes (Recovery Point Objective)
-- **Cross-Region Replication**: Automated failover to secondary region
-- **DR Testing**: Weekly automated disaster recovery testing
+**Step 4: Validate Deployment**
 
-## 🧪 Testing Framework
+```bash
+cd ../scripts
 
-### Comprehensive Testing Suite
+# Run infrastructure tests
+./test-infrastructure.sh
 
-- **Infrastructure Tests**: Connectivity, resource availability, configuration validation
-- **Security Tests**: Vulnerability scanning, penetration testing, configuration assessment
-- **Compliance Tests**: Regulatory compliance validation, audit trail verification
-- **Performance Tests**: Load testing, stress testing, capacity planning
+# Run compliance validation
+./validate-compliance.sh
 
-### Automated Testing
+# Run security tests
+./security-test.sh
+```
 
-- **CI/CD Integration**: Automated testing in deployment pipeline
-- **Continuous Monitoring**: Real-time testing and validation
-- **Regression Testing**: Automated regression testing for changes
-- **Security Scanning**: Continuous vulnerability and compliance scanning
+## 🔒 Security & Secrets Management
 
-## 📋 Configuration Management
+### Critical Security Notes
 
-### Infrastructure as Code
+1. **NEVER commit secrets to version control**
+   - All `*.example` files are templates
+   - Actual secrets should be in `.gitignore`
 
-- **Terraform**: Complete infrastructure provisioning
-- **Kubernetes Manifests**: Application and service deployment
-- **Helm Charts**: Templated application deployment
-- **GitOps**: Version-controlled infrastructure management
+2. **Use External Secret Management in Production**
+   - AWS Secrets Manager (recommended)
+   - HashiCorp Vault
+   - Kubernetes External Secrets Operator
 
-### Environment Management
+3. **Secret Rotation**
+   - Rotate secrets every 90 days
+   - Use automated secret rotation where possible
 
-- **Multi-Environment Support**: Development, staging, production
-- **Configuration Separation**: Environment-specific configurations
-- **Secret Management**: HashiCorp Vault integration
-- **Feature Flags**: Runtime configuration management
+### Managing Secrets
 
-## 🔧 Maintenance & Operations
+#### Development/Testing
+
+For development, you can use the example files:
+
+```bash
+# Copy and edit secrets
+cp kubernetes/secrets.example.yaml kubernetes/secrets.yaml
+# Fill in base64-encoded values
+echo -n "your-secret-value" | base64
+```
+
+#### Production (Recommended)
+
+Use AWS Secrets Manager integration:
+
+```bash
+# Create secret in AWS Secrets Manager
+aws secretsmanager create-secret \
+  --name nexafi/prod/database-credentials \
+  --secret-string '{"username":"admin","password":"strong-password"}'
+
+# Deploy External Secrets Operator
+kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/main/deploy/crds/bundle.yaml
+helm install external-secrets external-secrets/external-secrets -n external-secrets-system
+```
+
+## 🧪 Testing & Validation
+
+### Terraform Validation
+
+```bash
+cd terraform
+
+# Format check
+terraform fmt -check -recursive
+
+# Validate configuration
+terraform validate
+
+# Security scan (requires tfsec)
+tfsec .
+
+# Compliance scan (requires checkov)
+checkov -d .
+```
+
+### Kubernetes Validation
+
+```bash
+cd kubernetes
+
+# YAML lint
+yamllint .
+
+# Dry-run apply
+kubectl apply --dry-run=client -f .
+
+# Validate with kubeval (if installed)
+kubeval **/*.yaml
+```
+
+### CI/CD Workflow Validation
+
+```bash
+cd ci-cd
+
+# YAML syntax check
+yamllint *.yml
+
+# GitHub Actions workflow validation (requires act)
+act -n
+
+## 📋 Maintenance & Operations
 
 ### Regular Maintenance Tasks
 
@@ -199,28 +367,42 @@ export SECONDARY_REGION=us-east-1
 2. **Compliance Reviews**: Quarterly compliance assessments
 3. **Disaster Recovery Testing**: Monthly DR drills
 4. **Performance Optimization**: Quarterly performance reviews
-5. **Cost Optimization**: Monthly cost analysis and optimization
+5. **Cost Optimization**: Monthly cost analysis
 
-### Operational Procedures
+### Monitoring & Alerts
 
-- **Incident Response**: 24/7 incident response procedures
-- **Change Management**: Controlled change deployment process
-- **Capacity Planning**: Proactive capacity management
-- **Performance Monitoring**: Continuous performance optimization
+- **Prometheus**: Metrics collection at `http://prometheus.nexafi.local`
+- **Grafana**: Dashboards at `http://grafana.nexafi.local`
+- **AlertManager**: Alert management at `http://alertmanager.nexafi.local`
 
-## 📚 Documentation
+### Backup & Recovery
 
-### Available Documentation
+- **Automated Backups**:
+  - Financial databases: Every 4 hours, 7-year retention
+  - User databases: Daily, 3-year retention
+  - Cluster state: Daily
 
-- **Architecture Design**: Comprehensive system architecture documentation
-- **Security Policies**: Detailed security policies and procedures
-- **Compliance Guides**: Regulatory compliance implementation guides
-- **Operational Runbooks**: Step-by-step operational procedures
-- **API Documentation**: Complete API reference documentation
+- **Recovery Procedures**: See `docs/disaster-recovery.md`
 
-### Training Materials
+## 📚 Additional Documentation
 
-- **Security Training**: Security awareness and best practices
-- **Compliance Training**: Regulatory compliance requirements
-- **Operational Training**: System operation and maintenance
-- **Development Guidelines**: Secure development practices
+- [Architecture Design Document](docs/design_document.md)
+- [Security Policies](kubernetes/security/README.md)
+- [Compliance Guide](docs/compliance-guide.md)
+- [Disaster Recovery Plan](docs/disaster-recovery.md)
+
+## 🤝 Contributing
+
+Please follow these guidelines when modifying infrastructure:
+
+1. Always work in a branch
+2. Test changes in dev/staging first
+3. Run validation scripts before committing
+4. Update documentation
+5. Get peer review for production changes
+
+## 📄 License
+
+See LICENSE file in repository root.
+
+```
