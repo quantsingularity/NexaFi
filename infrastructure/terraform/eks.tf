@@ -8,14 +8,14 @@ module "eks_primary" {
   cluster_name    = "${local.name_prefix}-primary"
   cluster_version = var.eks_cluster_version
 
-  vpc_id                         = module.vpc_primary.vpc_id
-  subnet_ids                     = module.vpc_primary.private_subnets
-  control_plane_subnet_ids       = module.vpc_primary.intra_subnets
+  vpc_id                   = module.vpc_primary.vpc_id
+  subnet_ids               = module.vpc_primary.private_subnets
+  control_plane_subnet_ids = module.vpc_primary.intra_subnets
 
   # Enhanced security configuration
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]  # Restrict in production
+  cluster_endpoint_private_access      = true
+  cluster_endpoint_public_access       = true
+  cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"] # Restrict in production
 
   # Encryption configuration
   cluster_encryption_config = {
@@ -32,7 +32,7 @@ module "eks_primary" {
     "scheduler"
   ]
 
-  cloudwatch_log_group_retention_in_days = 2555  # 7 years for financial compliance
+  cloudwatch_log_group_retention_in_days = 2555 # 7 years for financial compliance
   cloudwatch_log_group_kms_key_id        = aws_kms_key.nexafi_primary.arn
 
   # Cluster security group
@@ -140,7 +140,7 @@ module "eks_primary" {
             iops                  = 3000
             throughput            = 150
             encrypted             = true
-            kms_key_id           = aws_kms_key.nexafi_primary.arn
+            kms_key_id            = aws_kms_key.nexafi_primary.arn
             delete_on_termination = true
           }
         }
@@ -149,7 +149,7 @@ module "eks_primary" {
       # Metadata service configuration
       metadata_options = {
         http_endpoint               = "enabled"
-        http_tokens                = "required"
+        http_tokens                 = "required"
         http_put_response_hop_limit = 2
         instance_metadata_tags      = "enabled"
       }
@@ -195,7 +195,7 @@ module "eks_primary" {
             iops                  = 4000
             throughput            = 250
             encrypted             = true
-            kms_key_id           = aws_kms_key.nexafi_primary.arn
+            kms_key_id            = aws_kms_key.nexafi_primary.arn
             delete_on_termination = true
           }
         }
@@ -203,7 +203,7 @@ module "eks_primary" {
 
       metadata_options = {
         http_endpoint               = "enabled"
-        http_tokens                = "required"
+        http_tokens                 = "required"
         http_put_response_hop_limit = 1
         instance_metadata_tags      = "enabled"
       }
@@ -257,7 +257,7 @@ module "eks_primary" {
             iops                  = 3000
             throughput            = 200
             encrypted             = true
-            kms_key_id           = aws_kms_key.nexafi_primary.arn
+            kms_key_id            = aws_kms_key.nexafi_primary.arn
             delete_on_termination = true
           }
         }
@@ -265,7 +265,7 @@ module "eks_primary" {
 
       metadata_options = {
         http_endpoint               = "enabled"
-        http_tokens                = "required"
+        http_tokens                 = "required"
         http_put_response_hop_limit = 2
         instance_metadata_tags      = "enabled"
       }
@@ -374,19 +374,19 @@ module "eks_primary" {
     }
 
     aws-ebs-csi-driver = {
-      most_recent = true
+      most_recent              = true
       service_account_role_arn = module.ebs_csi_irsa_role.iam_role_arn
     }
 
     aws-efs-csi-driver = {
-      most_recent = true
+      most_recent              = true
       service_account_role_arn = module.efs_csi_irsa_role.iam_role_arn
     }
   }
 
   tags = merge(local.common_tags, local.compliance_tags, {
-    Name = "${local.name_prefix}-primary-eks"
-    Type = "eks-cluster"
+    Name   = "${local.name_prefix}-primary-eks"
+    Type   = "eks-cluster"
     Region = var.primary_region
   })
 }
@@ -403,12 +403,12 @@ module "eks_secondary" {
   cluster_name    = "${local.name_prefix}-secondary"
   cluster_version = var.eks_cluster_version
 
-  vpc_id                         = module.vpc_secondary.vpc_id
-  subnet_ids                     = module.vpc_secondary.private_subnets
-  control_plane_subnet_ids       = module.vpc_secondary.intra_subnets
+  vpc_id                   = module.vpc_secondary.vpc_id
+  subnet_ids               = module.vpc_secondary.private_subnets
+  control_plane_subnet_ids = module.vpc_secondary.intra_subnets
 
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = true
+  cluster_endpoint_private_access      = true
+  cluster_endpoint_public_access       = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
 
   # Same encryption and logging configuration as primary
@@ -455,7 +455,7 @@ module "eks_secondary" {
 
       metadata_options = {
         http_endpoint               = "enabled"
-        http_tokens                = "required"
+        http_tokens                 = "required"
         http_put_response_hop_limit = 2
       }
 
@@ -466,8 +466,8 @@ module "eks_secondary" {
       }
 
       tags = merge(local.common_tags, {
-        Name = "${local.name_prefix}-dr-standby-node-group"
-        Type = "eks-node-group"
+        Name    = "${local.name_prefix}-dr-standby-node-group"
+        Type    = "eks-node-group"
         Purpose = "disaster-recovery"
       })
     }
@@ -491,16 +491,16 @@ module "eks_secondary" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-secondary-eks"
-    Type = "eks-cluster"
-    Region = var.secondary_region
+    Name    = "${local.name_prefix}-secondary-eks"
+    Type    = "eks-cluster"
+    Region  = var.secondary_region
     Purpose = "disaster-recovery"
   })
 }
 
 # IRSA roles for CSI drivers
 module "ebs_csi_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
 
   role_name             = "${local.name_prefix}-ebs-csi"
@@ -520,7 +520,7 @@ module "ebs_csi_irsa_role" {
 }
 
 module "efs_csi_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
 
   role_name             = "${local.name_prefix}-efs-csi"
@@ -541,7 +541,7 @@ module "efs_csi_irsa_role" {
 
 # Load Balancer Controller IRSA
 module "load_balancer_controller_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
 
   role_name                              = "${local.name_prefix}-load-balancer-controller"
@@ -562,7 +562,7 @@ module "load_balancer_controller_irsa_role" {
 
 # External DNS IRSA
 module "external_dns_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
 
   role_name                     = "${local.name_prefix}-external-dns"
@@ -584,7 +584,7 @@ module "external_dns_irsa_role" {
 
 # Cluster Autoscaler IRSA
 module "cluster_autoscaler_irsa_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.0"
 
   role_name                        = "${local.name_prefix}-cluster-autoscaler"
@@ -606,9 +606,9 @@ module "cluster_autoscaler_irsa_role" {
 
 # EFS for shared storage
 resource "aws_efs_file_system" "shared_storage" {
-  creation_token   = "${local.name_prefix}-shared-storage"
-  performance_mode = "generalPurpose"
-  throughput_mode  = "provisioned"
+  creation_token                  = "${local.name_prefix}-shared-storage"
+  performance_mode                = "generalPurpose"
+  throughput_mode                 = "provisioned"
   provisioned_throughput_in_mibps = 100
 
   encrypted  = true

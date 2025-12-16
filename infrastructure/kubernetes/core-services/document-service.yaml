@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: document-service
-          image: nexafi/document-service:latest
+          image: nexafi/document-service:1.0.0
           ports:
             - containerPort: 5007
           env:

@@ -6,8 +6,8 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project             = "NexaFi"
-      Environment         = var.environment
+      Project            = "NexaFi"
+      Environment        = var.environment
       ManagedBy          = "Terraform"
       SecurityCompliance = "PCI-DSS,SOC2,GDPR"
       DataClassification = "Confidential"
@@ -23,8 +23,8 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project             = "NexaFi"
-      Environment         = var.environment
+      Project            = "NexaFi"
+      Environment        = var.environment
       ManagedBy          = "Terraform"
       SecurityCompliance = "PCI-DSS,SOC2,GDPR"
       DataClassification = "Confidential"
@@ -38,38 +38,38 @@ provider "aws" {
 # Kubernetes provider configuration - configure after EKS cluster is created
 # Uncomment and run terraform apply again after initial infrastructure creation
 # provider "kubernetes" {
-  host                   = module.eks_primary.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
-
-  exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
-    command     = "aws"
-    args        = ["eks", "get-token", "--cluster-name", module.eks_primary.cluster_name]
-  }
-}
+#   host                   = module.eks_primary.cluster_endpoint
+#   cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
+#
+#   exec {
+#     api_version = "client.authentication.k8s.io/v1beta1"
+#     command     = "aws"
+#     args        = ["eks", "get-token", "--cluster-name", module.eks_primary.cluster_name]
+#   }
+# }
 
 # Helm provider configuration - configure after EKS cluster is created
 # Uncomment and run terraform apply again after initial infrastructure creation
 # provider "helm" {
-  kubernetes {
-    host                   = module.eks_primary.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.eks_primary.cluster_name]
-    }
-  }
-}
+#   kubernetes {
+#     host                   = module.eks_primary.cluster_endpoint
+#     cluster_ca_certificate = base64decode(module.eks_primary.cluster_certificate_authority_data)
+#
+#     exec {
+#       api_version = "client.authentication.k8s.io/v1beta1"
+#       command     = "aws"
+#       args        = ["eks", "get-token", "--cluster-name", module.eks_primary.cluster_name]
+#     }
+#   }
+# }
 
 # Local values for common configurations
 locals {
   name_prefix = "nexafi-${var.environment}"
 
   common_tags = {
-    Project             = "NexaFi"
-    Environment         = var.environment
+    Project            = "NexaFi"
+    Environment        = var.environment
     ManagedBy          = "Terraform"
     SecurityCompliance = "PCI-DSS,SOC2,GDPR"
     DataClassification = "Confidential"
@@ -77,12 +77,12 @@ locals {
 
   # Financial industry compliance requirements
   compliance_tags = {
-    PCI_DSS_Scope      = "true"
-    SOC2_Type2         = "true"
-    GDPR_Applicable    = "true"
-    SOX_Applicable     = "true"
-    GLBA_Applicable    = "true"
-    FFIEC_Applicable   = "true"
+    PCI_DSS_Scope    = "true"
+    SOC2_Type2       = "true"
+    GDPR_Applicable  = "true"
+    SOX_Applicable   = "true"
+    GLBA_Applicable  = "true"
+    FFIEC_Applicable = "true"
   }
 
   # Security configuration
@@ -90,16 +90,16 @@ locals {
     enable_encryption_at_rest     = true
     enable_encryption_in_transit  = true
     enable_network_segmentation   = true
-    enable_audit_logging         = true
+    enable_audit_logging          = true
     enable_vulnerability_scanning = true
-    enable_intrusion_detection   = true
-    enable_data_loss_prevention  = true
+    enable_intrusion_detection    = true
+    enable_data_loss_prevention   = true
   }
 
   # Monitoring and alerting
   monitoring_config = {
-    enable_cloudtrail           = true
-    enable_config_rules         = true
+    enable_cloudtrail          = true
+    enable_config_rules        = true
     enable_guardduty           = true
     enable_security_hub        = true
     enable_inspector           = true
@@ -109,11 +109,11 @@ locals {
 
   # Backup and disaster recovery
   backup_config = {
-    backup_retention_days       = 2555  # 7 years for financial compliance
-    cross_region_backup        = true
-    point_in_time_recovery     = true
-    automated_backup_testing   = true
-    disaster_recovery_testing  = true
+    backup_retention_days     = 2555 # 7 years for financial compliance
+    cross_region_backup       = true
+    point_in_time_recovery    = true
+    automated_backup_testing  = true
+    disaster_recovery_testing = true
   }
 }
 
@@ -180,8 +180,8 @@ resource "aws_cloudtrail" "nexafi_audit" {
   s3_bucket_name = aws_s3_bucket.audit_logs.bucket
 
   include_global_service_events = true
-  is_multi_region_trail        = true
-  enable_logging               = true
+  is_multi_region_trail         = true
+  enable_logging                = true
 
   # Enhanced logging for financial compliance
   enable_log_file_validation = true
@@ -190,8 +190,8 @@ resource "aws_cloudtrail" "nexafi_audit" {
   kms_key_id = aws_kms_key.nexafi_primary.arn
 
   event_selector {
-    read_write_type                 = "All"
-    include_management_events       = true
+    read_write_type                  = "All"
+    include_management_events        = true
     exclude_management_event_sources = []
 
     data_resource {
@@ -237,17 +237,15 @@ resource "aws_s3_bucket_versioning" "audit_logs" {
   }
 }
 
-resource "aws_s3_bucket_encryption" "audit_logs" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.nexafi_primary.arn
-        sse_algorithm     = "aws:kms"
-      }
-      bucket_key_enabled = true
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.nexafi_primary.arn
+      sse_algorithm     = "aws:kms"
     }
+    bucket_key_enabled = true
   }
 }
 
@@ -264,6 +262,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
   rule {
+    filter {}
     id     = "audit_log_lifecycle"
     status = "Enabled"
 

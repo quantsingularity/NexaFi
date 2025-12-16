@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: credit-service
-          image: nexafi/credit-service:latest
+          image: nexafi/credit-service:1.0.0
           ports:
             - containerPort: 5006
           env:

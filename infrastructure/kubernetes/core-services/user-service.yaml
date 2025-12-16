@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: nexafi/user-service:latest
+          image: nexafi/user-service:1.0.0
           ports:
             - containerPort: 5001
           env:

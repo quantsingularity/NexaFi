@@ -1,7 +1,7 @@
 # Terraform version and provider requirements
 terraform {
   required_version = ">= 1.5.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -24,7 +24,7 @@ terraform {
       version = "~> 4.0"
     }
   }
-  
+
   # Backend configuration - use partial configuration via backend-config file
   # Usage: terraform init -backend-config=backend-config.tfvars
   backend "s3" {

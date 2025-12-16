@@ -159,7 +159,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: dr-controller
-          image: nexafi/disaster-recovery-controller:latest
+          image: nexafi/disaster-recovery-controller:1.0.0
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -528,7 +528,7 @@ spec:
             fsGroup: 1000
           containers:
             - name: dr-tester
-              image: nexafi/dr-tester:latest
+              image: nexafi/dr-tester:1.0.0
               imagePullPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false

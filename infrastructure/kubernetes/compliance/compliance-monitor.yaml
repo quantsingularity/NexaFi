@@ -32,7 +32,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: compliance-monitor
-          image: nexafi/compliance-monitor:latest
+          image: nexafi/compliance-monitor:1.0.0
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -331,7 +331,7 @@ spec:
             fsGroup: 1000
           containers:
             - name: compliance-scanner
-              image: nexafi/compliance-scanner:latest
+              image: nexafi/compliance-scanner:1.0.0
               imagePullPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false

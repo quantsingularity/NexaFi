@@ -2,7 +2,7 @@
 
 # Primary VPC
 module "vpc_primary" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
   name = "${local.name_prefix}-primary-vpc"
@@ -12,15 +12,15 @@ module "vpc_primary" {
 
   # Subnet configuration for financial services
   private_subnets = [
-    cidrsubnet(var.vpc_cidr_primary, 4, 1),  # 10.0.16.0/20 - Financial services
-    cidrsubnet(var.vpc_cidr_primary, 4, 2),  # 10.0.32.0/20 - Financial services
-    cidrsubnet(var.vpc_cidr_primary, 4, 3),  # 10.0.48.0/20 - Financial services
+    cidrsubnet(var.vpc_cidr_primary, 4, 1), # 10.0.16.0/20 - Financial services
+    cidrsubnet(var.vpc_cidr_primary, 4, 2), # 10.0.32.0/20 - Financial services
+    cidrsubnet(var.vpc_cidr_primary, 4, 3), # 10.0.48.0/20 - Financial services
   ]
 
   public_subnets = [
-    cidrsubnet(var.vpc_cidr_primary, 8, 1),  # 10.0.1.0/24 - Load balancers
-    cidrsubnet(var.vpc_cidr_primary, 8, 2),  # 10.0.2.0/24 - Load balancers
-    cidrsubnet(var.vpc_cidr_primary, 8, 3),  # 10.0.3.0/24 - Load balancers
+    cidrsubnet(var.vpc_cidr_primary, 8, 1), # 10.0.1.0/24 - Load balancers
+    cidrsubnet(var.vpc_cidr_primary, 8, 2), # 10.0.2.0/24 - Load balancers
+    cidrsubnet(var.vpc_cidr_primary, 8, 3), # 10.0.3.0/24 - Load balancers
   ]
 
   database_subnets = [
@@ -37,22 +37,22 @@ module "vpc_primary" {
   ]
 
   # Enhanced networking features
-  enable_nat_gateway     = var.enable_nat_gateway
-  enable_vpn_gateway     = var.enable_vpn_gateway
-  enable_dns_hostnames   = true
-  enable_dns_support     = true
+  enable_nat_gateway   = var.enable_nat_gateway
+  enable_vpn_gateway   = var.enable_vpn_gateway
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
   # VPC Flow Logs for security monitoring
-  enable_flow_log                      = true
-  create_flow_log_cloudwatch_iam_role  = true
-  create_flow_log_cloudwatch_log_group = true
-  flow_log_destination_type            = "cloud-watch-logs"
-  flow_log_cloudwatch_log_group_retention_in_days = 2555  # 7 years for compliance
-  flow_log_cloudwatch_log_group_kms_key_id = aws_kms_key.nexafi_primary.arn
+  enable_flow_log                                 = true
+  create_flow_log_cloudwatch_iam_role             = true
+  create_flow_log_cloudwatch_log_group            = true
+  flow_log_destination_type                       = "cloud-watch-logs"
+  flow_log_cloudwatch_log_group_retention_in_days = 2555 # 7 years for compliance
+  flow_log_cloudwatch_log_group_kms_key_id        = aws_kms_key.nexafi_primary.arn
 
   # Enhanced VPC Flow Logs configuration
-  flow_log_traffic_type                = "ALL"
-  flow_log_log_format                 = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${windowstart} $${windowend} $${action} $${flowlogstatus} $${vpc-id} $${subnet-id} $${instance-id} $${tcp-flags} $${type} $${pkt-srcaddr} $${pkt-dstaddr} $${region} $${az-id} $${sublocation-type} $${sublocation-id}"
+  flow_log_traffic_type = "ALL"
+  flow_log_log_format   = "$${version} $${account-id} $${interface-id} $${srcaddr} $${dstaddr} $${srcport} $${dstport} $${protocol} $${packets} $${bytes} $${windowstart} $${windowend} $${action} $${flowlogstatus} $${vpc-id} $${subnet-id} $${instance-id} $${tcp-flags} $${type} $${pkt-srcaddr} $${pkt-dstaddr} $${region} $${az-id} $${sublocation-type} $${sublocation-id}"
 
   # Network ACLs for additional security
   manage_default_network_acl = true
@@ -68,42 +68,42 @@ module "vpc_primary" {
 
   # Subnet tags for EKS
   public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
+    "kubernetes.io/role/elb"                             = "1"
     "kubernetes.io/cluster/${local.name_prefix}-primary" = "shared"
-    Tier = "public"
-    SecurityZone = "dmz"
+    Tier                                                 = "public"
+    SecurityZone                                         = "dmz"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/role/internal-elb"                    = "1"
     "kubernetes.io/cluster/${local.name_prefix}-primary" = "shared"
-    Tier = "private"
-    SecurityZone = "application"
+    Tier                                                 = "private"
+    SecurityZone                                         = "application"
   }
 
   database_subnet_tags = {
-    Tier = "database"
-    SecurityZone = "data"
-    BackupRequired = "true"
+    Tier               = "database"
+    SecurityZone       = "data"
+    BackupRequired     = "true"
     EncryptionRequired = "true"
   }
 
   intra_subnet_tags = {
-    Tier = "security"
+    Tier         = "security"
     SecurityZone = "security"
-    Purpose = "security-services"
+    Purpose      = "security-services"
   }
 
   tags = merge(local.common_tags, local.compliance_tags, {
-    Name = "${local.name_prefix}-primary-vpc"
+    Name   = "${local.name_prefix}-primary-vpc"
     Region = var.primary_region
-    Type = "primary"
+    Type   = "primary"
   })
 }
 
 # Secondary VPC for disaster recovery
 module "vpc_secondary" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
 
   providers = {
@@ -145,53 +145,53 @@ module "vpc_secondary" {
   enable_dns_support   = true
 
   # VPC Flow Logs for secondary region
-  enable_flow_log                      = true
-  create_flow_log_cloudwatch_iam_role  = true
-  create_flow_log_cloudwatch_log_group = true
-  flow_log_destination_type            = "cloud-watch-logs"
+  enable_flow_log                                 = true
+  create_flow_log_cloudwatch_iam_role             = true
+  create_flow_log_cloudwatch_log_group            = true
+  flow_log_destination_type                       = "cloud-watch-logs"
   flow_log_cloudwatch_log_group_retention_in_days = 2555
 
   # Subnet tags for EKS
   public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
+    "kubernetes.io/role/elb"                               = "1"
     "kubernetes.io/cluster/${local.name_prefix}-secondary" = "shared"
-    Tier = "public"
-    SecurityZone = "dmz"
+    Tier                                                   = "public"
+    SecurityZone                                           = "dmz"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/role/internal-elb"                      = "1"
     "kubernetes.io/cluster/${local.name_prefix}-secondary" = "shared"
-    Tier = "private"
-    SecurityZone = "application"
+    Tier                                                   = "private"
+    SecurityZone                                           = "application"
   }
 
   database_subnet_tags = {
-    Tier = "database"
-    SecurityZone = "data"
-    BackupRequired = "true"
+    Tier               = "database"
+    SecurityZone       = "data"
+    BackupRequired     = "true"
     EncryptionRequired = "true"
   }
 
   intra_subnet_tags = {
-    Tier = "security"
+    Tier         = "security"
     SecurityZone = "security"
-    Purpose = "security-services"
+    Purpose      = "security-services"
   }
 
   tags = merge(local.common_tags, local.compliance_tags, {
-    Name = "${local.name_prefix}-secondary-vpc"
+    Name   = "${local.name_prefix}-secondary-vpc"
     Region = var.secondary_region
-    Type = "disaster-recovery"
+    Type   = "disaster-recovery"
   })
 }
 
 # VPC Peering between primary and secondary regions
 resource "aws_vpc_peering_connection" "primary_to_secondary" {
-  vpc_id        = module.vpc_primary.vpc_id
-  peer_vpc_id   = module.vpc_secondary.vpc_id
-  peer_region   = var.secondary_region
-  auto_accept   = false
+  vpc_id      = module.vpc_primary.vpc_id
+  peer_vpc_id = module.vpc_secondary.vpc_id
+  peer_region = var.secondary_region
+  auto_accept = false
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-primary-to-secondary-peering"
@@ -300,8 +300,8 @@ resource "aws_network_acl" "financial_services" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-financial-services-nacl"
-    Type = "network-acl"
+    Name         = "${local.name_prefix}-financial-services-nacl"
+    Type         = "network-acl"
     SecurityZone = "application"
   })
 }
@@ -370,8 +370,8 @@ resource "aws_network_acl" "database" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-database-nacl"
-    Type = "network-acl"
+    Name         = "${local.name_prefix}-database-nacl"
+    Type         = "network-acl"
     SecurityZone = "data"
   })
 }
@@ -440,8 +440,8 @@ resource "aws_network_acl" "security_services" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-security-services-nacl"
-    Type = "network-acl"
+    Name         = "${local.name_prefix}-security-services-nacl"
+    Type         = "network-acl"
     SecurityZone = "security"
   })
 }
@@ -457,7 +457,7 @@ resource "aws_vpc_endpoint" "s3" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = "*"
         Action = [
           "s3:GetObject",

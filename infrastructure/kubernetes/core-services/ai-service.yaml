@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: ai-service
-          image: nexafi/ai-service:latest
+          image: nexafi/ai-service:1.0.0
           ports:
             - containerPort: 5004
           env:

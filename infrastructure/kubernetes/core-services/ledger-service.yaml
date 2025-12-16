@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: ledger-service
-          image: nexafi/ledger-service:latest
+          image: nexafi/ledger-service:1.0.0
           ports:
             - containerPort: 5002
           env:

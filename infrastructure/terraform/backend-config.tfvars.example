@@ -1,12 +1,16 @@
-# Terraform Backend Configuration Example
+# Terraform S3 Backend Configuration
 # Copy this file to backend-config.tfvars and fill in your values
 # Usage: terraform init -backend-config=backend-config.tfvars
 
-bucket         = "YOUR-TERRAFORM-STATE-BUCKET-NAME"  # e.g., "nexafi-terraform-state-prod"
+bucket         = "nexafi-terraform-state-ENVIRONMENT"
 key            = "infrastructure/terraform.tfstate"
-region         = "us-west-2"  # Change to your preferred region
+region         = "us-west-2"
 encrypt        = true
-dynamodb_table = "YOUR-TERRAFORM-LOCKS-TABLE-NAME"  # e.g., "nexafi-terraform-locks"
-kms_key_id     = "alias/YOUR-TERRAFORM-STATE-KMS-ALIAS"  # e.g., "alias/nexafi-terraform-state"
+dynamodb_table = "nexafi-terraform-locks"
 
-# Note: Ensure the S3 bucket, DynamoDB table, and KMS key exist before running terraform init
+# Optional: Configure state locking timeout
+# lock_timeout   = "5m"
+
+# Optional: For role assumption
+# role_arn       = "arn:aws:iam::ACCOUNT-ID:role/TerraformRole"
+# session_name   = "terraform"

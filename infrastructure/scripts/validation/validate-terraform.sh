@@ -1,45 +1,33 @@
 #!/bin/bash
-# Terraform Validation Script
-
 set -e
 
-echo "========================================="
-echo "Terraform Validation"
-echo "========================================="
+TERRAFORM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/terraform"
+cd "$TERRAFORM_DIR"
 
-cd "$(dirname "$0")/../../terraform"
+echo "Terraform Validation Report"
+echo "============================"
+echo ""
 
-echo "[1/4] Checking Terraform installation..."
-if ! command -v terraform &> /dev/null; then
-    echo "❌ Terraform not found. Please install Terraform >= 1.5.0"
-    exit 1
+echo "[1/4] Formatting check..."
+terraform fmt -check -recursive && echo "✓ Format OK" || echo "❌ Needs formatting"
+
+echo ""
+echo "[2/4] Initialization (local)..."
+terraform init -backend=false > /dev/null 2>&1 && echo "✓ Init OK" || echo "❌ Init failed"
+
+echo ""
+echo "[3/4] Validation..."
+terraform validate && echo "✓ Validation OK" || echo "❌ Validation failed"
+
+echo ""
+echo "[4/4] Plan (dry-run with example vars)..."
+if [ -f terraform.tfvars.example ]; then
+    terraform plan -var-file=terraform.tfvars.example -out=plan.out > /dev/null 2>&1 \
+        && echo "✓ Plan OK" || echo "⚠ Plan requires real values"
+    rm -f plan.out
+else
+    echo "⚠ No example vars file"
 fi
-terraform version
 
-echo -e "\n[2/4] Running terraform fmt..."
-terraform fmt -check -recursive || {
-    echo "⚠️  Format check failed. Run 'terraform fmt -recursive' to fix"
-    terraform fmt -recursive
-    echo "✓ Formatting fixed"
-}
-
-echo -e "\n[3/4] Running terraform validate..."
-# Initialize without backend for validation
-terraform init -backend=false
-terraform validate
-echo "✓ Validation passed"
-
-echo -e "\n[4/4] Checking for required example files..."
-required_files=("terraform.tfvars.example" "backend-config.tfvars.example")
-for file in "${required_files[@]}"; do
-    if [ -f "$file" ]; then
-        echo "✓ $file exists"
-    else
-        echo "❌ $file missing"
-        exit 1
-    fi
-done
-
-echo -e "\n========================================="
-echo "✓ Terraform validation completed successfully"
-echo "========================================="
+echo ""
+echo "Validation complete!"

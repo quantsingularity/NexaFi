@@ -32,7 +32,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: audit-service
-          image: nexafi/audit-service:latest
+          image: nexafi/audit-service:1.0.0
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

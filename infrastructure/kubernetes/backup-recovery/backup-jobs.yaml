@@ -158,7 +158,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: backup-controller
-          image: nexafi/backup-controller:latest
+          image: nexafi/backup-controller:1.0.0
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
@@ -536,7 +536,7 @@ spec:
             fsGroup: 1000
           containers:
             - name: backup-verifier
-              image: nexafi/backup-verifier:latest
+              image: nexafi/backup-verifier:1.0.0
               imagePullPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: analytics-service
-          image: nexafi/analytics-service:latest
+          image: nexafi/analytics-service:1.0.0
           ports:
             - containerPort: 5005
           env:

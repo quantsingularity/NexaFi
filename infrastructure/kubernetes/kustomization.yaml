@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespaces.yaml
+  - security/
+  - infrastructure-components/
+  - core-services/
+  - monitoring/
+  - ingress/
+  - storage/
+  - backup-recovery/
+  - compliance/
+
+# Add common labels
+commonLabels:
+  app.kubernetes.io/part-of: nexafi
+  app.kubernetes.io/managed-by: kustomize
+# Add namespace to all resources
+# namespace: nexafi

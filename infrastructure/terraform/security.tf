@@ -37,8 +37,8 @@ resource "aws_kms_key" "database" {
   })
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-database-key"
-    Type = "encryption"
+    Name    = "${local.name_prefix}-database-key"
+    Type    = "encryption"
     Purpose = "database"
   })
 }
@@ -84,8 +84,8 @@ resource "aws_kms_key" "backup" {
   })
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-backup-key"
-    Type = "encryption"
+    Name    = "${local.name_prefix}-backup-key"
+    Type    = "encryption"
     Purpose = "backup"
   })
 }
@@ -282,7 +282,7 @@ resource "aws_acm_certificate" "nexafi_api" {
 resource "aws_secretsmanager_secret" "database_credentials" {
   name                    = "${local.name_prefix}/database/credentials"
   description             = "Database credentials for NexaFi"
-  kms_key_id             = aws_kms_key.nexafi_primary.arn
+  kms_key_id              = aws_kms_key.nexafi_primary.arn
   recovery_window_in_days = 30
 
   replica {
@@ -306,7 +306,7 @@ resource "aws_secretsmanager_secret_version" "database_credentials" {
 resource "aws_secretsmanager_secret" "jwt_secret" {
   name                    = "${local.name_prefix}/auth/jwt-secret"
   description             = "JWT signing secret for NexaFi authentication"
-  kms_key_id             = aws_kms_key.nexafi_primary.arn
+  kms_key_id              = aws_kms_key.nexafi_primary.arn
   recovery_window_in_days = 30
 
   replica {
@@ -333,8 +333,8 @@ resource "random_password" "jwt_secret" {
 
 # Parameter Store for non-sensitive configuration
 resource "aws_ssm_parameter" "app_config" {
-  name  = "/${local.name_prefix}/app/config"
-  type  = "String"
+  name = "/${local.name_prefix}/app/config"
+  type = "String"
   value = jsonencode({
     environment = var.environment
     region      = var.primary_region
@@ -545,17 +545,15 @@ resource "aws_s3_bucket_versioning" "security_logs" {
   }
 }
 
-resource "aws_s3_bucket_encryption" "security_logs" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "security_logs" {
   bucket = aws_s3_bucket.security_logs.id
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        kms_master_key_id = aws_kms_key.nexafi_primary.arn
-        sse_algorithm     = "aws:kms"
-      }
-      bucket_key_enabled = true
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.nexafi_primary.arn
+      sse_algorithm     = "aws:kms"
     }
+    bucket_key_enabled = true
   }
 }
 
@@ -574,6 +572,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "security_logs" {
   rule {
     id     = "security_log_lifecycle"
     status = "Enabled"
+    filter {}
 
     transition {
       days          = 30
@@ -591,7 +590,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "security_logs" {
     }
 
     expiration {
-      days = 2555  # 7 years
+      days = 2555 # 7 years
     }
   }
 }
@@ -657,7 +656,7 @@ resource "aws_cloudwatch_event_rule" "guardduty_findings" {
     source      = ["aws.guardduty"]
     detail-type = ["GuardDuty Finding"]
     detail = {
-      severity = [7.0, 8.0, 8.9]  # High and Critical findings
+      severity = [7.0, 8.0, 8.9] # High and Critical findings
     }
   })
 

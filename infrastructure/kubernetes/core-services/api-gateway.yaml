@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: nexafi/api-gateway:latest
+          image: nexafi/api-gateway:1.0.0
           ports:
             - containerPort: 5000
           env:
