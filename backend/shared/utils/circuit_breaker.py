@@ -7,6 +7,7 @@ import time
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable
+
 from ..config.infrastructure import InfrastructureConfig
 
 

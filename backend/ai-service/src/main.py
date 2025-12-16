@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from database.manager import BaseModel, initialize_database
-from .routes.user import user_bp
+from routes.user import user_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 app.config["SECRET_KEY"] = "nexafi-ai-service-secret-key-2024"
@@ -16,6 +16,7 @@ os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
 BaseModel.set_db_manager(db_manager)
 from .migrations import AI_MIGRATIONS
+from typing import Any
 
 for version, migration in AI_MIGRATIONS.items():
     migration_manager.apply_migration(

@@ -2,15 +2,17 @@ import os
 import sys
 import time
 from datetime import datetime
+
 import requests
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
-from logging.logger import get_logger, log_security_event, setup_request_logging
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
+from nexafi_logging.logger import get_logger, log_security_event, setup_request_logging
 from audit.audit_logger import audit_logger
 from middleware.auth import init_auth_manager, optional_auth
 from middleware.rate_limiter import add_rate_limit_headers, rate_limit
+from typing import Any
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(

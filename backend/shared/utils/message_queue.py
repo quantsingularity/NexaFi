@@ -5,6 +5,7 @@ Shared message queue utilities for NexaFi services
 import json
 import logging
 from typing import Any, Callable, Dict, Optional
+
 import pika
 from ..config.infrastructure import InfrastructureConfig
 

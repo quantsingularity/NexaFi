@@ -8,14 +8,15 @@ import os
 import sys
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
-from logging.logger import get_logger, setup_request_logging
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
+from nexafi_logging.logger import get_logger, setup_request_logging
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
-from .models.user import KYCVerification, AMLCheck, SanctionsScreening, ComplianceReport
+from models.user import KYCVerification, AMLCheck, SanctionsScreening, ComplianceReport
 from middleware.auth import require_auth, require_permission
 from validators.schemas import (
     SanitizationMixin,

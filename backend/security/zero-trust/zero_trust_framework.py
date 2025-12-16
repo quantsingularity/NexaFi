@@ -4,15 +4,16 @@ Implements comprehensive zero-trust architecture with never trust, always verify
 """
 
 import hashlib
-import ipaddress
 import json
 import logging
 import os
-import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+import ipaddress
+import uuid
 import geoip2.database
 import redis
 import user_agents
@@ -28,7 +29,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from core.logging import get_logger
+from nexafi_logging.logger import get_logger
 
 logger = get_logger(__name__)
 Base = declarative_base()

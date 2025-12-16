@@ -4,8 +4,9 @@ Implements comprehensive validation for financial data
 """
 
 import re
-from decimal import Decimal, InvalidOperation
 from typing import Any, Dict
+
+from decimal import Decimal, InvalidOperation
 import bleach
 from marshmallow import Schema, ValidationError, fields, post_load, pre_load, validate
 

@@ -1,6 +1,8 @@
-import uuid
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Any
+
+import uuid
 from flask import Blueprint, jsonify, request
 from .models.user import (
     CreditScoreModel,

@@ -7,16 +7,17 @@ import json
 import logging
 import os
 import re
-import smtplib
 import time
 import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import joblib
 import numpy as np
 import redis
@@ -39,7 +40,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from twilio.rest import Client as TwilioClient
-from core.logging import get_logger
+from nexafi_logging.logger import get_logger
 
 logger = get_logger(__name__)
 warnings.filterwarnings("ignore")

@@ -8,10 +8,11 @@ import csv
 import io
 import logging
 import os
-import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+
+import zipfile
 import cx_Oracle
 import jwt
 import pandas as pd
@@ -25,7 +26,7 @@ from ..shared.base_integration import (
     IntegrationConfig,
     SyncResult,
 )
-from core.logging import get_logger
+from nexafi_logging.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -4,6 +4,8 @@ import json
 import secrets
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Any
+
 import jwt
 import qrcode
 from flask import Blueprint, current_app, jsonify, request

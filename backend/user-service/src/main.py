@@ -1,16 +1,36 @@
+"""
+User Service API Gateway
+Handles user authentication, registration, profile management, and role-based access control.
+"""
+
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Any, Tuple
+
 from dotenv import load_dotenv
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-sys.path.append("/home/ubuntu/nexafi_backend_refactored/shared")
-from logging.logger import get_logger, setup_request_logging
+# Load environment variables at the very beginning
+load_dotenv()
+
+# -------------------------------------------------------------------------
+# Path Configuration
+# -------------------------------------------------------------------------
+# Base directory for the service
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Add shared directory to Python path for internal modules
+sys.path.append(os.path.join(BASE_DIR, "..", "..", "shared"))
+
+# -------------------------------------------------------------------------
+# Imports (Ensure these modules exist in the shared path)
+# -------------------------------------------------------------------------
+from nexafi_logging.logger import get_logger, setup_request_logging
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
-from .models.user import User
+from models.user import User
 from middleware.auth import (
     auth_manager,
     get_user_permissions,
@@ -25,28 +45,132 @@ from validators.schemas import (
     validate_json_request,
 )
 
+# -------------------------------------------------------------------------
+# App Configuration & Initialization
+# -------------------------------------------------------------------------
 app = Flask(__name__)
-load_dotenv()
+
+# Environment Variable Validation
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY not set in environment")
-DEBUG = os.getenv("DEBUG", "False") == "True"
+    raise RuntimeError("SECRET_KEY not set in environment. Exiting.")
+
+# Configuration
+app.config["SECRET_KEY"] = SECRET_KEY
+app.config["DEBUG"] = os.getenv("DEBUG", "False").lower() == "true"
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 5000))
-app = Flask(__name__)
-app.config["SECRET_KEY"] = SECRET_KEY
-app.config["DEBUG"] = DEBUG
+
+# Initialize Auth Manager
 init_auth_manager(app.config["SECRET_KEY"])
+
+# CORS Configuration (Restrict in production)
+CORS(
+    app,
+    origins=os.getenv("ALLOWED_ORIGINS", "*"),
+    allow_headers=["Content-Type", "Authorization", "X-User-ID"],
+    supports_credentials=True,
+)
+
+# Logging Setup
+setup_request_logging(app)
+logger = get_logger("user_service")
+
+# Database Setup
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL not set in environment. Exiting.")
+
+# Determine database path for sqlite or other drivers
+if DATABASE_URL.startswith("sqlite:///"):
+    db_path = DATABASE_URL.replace("sqlite:///", "")
+    # Ensure database directory exists if using sqlite
+    db_dir = os.path.dirname(db_path)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+else:
+    db_path = DATABASE_URL
+
+db_manager, migration_manager = initialize_database(db_path)
+BaseModel.set_db_manager(db_manager)
+
+# -------------------------------------------------------------------------
+# Utility Functions
+# -------------------------------------------------------------------------
+
+
+def validate_password_strength(password: str) -> Tuple[bool, str]:
+    """Validate password strength according to financial industry standards."""
+    if len(password) < 12:
+        return (False, "Password must be at least 12 characters long")
+    # Check complexity
+    if not re.search("[A-Z]", password):
+        return (False, "Password must contain at least one uppercase letter")
+    if not re.search("[a-z]", password):
+        return (False, "Password must contain at least one lowercase letter")
+    if not re.search(r"\d", password):  # Use raw string for cleaner regex
+        return (False, "Password must contain at least one digit")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>\[\]\-\+_=\\]", password):
+        return (False, "Password must contain at least one special character")
+
+    # Check common patterns/dictionary words (Optimized)
+    common_patterns = ["123", "abc", "password", "admin", "user", "qwert"]
+    for pattern in common_patterns:
+        if pattern.lower() in password.lower():
+            return (False, f"Password cannot contain common pattern: {pattern}")
+
+    return (True, "Password is strong")
+
+
+#
+
+# -------------------------------------------------------------------------
+# Error Handlers
+# -------------------------------------------------------------------------
+
+
+@app.errorhandler(400)
+def handle_400(error: Any) -> Tuple[Any, int]:
+    """Return a custom 400 Bad Request JSON response."""
+    return (jsonify({"error": "Bad request", "message": str(error)}), 400)
+
+
+@app.errorhandler(401)
+def handle_401(error: Any) -> Tuple[Any, int]:
+    """Return a custom 401 Unauthorized JSON response."""
+    return (
+        jsonify(
+            {
+                "error": "Unauthorized",
+                "message": "Authentication failed or token missing.",
+            }
+        ),
+        401,
+    )
+
+
+@app.errorhandler(403)
+def handle_403(error: Any) -> Tuple[Any, int]:
+    """Return a custom 403 Forbidden JSON response."""
+    return (
+        jsonify(
+            {
+                "error": "Forbidden",
+                "message": "You do not have permission to access this resource.",
+            }
+        ),
+        403,
+    )
 
 
 @app.errorhandler(404)
-def handle_404(error: Any) -> Any:
+def handle_404(error: Any) -> Tuple[Any, int]:
     """Return a custom 404 Not Found JSON response."""
     return (jsonify({"error": "Not found", "message": str(error)}), 404)
 
 
 @app.errorhandler(500)
-def handle_500(error: Any) -> Any:
+def handle_500(error: Any) -> Tuple[Any, int]:
     """Return a custom 500 Internal Server Error JSON response."""
     logger.error(f"Internal Server Error: {error}", exc_info=True)
     return (
@@ -60,44 +184,9 @@ def handle_500(error: Any) -> Any:
     )
 
 
-@app.errorhandler(400)
-def handle_400(error: Any) -> Any:
-    """Return a custom 400 Bad Request JSON response."""
-    return (jsonify({"error": "Bad request", "message": str(error)}), 400)
-
-
-CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
-setup_request_logging(app)
-logger = get_logger("user_service")
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL not set in environment")
-db_path = (
-    DATABASE_URL.replace("sqlite:///", "")
-    if DATABASE_URL.startswith("sqlite:///")
-    else DATABASE_URL
-)
-db_manager, migration_manager = initialize_database(db_path)
-BaseModel.set_db_manager(db_manager)
-
-
-def validate_password_strength(password: str) -> tuple[bool, str]:
-    """Validate password strength according to financial industry standards"""
-    if len(password) < 12:
-        return (False, "Password must be at least 12 characters long")
-    if not re.search("[A-Z]", password):
-        return (False, "Password must contain at least one uppercase letter")
-    if not re.search("[a-z]", password):
-        return (False, "Password must contain at least one lowercase letter")
-    if not re.search("\\d", password):
-        return (False, "Password must contain at least one digit")
-    if not re.search('[!@#$%^&*(),.?":{}|<>]', password):
-        return (False, "Password must contain at least one special character")
-    common_patterns = ["123", "abc", "password", "admin", "user"]
-    for pattern in common_patterns:
-        if pattern.lower() in password.lower():
-            return (False, f"Password cannot contain common pattern: {pattern}")
-    return (True, "Password is strong")
+# -------------------------------------------------------------------------
+# Health Check Route
+# -------------------------------------------------------------------------
 
 
 @app.route("/api/v1/health", methods=["GET"])
@@ -107,10 +196,16 @@ def health_check() -> Any:
         {
             "status": "healthy",
             "service": "user-service",
-            "timestamp": datetime.utcnow().isoformat(),
-            "version": "2.0.0",
+            # Use timezone-aware datetime
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "version": "2.0.1",
         }
     )
+
+
+# -------------------------------------------------------------------------
+# Authentication Routes
+# -------------------------------------------------------------------------
 
 
 @app.route("/api/v1/auth/register", methods=["POST"])
@@ -118,10 +213,11 @@ def health_check() -> Any:
 @audit_action(
     AuditEventType.USER_REGISTRATION, "user_registration", severity=AuditSeverity.HIGH
 )
-def register() -> Any:
+def register() -> Tuple[Any, int]:
     """User registration with enhanced security"""
     data = request.validated_data
     existing_user = User.find_one("email = ?", (data["email"],))
+
     if existing_user:
         audit_logger.log_security_event(
             "duplicate_registration_attempt",
@@ -129,9 +225,11 @@ def register() -> Any:
             {"email": data["email"]},
         )
         return (jsonify({"error": "User already exists"}), 409)
+
     is_strong, message = validate_password_strength(data["password"])
     if not is_strong:
         return (jsonify({"error": message}), 400)
+
     user = User(
         email=data["email"],
         first_name=data["first_name"],
@@ -142,6 +240,7 @@ def register() -> Any:
     user.set_password(data["password"], auth_manager)
     user.save()
     user.add_role("user")
+
     audit_logger.log_user_action(
         AuditEventType.USER_REGISTRATION,
         str(user.id),
@@ -153,6 +252,7 @@ def register() -> Any:
         },
     )
     logger.info(f"New user registered: {user.email}")
+
     return (
         jsonify({"message": "User registered successfully", "user": user.to_dict()}),
         201,
@@ -162,10 +262,11 @@ def register() -> Any:
 @app.route("/api/v1/auth/login", methods=["POST"])
 @validate_json_request(UserLoginSchema)
 @audit_action(AuditEventType.USER_LOGIN, "user_login", severity=AuditSeverity.MEDIUM)
-def login() -> Any:
+def login() -> Tuple[Any, int]:
     """User login with enhanced security"""
     data = request.validated_data
     user = User.find_one("email = ?", (data["email"],))
+
     if not user:
         audit_logger.log_security_event(
             "login_attempt_unknown_user",
@@ -173,6 +274,7 @@ def login() -> Any:
             {"email": data["email"]},
         )
         return (jsonify({"error": "Invalid credentials"}), 401)
+
     if user.is_locked():
         audit_logger.log_security_event(
             "login_attempt_locked_account",
@@ -180,6 +282,7 @@ def login() -> Any:
             {"user_id": str(user.id), "email": user.email},
         )
         return (jsonify({"error": "Account is temporarily locked"}), 423)
+
     if not user.is_active:
         audit_logger.log_security_event(
             "login_attempt_inactive_account",
@@ -187,6 +290,7 @@ def login() -> Any:
             {"user_id": str(user.id), "email": user.email},
         )
         return (jsonify({"error": "Account is inactive"}), 401)
+
     if not user.check_password(data["password"], auth_manager):
         user.increment_failed_attempts()
         audit_logger.log_security_event(
@@ -198,12 +302,18 @@ def login() -> Any:
                 "failed_attempts": user.failed_login_attempts,
             },
         )
+        # Lock account if failed attempts threshold is met (logic assumed in User model)
+        if user.is_locked():
+            logger.warning(f"Account locked: {user.email}")
         return (jsonify({"error": "Invalid credentials"}), 401)
+
+    # Successful login
     user.reset_failed_attempts()
     roles = user.get_roles()
     access_token, refresh_token = auth_manager.generate_tokens(
         str(user.id), user.email, roles
     )
+
     audit_logger.log_user_action(
         AuditEventType.USER_LOGIN,
         str(user.id),
@@ -212,75 +322,102 @@ def login() -> Any:
     )
     logger.info(f"User logged in: {user.email}")
 
-
-if __name__ == "__main__":
-    os.makedirs("/home/ubuntu/NexaFi/backend/user-service/src/database", exist_ok=True)
-    app.run(host=HOST, port=PORT, debug=DEBUG)
-    return jsonify(
-        {
-            "message": "Login successful",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": user.to_dict(),
-            "permissions": get_user_permissions(roles),
-        }
+    # Corrected return structure
+    return (
+        jsonify(
+            {
+                "message": "Login successful",
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user": user.to_dict(),
+                "permissions": get_user_permissions(roles),
+            }
+        ),
+        200,
     )
 
 
 @app.route("/api/v1/auth/refresh", methods=["POST"])
-def refresh_token() -> Any:
+def refresh_token() -> Tuple[Any, int]:
     """Refresh access token"""
-    refresh_token = request.json.get("refresh_token")
+    data = request.get_json() or {}
+    refresh_token = data.get("refresh_token")
+
     if not refresh_token:
         return (jsonify({"error": "Refresh token required"}), 400)
+
     result = auth_manager.refresh_access_token(refresh_token)
+
     if not result:
-        return (jsonify({"error": "Invalid refresh token"}), 401)
+        return (jsonify({"error": "Invalid or expired refresh token"}), 401)
+
     access_token, new_refresh_token = result
+
     return jsonify({"access_token": access_token, "refresh_token": new_refresh_token})
 
 
 @app.route("/api/v1/auth/logout", methods=["POST"])
 @require_auth
 @audit_action(AuditEventType.USER_LOGOUT, "user_logout")
-def logout() -> Any:
+def logout() -> Tuple[Any, int]:
     """User logout"""
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
         auth_manager.revoke_token(token)
-    audit_logger.log_user_action(
-        AuditEventType.USER_LOGOUT, g.current_user["user_id"], "user_logged_out"
-    )
-    return jsonify({"message": "Logged out successfully"})
+
+    # Ensure g.current_user is available from require_auth decorator
+    user_id = g.get("current_user", {}).get("user_id")
+    if user_id:
+        audit_logger.log_user_action(
+            AuditEventType.USER_LOGOUT, str(user_id), "user_logged_out"
+        )
+
+    return jsonify({"message": "Logged out successfully"}), 200
+
+
+# -------------------------------------------------------------------------
+# User Profile Routes
+# -------------------------------------------------------------------------
 
 
 @app.route("/api/v1/users/profile", methods=["GET"])
 @require_auth
-def get_profile() -> Any:
-    """Get user profile"""
-    user = User.find_by_id(g.current_user["user_id"])
+def get_profile() -> Tuple[Any, int]:
+    """Get authenticated user profile"""
+    user_id = g.current_user["user_id"]
+    user = User.find_by_id(user_id)
+
     if not user:
+        # Should not happen if require_auth works, but safe check
         return (jsonify({"error": "User not found"}), 404)
-    return jsonify({"user": user.to_dict()})
+
+    return jsonify({"user": user.to_dict()}), 200
 
 
 @app.route("/api/v1/users/profile", methods=["PUT"])
 @require_auth
 @validate_json_request(UserUpdateSchema)
 @audit_action(AuditEventType.USER_UPDATE, "user_profile_update")
-def update_profile() -> Any:
-    """Update user profile"""
+def update_profile() -> Tuple[Any, int]:
+    """Update authenticated user profile"""
     data = request.validated_data
-    user = User.find_by_id(g.current_user["user_id"])
+    user_id = g.current_user["user_id"]
+    user = User.find_by_id(user_id)
+
     if not user:
         return (jsonify({"error": "User not found"}), 404)
+
     before_state = user.to_dict()
+
     for field in ["first_name", "last_name", "phone", "company_name"]:
         if field in data:
             setattr(user, field, data[field])
-    user.updated_at = datetime.utcnow()
+
+    # Use timezone-aware datetime
+    user.updated_at = datetime.now(timezone.utc)
     user.save()
+
     audit_logger.log_user_action(
         AuditEventType.USER_UPDATE,
         str(user.id),
@@ -288,20 +425,48 @@ def update_profile() -> Any:
         before_state=before_state,
         after_state=user.to_dict(),
     )
-    return jsonify({"message": "Profile updated successfully", "user": user.to_dict()})
+
+    return (
+        jsonify({"message": "Profile updated successfully", "user": user.to_dict()}),
+        200,
+    )
+
+
+# -------------------------------------------------------------------------
+# Admin/Role Management Routes
+# -------------------------------------------------------------------------
+
+
+@app.route("/api/v1/users", methods=["GET"])
+@require_auth
+@require_permission("user:read")
+def list_users() -> Tuple[Any, int]:
+    """List all users (admin only)"""
+    users = User.find_all()
+
+    return (
+        jsonify({"users": [user.to_dict() for user in users], "total": len(users)}),
+        200,
+    )
 
 
 @app.route("/api/v1/users/<int:user_id>/roles", methods=["GET"])
 @require_auth
 @require_permission("user:read")
-def get_user_roles(user_id: Any) -> Any:
-    """Get user roles"""
+def get_user_roles(user_id: int) -> Tuple[Any, int]:
+    """Get user roles and permissions"""
     user = User.find_by_id(user_id)
+
     if not user:
         return (jsonify({"error": "User not found"}), 404)
+
     roles = user.get_roles()
     permissions = get_user_permissions(roles)
-    return jsonify({"user_id": user_id, "roles": roles, "permissions": permissions})
+
+    return (
+        jsonify({"user_id": user_id, "roles": roles, "permissions": permissions}),
+        200,
+    )
 
 
 @app.route("/api/v1/users/<int:user_id>/roles", methods=["POST"])
@@ -310,64 +475,91 @@ def get_user_roles(user_id: Any) -> Any:
 @audit_action(
     AuditEventType.USER_UPDATE, "user_role_granted", severity=AuditSeverity.HIGH
 )
-def grant_role(user_id: Any) -> Any:
+def grant_role(user_id: int) -> Tuple[Any, int]:
     """Grant role to user"""
-    data = request.get_json()
+    data = request.get_json() or {}
     role_name = data.get("role_name")
+
     if not role_name:
         return (jsonify({"error": "Role name required"}), 400)
+
     user = User.find_by_id(user_id)
     if not user:
         return (jsonify({"error": "User not found"}), 404)
+
     current_roles = user.get_roles()
     if role_name in current_roles:
         return (jsonify({"error": "User already has this role"}), 409)
-    user.add_role(role_name, int(g.current_user["user_id"]))
+
+    # Pass the user_id of the user performing the action (admin)
+    admin_id = g.current_user["user_id"]
+    user.add_role(role_name, admin_id)
+
     audit_logger.log_user_action(
         AuditEventType.USER_UPDATE,
         str(user_id),
         "role_granted",
-        details={"role_name": role_name, "granted_by": g.current_user["user_id"]},
+        details={"role_name": role_name, "granted_by": admin_id},
     )
-    return jsonify(
-        {"message": f"Role {role_name} granted successfully", "roles": user.get_roles()}
+
+    return (
+        jsonify(
+            {
+                "message": f"Role {role_name} granted successfully",
+                "roles": user.get_roles(),
+            }
+        ),
+        200,
     )
 
 
-@app.route("/api/v1/users/<int:user_id>/roles/<role_name>", methods=["DELETE"])
+@app.route("/api/v1/users/<int:user_id>/roles/<string:role_name>", methods=["DELETE"])
 @require_auth
 @require_permission("user:write")
 @audit_action(
     AuditEventType.USER_UPDATE, "user_role_revoked", severity=AuditSeverity.HIGH
 )
-def revoke_role(user_id: Any, role_name: Any) -> Any:
+def revoke_role(user_id: int, role_name: str) -> Tuple[Any, int]:
     """Revoke role from user"""
     user = User.find_by_id(user_id)
+
     if not user:
         return (jsonify({"error": "User not found"}), 404)
+
+    # Check if user has the role before attempting removal
+    if role_name not in user.get_roles():
+        return (jsonify({"error": f"User does not have role: {role_name}"}), 404)
+
     user.remove_role(role_name)
+
     audit_logger.log_user_action(
         AuditEventType.USER_UPDATE,
         str(user_id),
         "role_revoked",
         details={"role_name": role_name, "revoked_by": g.current_user["user_id"]},
     )
-    return jsonify(
-        {"message": f"Role {role_name} revoked successfully", "roles": user.get_roles()}
+
+    return (
+        jsonify(
+            {
+                "message": f"Role {role_name} revoked successfully",
+                "roles": user.get_roles(),
+            }
+        ),
+        200,
     )
 
 
-@app.route("/api/v1/users", methods=["GET"])
-@require_auth
-@require_permission("user:read")
-def list_users() -> Any:
-    """List all users (admin only)"""
-    users = User.find_all()
-    return jsonify({"users": [user.to_dict() for user in users], "total": len(users)})
-
+# -------------------------------------------------------------------------
+# Run Application
+# -------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    os.makedirs(
-        "/home/ubuntu/nexafi_backend_refactored/user-service/data", exist_ok=True
+    # Ensure the database directory exists before running
+    data_dir = os.path.join(BASE_DIR, "data")
+    os.makedirs(data_dir, exist_ok=True)
+
+    logger.info(
+        f"Starting User Service on {HOST}:{PORT} (Debug: {app.config['DEBUG']})"
     )
-    app.run(host="0.0.0.0", port=5001, debug=False)
+    app.run(host=HOST, port=PORT, debug=app.config["DEBUG"])

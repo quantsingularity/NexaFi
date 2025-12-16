@@ -3,7 +3,8 @@ import sys
 import time
 from datetime import datetime
 import requests
-from core.logging import get_logger
+from nexafi_logging.logger import get_logger
+from typing import Any
 
 logger = get_logger(__name__)
 BASE_URL = "http://localhost:5000"

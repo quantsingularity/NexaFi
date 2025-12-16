@@ -1,7 +1,9 @@
 import os
-import uuid
 from datetime import datetime
 from functools import wraps
+from typing import Any
+
+import uuid
 from flask import Blueprint, jsonify, request, send_file
 from .models.user import Document, DocumentTemplate, DocumentShare, DocumentVersion
 

@@ -7,9 +7,10 @@ import logging
 import os
 import sys
 import threading
-import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+
+import uuid
 from flask import g, has_request_context, request
 from pythonjsonlogger import jsonlogger
 
@@ -74,7 +75,7 @@ class LoggerManager:
 
     def setup_root_logger(self) -> Any:
         """Setup root logger configuration"""
-        log_dir = "/home/ubuntu/nexafi_backend_refactored/logs"
+        log_dir = os.path.join(os.getcwd(), "logs")
         os.makedirs(log_dir, exist_ok=True)
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.INFO)

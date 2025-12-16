@@ -1,7 +1,9 @@
-import uuid
 from datetime import datetime, date
-from decimal import Decimal
 from functools import wraps
+from typing import Any
+
+import uuid
+from decimal import Decimal
 from flask import Blueprint, jsonify, request
 from .models.user import Account, JournalEntry, JournalEntryLine
 

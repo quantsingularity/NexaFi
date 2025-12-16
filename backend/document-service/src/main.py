@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from flask import Flask, send_from_directory
 from database.manager import BaseModel, initialize_database
-from .routes.user import document_bp
+from routes.user import document_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "static"))
 app.config["SECRET_KEY"] = "asdf#FGSgvasgf$5$WGT"
@@ -14,6 +14,7 @@ os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
 BaseModel.set_db_manager(db_manager)
 from .migrations import DOCUMENT_MIGRATIONS
+from typing import Any
 
 for version, migration in DOCUMENT_MIGRATIONS.items():
     migration_manager.apply_migration(

@@ -10,7 +10,7 @@ import unittest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-sys.path.append("/home/ubuntu/NexaFi/backend/shared")
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 from security import (
     AdvancedEncryption,
     FraudDetectionEngine,
@@ -30,7 +30,8 @@ from open_banking_compliance import (
     SCAStatus,
     TransactionRiskAnalysis,
 )
-from core.logging import get_logger
+from nexafi_logging.logger import get_logger
+from typing import Any
 
 logger = get_logger(__name__)
 

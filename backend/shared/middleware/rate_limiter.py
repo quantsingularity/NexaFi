@@ -5,7 +5,8 @@ Implements industry-standard rate limiting for financial services
 
 import time
 from functools import wraps
-from typing import Dict
+from typing import Any, Dict
+
 import redis
 from flask import g, jsonify, request
 
