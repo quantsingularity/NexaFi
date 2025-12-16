@@ -551,7 +551,6 @@ def verify_mfa() -> Any:
 
 
 @app.route("/oauth2/authorize", methods=["GET", "POST"])
-@validate_json_request(OAuth2AuthorizeSchema, methods=["POST"])
 def oauth2_authorize() -> Any:
     """OAuth 2.1 Authorization Endpoint with FAPI 2.0 compliance"""
     if request.method == "GET":

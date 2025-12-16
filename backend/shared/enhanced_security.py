@@ -149,8 +149,36 @@ class MultiFactorAuthentication:
 
     def _initialize_mfa_tables(self) -> Any:
         """Initialize MFA tables"""
-        mfa_table_sql = "\n        CREATE TABLE IF NOT EXISTS user_mfa_settings (\n            user_id TEXT PRIMARY KEY,\n            totp_secret TEXT,\n            backup_codes TEXT,\n            sms_phone TEXT,\n            email_enabled BOOLEAN DEFAULT FALSE,\n            totp_enabled BOOLEAN DEFAULT FALSE,\n            sms_enabled BOOLEAN DEFAULT FALSE,\n            recovery_codes_used TEXT DEFAULT '[]',\n            last_totp_used INTEGER DEFAULT 0,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (user_id) REFERENCES users(id)\n        );\n\n        CREATE TABLE IF NOT EXISTS mfa_attempts (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            user_id TEXT NOT NULL,\n            method TEXT NOT NULL,\n            success BOOLEAN NOT NULL,\n            ip_address TEXT,\n            user_agent TEXT,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (user_id) REFERENCES users(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_id ON mfa_attempts(user_id);\n        CREATE INDEX IF NOT EXISTS idx_mfa_attempts_created_at ON mfa_attempts(created_at);\n        "
-        self.db_manager.execute_query(mfa_table_sql)
+        # Execute each statement separately
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS mfa_secrets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT UNIQUE NOT NULL,
+                secret TEXT NOT NULL,
+                method TEXT NOT NULL,
+                enabled BOOLEAN DEFAULT FALSE,
+                backup_codes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_used TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS mfa_attempts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                method TEXT NOT NULL,
+                success BOOLEAN NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_mfa_secrets_user_id ON mfa_secrets(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_mfa_attempts_user_id ON mfa_attempts(user_id)",
+        ]
+        for statement in statements:
+            self.db_manager.execute_query(statement)
 
     def setup_totp(self, user_id: str, user_email: str) -> Tuple[str, str, List[str]]:
         """Setup TOTP for user"""
@@ -245,8 +273,35 @@ class FraudDetectionEngine:
 
     def _initialize_fraud_tables(self) -> Any:
         """Initialize fraud detection tables"""
-        fraud_table_sql = "\n        CREATE TABLE IF NOT EXISTS fraud_alerts (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            user_id TEXT,\n            alert_type TEXT NOT NULL,\n            risk_score INTEGER NOT NULL,\n            details TEXT NOT NULL,\n            status TEXT DEFAULT 'open',\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            resolved_at TIMESTAMP,\n            resolved_by TEXT,\n            FOREIGN KEY (user_id) REFERENCES users(id)\n        );\n\n        CREATE TABLE IF NOT EXISTS user_behavior_patterns (\n            user_id TEXT PRIMARY KEY,\n            typical_login_hours TEXT,\n            typical_ip_ranges TEXT,\n            typical_transaction_amounts TEXT,\n            device_fingerprints TEXT,\n            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (user_id) REFERENCES users(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_fraud_alerts_user_id ON fraud_alerts(user_id);\n        CREATE INDEX IF NOT EXISTS idx_fraud_alerts_created_at ON fraud_alerts(created_at);\n        "
-        self.db_manager.execute_query(fraud_table_sql)
+        # Execute each statement separately
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS fraud_alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                alert_type TEXT NOT NULL,
+                risk_score REAL NOT NULL,
+                details TEXT NOT NULL,
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS transaction_patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                pattern_type TEXT NOT NULL,
+                pattern_data TEXT NOT NULL,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_fraud_alerts_user_id ON fraud_alerts(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_fraud_alerts_status ON fraud_alerts(status)",
+            "CREATE INDEX IF NOT EXISTS idx_transaction_patterns_user_id ON transaction_patterns(user_id)",
+        ]
+        for statement in statements:
+            self.db_manager.execute_query(statement)
 
     def analyze_login_behavior(
         self,
@@ -386,8 +441,41 @@ class SecurityMonitor:
 
     def _initialize_monitoring_tables(self) -> Any:
         """Initialize security monitoring tables"""
-        monitoring_table_sql = "\n        CREATE TABLE IF NOT EXISTS security_events (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            event_type TEXT NOT NULL,\n            user_id TEXT,\n            ip_address TEXT NOT NULL,\n            user_agent TEXT,\n            session_id TEXT,\n            threat_level TEXT NOT NULL,\n            details TEXT NOT NULL,\n            location TEXT,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE TABLE IF NOT EXISTS threat_indicators (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            indicator_type TEXT NOT NULL,\n            indicator_value TEXT NOT NULL,\n            threat_level TEXT NOT NULL,\n            first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            occurrence_count INTEGER DEFAULT 1,\n            status TEXT DEFAULT 'active'\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_security_events_user_id ON security_events(user_id);\n        CREATE INDEX IF NOT EXISTS idx_security_events_ip_address ON security_events(ip_address);\n        CREATE INDEX IF NOT EXISTS idx_security_events_created_at ON security_events(created_at);\n        CREATE INDEX IF NOT EXISTS idx_threat_indicators_value ON threat_indicators(indicator_value);\n        "
-        self.db_manager.execute_query(monitoring_table_sql)
+        # Execute each statement separately to avoid SQLite's single statement limitation
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS security_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                user_id TEXT,
+                ip_address TEXT NOT NULL,
+                user_agent TEXT,
+                session_id TEXT,
+                threat_level TEXT NOT NULL,
+                details TEXT NOT NULL,
+                location TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS threat_indicators (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                indicator_type TEXT NOT NULL,
+                indicator_value TEXT NOT NULL,
+                threat_level TEXT NOT NULL,
+                first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                occurrence_count INTEGER DEFAULT 1,
+                status TEXT DEFAULT 'active'
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_security_events_user_id ON security_events(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_security_events_ip_address ON security_events(ip_address)",
+            "CREATE INDEX IF NOT EXISTS idx_security_events_created_at ON security_events(created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_threat_indicators_value ON threat_indicators(indicator_value)",
+        ]
+        for statement in statements:
+            self.db_manager.execute_query(statement)
 
     def log_security_event(self, event: SecurityEvent) -> Any:
         """Log security event"""
@@ -502,8 +590,30 @@ class SecureSessionManager:
 
     def _initialize_session_tables(self) -> Any:
         """Initialize session management tables"""
-        session_table_sql = "\n        CREATE TABLE IF NOT EXISTS user_sessions (\n            session_id TEXT PRIMARY KEY,\n            user_id TEXT NOT NULL,\n            ip_address TEXT NOT NULL,\n            user_agent TEXT,\n            device_fingerprint TEXT,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            expires_at TIMESTAMP NOT NULL,\n            is_active BOOLEAN DEFAULT TRUE,\n            security_level TEXT DEFAULT 'medium',\n            mfa_verified BOOLEAN DEFAULT FALSE,\n            session_data TEXT,\n            FOREIGN KEY (user_id) REFERENCES users(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);\n        CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);\n        "
-        self.db_manager.execute_query(session_table_sql)
+        # Execute each statement separately
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS secure_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT UNIQUE NOT NULL,
+                user_id TEXT NOT NULL,
+                ip_address TEXT NOT NULL,
+                user_agent TEXT,
+                device_fingerprint TEXT,
+                security_level TEXT NOT NULL,
+                mfa_verified BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_sessions_session_id ON secure_sessions(session_id)",
+            "CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON secure_sessions(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON secure_sessions(expires_at)",
+        ]
+        for statement in statements:
+            self.db_manager.execute_query(statement)
 
     def create_session(
         self,

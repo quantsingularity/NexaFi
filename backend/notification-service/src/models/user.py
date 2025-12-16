@@ -1,4 +1,4 @@
-from ..shared.database.manager import BaseModel
+from database.manager import BaseModel
 
 
 class Notification(BaseModel):

@@ -5,7 +5,7 @@ from typing import Any
 import uuid
 from decimal import Decimal
 from flask import Blueprint, jsonify, request
-from .models.user import Account, JournalEntry, JournalEntryLine
+from models.user import Account, JournalEntry, JournalEntryLine
 
 ledger_bp = Blueprint("ledger", __name__)
 

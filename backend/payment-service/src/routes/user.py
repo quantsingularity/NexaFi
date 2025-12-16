@@ -5,7 +5,7 @@ from typing import Any, Optional
 import uuid
 from decimal import Decimal
 from flask import Blueprint, jsonify, request
-from .models.user import (
+from models.user import (
     PaymentMethod,
     RecurringPayment,
     Transaction,

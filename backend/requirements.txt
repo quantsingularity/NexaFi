@@ -52,7 +52,7 @@ boto3==1.34.27
 # Utilities
 python-dotenv==1.0.0
 structlog==24.1.0
-pythonjsonlogger==2.0.7
+python-json-logger==2.0.7
 tenacity==8.2.3
 schedule==1.2.0
 qrcode==7.4.2
