@@ -1,0 +1,66 @@
+---
+# Global variables for all hosts
+# Copy this file to all.yml and customize for your environment
+# IMPORTANT: Do NOT commit all.yml with real values to version control
+
+# Environment configuration
+environment: production  # production, staging, development
+
+# AWS Configuration
+aws_region: us-west-2
+aws_account_id: "REPLACE_WITH_YOUR_AWS_ACCOUNT_ID"
+
+# Kubernetes Configuration
+kubernetes_version: "1.28"
+kubectl_version: "1.28.0"
+helm_version: "3.12.0"
+
+# Docker Configuration
+docker_version: "24.0.0"
+docker_registry: "nexafi"
+
+# Application Configuration
+app_name: "nexafi"
+app_namespace: "nexafi"
+app_domain: "nexafi.com"
+
+# Database Configuration (DO NOT use actual credentials here)
+# Use Ansible Vault for sensitive data
+database_host: "{{ lookup('env', 'DB_HOST') | default('localhost', true) }}"
+database_port: 5432
+database_name: "nexafi"
+# database_user: defined in vault
+# database_password: defined in vault
+
+# Redis Configuration
+redis_host: "redis.{{ app_namespace }}.svc.cluster.local"
+redis_port: 6379
+# redis_password: defined in vault
+
+# Monitoring Configuration
+enable_monitoring: true
+prometheus_retention: "30d"
+grafana_admin_user: "admin"
+# grafana_admin_password: defined in vault
+
+# Backup Configuration
+backup_enabled: true
+backup_schedule: "0 2 * * *"
+backup_retention_days: 90
+backup_s3_bucket: "nexafi-backups-{{ environment }}"
+
+# Security Configuration
+enable_ssl: true
+ssl_cert_manager: "cert-manager"
+enable_network_policies: true
+enable_pod_security_policies: true
+
+# Logging Configuration
+log_level: "info"  # debug, info, warn, error
+log_format: "json"
+centralized_logging: true
+
+# Feature Flags
+enable_auto_scaling: true
+enable_disaster_recovery: true
+enable_compliance_monitoring: true

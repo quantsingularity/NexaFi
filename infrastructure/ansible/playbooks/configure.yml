@@ -4,18 +4,18 @@
 
 - name: Configure NexaFi Infrastructure
   hosts: nexafi_cluster
-  become: yes
+  become: true
 
   tasks:
     - name: Ensure required packages are installed
-      apt:
+      ansible.builtin.apt:
         name:
           - docker.io
           - kubectl
         state: present
-        update_cache: yes
+        update_cache: true
       when: ansible_os_family == "Debian"
 
     - name: Display cluster information
-      debug:
+      ansible.builtin.debug:
         msg: "Configuring {{ inventory_hostname }} for {{ environment }}"

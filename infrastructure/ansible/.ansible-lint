@@ -1,0 +1,23 @@
+---
+# Ansible-lint configuration
+profile: production
+
+exclude_paths:
+  - .git/
+  - .github/
+  - .terraform/
+  - roles/external/
+  - vendor/
+
+skip_list:
+  - experimental  # Allow experimental features in production
+
+warn_list:
+  - no-changed-when  # Warn but don't fail on missing changed_when
+  - command-instead-of-module  # Warn on shell/command usage
+
+# Enable offline mode for CI/CD
+offline: false
+
+# Use strict mode
+strict: true

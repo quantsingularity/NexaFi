@@ -1,0 +1,207 @@
+# NexaFi Infrastructure - Git Ignore Rules
+
+# ==============================================================================
+# SECRETS AND CREDENTIALS - NEVER COMMIT THESE
+# ==============================================================================
+
+# Terraform
+terraform.tfvars
+backend-config.tfvars
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl.backup
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Kubernetes
+secrets.yaml
+*-secrets.yaml
+*.secret.yaml
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+# Ansible
+*.vault
+.vault_password
+group_vars/all.yml
+host_vars/*.yml
+!*.example
+*.retry
+
+# CI/CD
+.secrets
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+!*.example.*
+
+# AWS
+.aws/
+credentials
+config
+*.pem
+
+# ==============================================================================
+# BUILD OUTPUTS AND DEPENDENCIES
+# ==============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+ENV/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ==============================================================================
+# IDEs AND EDITORS
+# ==============================================================================
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# ==============================================================================
+# OPERATING SYSTEM
+# ==============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ==============================================================================
+# LOGS AND TEMPORARY FILES
+# ==============================================================================
+
+*.log
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+logs/
+*.log.*
+audit.log
+access.log
+
+# ==============================================================================
+# TESTING AND COVERAGE
+# ==============================================================================
+
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+.hypothesis/
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+
+# ==============================================================================
+# GENERATED DOCUMENTATION
+# ==============================================================================
+
+docs/_build/
+site/
+.mkdocs/
+
+# ==============================================================================
+# KEEP EXAMPLE FILES
+# ==============================================================================
+
+!*.example
+!*.example.*
+!*.template
+!*.template.*
+!.vault_password.example
+!terraform.tfvars.example
+!backend-config.tfvars.example
+!secrets.example.yaml
+
+# ==============================================================================
+# LOCAL DEVELOPMENT
+# ==============================================================================
+
+.local/
+.scratch/
+.tmp/
+local/
+tmp/

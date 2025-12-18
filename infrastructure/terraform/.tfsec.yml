@@ -1,0 +1,29 @@
+---
+# tfsec configuration for Terraform security scanning
+# https://aquasecurity.github.io/tfsec/
+
+# Minimum severity level
+minimum_severity: MEDIUM
+
+# Exclude specific checks (with justification)
+exclude:
+  # AWS-specific exclusions with business justification
+  # - aws-vpc-no-public-ingress-sgr  # Public ingress required for ALB
+
+# Include experimental checks
+include_experimental: false
+
+# Include passed checks in output
+include_passed: false
+
+# Include ignored checks in output
+include_ignored: false
+
+# Exclude directories
+exclude_paths:
+  - .terraform/
+  - .terragrunt-cache/
+  - examples/
+  - tests/
+# Custom checks directory (if you have custom policies)
+# custom_check_dir: ./tfsec-custom-checks

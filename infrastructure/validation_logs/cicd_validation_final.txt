@@ -1,0 +1,11 @@
+✓ backend_ci.yml
+✓ backend_ci_cd.yml
+✓ cd_pipeline.yml
+✓ cicd.yml
+✓ docs.yml
+✓ frontend_ci.yml
+✓ frontend_ci_cd.yml
+✓ ml_ci_cd.yml
+✓ release.yml
+✓ security.yml
+✓ stale.yml

@@ -247,7 +247,7 @@ compliance:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "changeme"
+    postgresPassword: "" # Set via secrets or --set flag
     database: "nexafi"
   primary:
     persistence:
@@ -273,7 +273,7 @@ redis:
   enabled: true
   auth:
     enabled: true
-    password: "changeme"
+    password: "" # Set via secrets or --set flag
   master:
     persistence:
       enabled: true
