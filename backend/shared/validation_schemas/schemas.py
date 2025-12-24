@@ -78,7 +78,7 @@ class FinancialValidators:
 
     @staticmethod
     def validate_email(value: str) -> str:
-        """Enhanced email validation"""
+        """Comprehensive email validation"""
         email_regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
         if not re.match(email_regex, value):
             raise ValidationError("Invalid email format")

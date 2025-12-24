@@ -235,7 +235,7 @@ class BaseModel:
 
 INITIAL_MIGRATIONS = {
     "001_create_users_table": {
-        "description": "Create users table with enhanced security",
+        "description": "Create users table with robust security features",
         "sql": "\n        CREATE TABLE IF NOT EXISTS users (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            email TEXT UNIQUE NOT NULL,\n            password_hash TEXT NOT NULL,\n            first_name TEXT NOT NULL,\n            last_name TEXT NOT NULL,\n            phone TEXT,\n            company_name TEXT,\n            is_active BOOLEAN DEFAULT 1,\n            email_verified BOOLEAN DEFAULT 0,\n            failed_login_attempts INTEGER DEFAULT 0,\n            locked_until TIMESTAMP NULL,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);\n        CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active);\n        ",
     },
     "002_create_user_roles_table": {

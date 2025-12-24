@@ -1,5 +1,5 @@
 """
-Enhanced structured logging system for NexaFi
+Structured logging system for NexaFi
 Implements comprehensive logging with correlation IDs and security event tracking
 """
 
