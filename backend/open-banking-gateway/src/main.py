@@ -8,7 +8,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from functools import wraps
-from typing import Any
+from typing import Any, Dict
 
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
@@ -615,8 +615,7 @@ def initiate_payment() -> Any:
     # Logic: SCA is required if risk is high OR not eligible for exemption
     sca_required = not exemption_eligible or risk_score > 30
 
-    response_data = {}
-
+    response_data: Dict[str, Any] = {}
     if sca_required:
         sca_data = sca_manager.initiate_sca(
             psu_id=psu_id,

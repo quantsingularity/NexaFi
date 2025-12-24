@@ -46,8 +46,11 @@ class EnterpriseIntegrationManager:
     """Centralized manager for all enterprise integrations"""
 
     def __init__(
-        self, config_file: str = None, database_url: str = None, redis_url: str = None
-    ) -> Any:
+        self,
+        config_file: Optional[str] = None,
+        database_url: Optional[str] = None,
+        redis_url: Optional[str] = None,
+    ) -> None:
         self.logger = logging.getLogger(__name__)
         self.integrations: Dict[str, BaseIntegration] = {}
         self.registry: Dict[str, IntegrationRegistry] = {}
@@ -202,11 +205,11 @@ class EnterpriseIntegrationManager:
             ).inc()
             return None
 
-    def sync_all(self, entity_type: str = None) -> Dict[str, SyncResult]:
+    def sync_all(self, entity_type: Optional[str] = None) -> Dict[str, SyncResult]:
         """Sync all integrations"""
-        results = {}
+        results: Dict[str, Any] = {}
         with ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_system = {}
+            future_to_system: Dict[str, Any] = {}
             for system_name, integration in self.integrations.items():
                 if entity_type:
                     future = executor.submit(
@@ -270,7 +273,9 @@ class EnterpriseIntegrationManager:
             self.scheduler_thread.join()
         self.logger.info("Integration scheduler stopped")
 
-    def get_integration_status(self, system_name: str = None) -> Dict[str, Any]:
+    def get_integration_status(
+        self, system_name: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Get status of integrations"""
         if system_name:
             if system_name in self.integrations:
@@ -278,7 +283,7 @@ class EnterpriseIntegrationManager:
             else:
                 return {"error": f"Integration not found: {system_name}"}
         else:
-            status = {}
+            status: Dict[str, Any] = {}
             for name, integration in self.integrations.items():
                 status[name] = integration.get_integration_status()
             return status
@@ -287,7 +292,7 @@ class EnterpriseIntegrationManager:
         """Perform health check on all integrations"""
         healthy_count = 0
         total_count = len(self.integrations)
-        system_status = {}
+        system_status: Dict[str, Any] = {}
         for system_name, integration in self.integrations.items():
             try:
                 is_healthy = integration.test_connection()
@@ -494,7 +499,7 @@ class EnterpriseIntegrationManager:
 
 
 def create_enterprise_integration_manager(
-    config_file: str = None,
+    config_file: Optional[str] = None,
 ) -> EnterpriseIntegrationManager:
     """Factory function to create enterprise integration manager"""
     database_url = os.getenv("INTEGRATION_DATABASE_URL", "sqlite:///integrations.db")

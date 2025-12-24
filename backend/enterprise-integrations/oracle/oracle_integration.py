@@ -48,15 +48,15 @@ class OracleConfig:
     enable_soap_api: bool = False
     enable_bulk_import: bool = True
     enable_bi_publisher: bool = False
-    custom_objects: Dict[str, str] = None
-    fusion_apps_config: Dict[str, Any] = None
-    security_config: Dict[str, Any] = None
+    custom_objects: Optional[Dict[str, str]] = None
+    fusion_apps_config: Optional[Dict[str, Any]] = None
+    security_config: Optional[Dict[str, Any]] = None
 
 
 class OracleAuthenticator:
     """Oracle authentication handler"""
 
-    def __init__(self, config: IntegrationConfig, oracle_config: OracleConfig) -> Any:
+    def __init__(self, config: IntegrationConfig, oracle_config: OracleConfig) -> None:
         self.config = config
         self.oracle_config = oracle_config
         self.logger = logging.getLogger(__name__)
@@ -175,7 +175,7 @@ class OracleAuthenticator:
 
     def get_auth_headers(self) -> Dict[str, str]:
         """Get authentication headers"""
-        headers = {}
+        headers: Dict[str, Any] = {}
         if self.config.auth_method == AuthMethod.OAUTH2:
             if self.access_token:
                 headers["Authorization"] = f"Bearer {self.access_token}"
@@ -201,7 +201,7 @@ class OracleAuthenticator:
 class OracleDatabaseConnector:
     """Oracle Database connector"""
 
-    def __init__(self, config: IntegrationConfig, oracle_config: OracleConfig) -> Any:
+    def __init__(self, config: IntegrationConfig, oracle_config: OracleConfig) -> None:
         self.config = config
         self.oracle_config = oracle_config
         self.logger = logging.getLogger(__name__)
@@ -246,7 +246,7 @@ class OracleDatabaseConnector:
             self.engine = None
 
     def execute_query(
-        self, query: str, params: Dict[str, Any] = None
+        self, query: str, params: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """Execute SQL query"""
         if not self.connection:
@@ -259,7 +259,7 @@ class OracleDatabaseConnector:
                 cursor.execute(query)
             columns = [desc[0] for desc in cursor.description]
             rows = cursor.fetchall()
-            results = []
+            results: List[Any] = []
             for row in rows:
                 results.append(dict(zip(columns, row)))
             cursor.close()
@@ -269,7 +269,7 @@ class OracleDatabaseConnector:
             raise
 
     def execute_query_pandas(
-        self, query: str, params: Dict[str, Any] = None
+        self, query: str, params: Optional[Dict[str, Any]] = None
     ) -> pd.DataFrame:
         """Execute SQL query and return pandas DataFrame"""
         if not self.engine:
@@ -284,7 +284,7 @@ class OracleDatabaseConnector:
             raise
 
     def execute_procedure(
-        self, procedure_name: str, params: Dict[str, Any] = None
+        self, procedure_name: str, params: Optional[Dict[str, Any]] = None
     ) -> Any:
         """Execute stored procedure"""
         if not self.connection:
@@ -310,7 +310,7 @@ class OracleRestAPIConnector:
         config: IntegrationConfig,
         oracle_config: OracleConfig,
         authenticator: OracleAuthenticator,
-    ) -> Any:
+    ) -> None:
         self.config = config
         self.oracle_config = oracle_config
         self.authenticator = authenticator
@@ -320,9 +320,9 @@ class OracleRestAPIConnector:
     def get_resource(
         self,
         resource_path: str,
-        params: Dict[str, Any] = None,
-        expand: List[str] = None,
-        fields: List[str] = None,
+        params: Optional[Dict[str, Any]] = None,
+        expand: Optional[List[str]] = None,
+        fields: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Get resource from Oracle REST API"""
         try:
@@ -431,17 +431,17 @@ class OracleSupplierSync:
 
     def __init__(
         self, rest_connector: OracleRestAPIConnector, data_transformer: DataTransformer
-    ) -> Any:
+    ) -> None:
         self.rest_connector = rest_connector
         self.data_transformer = data_transformer
         self.logger = logging.getLogger(__name__)
 
-    def sync_suppliers(self, filters: Dict[str, Any] = None) -> SyncResult:
+    def sync_suppliers(self, filters: Optional[Dict[str, Any]] = None) -> SyncResult:
         """Sync suppliers from Oracle"""
         start_time = datetime.utcnow()
         records_processed = 0
         records_failed = 0
-        errors = []
+        errors: List[Any] = []
         try:
             suppliers_data = self.rest_connector.get_resource(
                 "suppliers",
@@ -522,19 +522,21 @@ class OracleFinancialSync:
         rest_connector: OracleRestAPIConnector,
         db_connector: OracleDatabaseConnector,
         data_transformer: DataTransformer,
-    ) -> Any:
+    ) -> None:
         self.rest_connector = rest_connector
         self.db_connector = db_connector
         self.data_transformer = data_transformer
         self.logger = logging.getLogger(__name__)
 
-    def sync_invoices(self, date_from: str = None, date_to: str = None) -> SyncResult:
+    def sync_invoices(
+        self, date_from: Optional[str] = None, date_to: Optional[str] = None
+    ) -> SyncResult:
         """Sync invoices from Oracle"""
         start_time = datetime.utcnow()
         records_processed = 0
         records_failed = 0
         try:
-            filters = {}
+            filters: Dict[str, Any] = {}
             if date_from:
                 filters["q"] = f"InvoiceDate >= '{date_from}'"
             if date_to:
@@ -695,7 +697,7 @@ class OracleIntegration(BaseIntegration):
         oracle_config: OracleConfig,
         db_session: Any = None,
         redis_client: Any = None,
-    ) -> Any:
+    ) -> None:
         super().__init__(config, db_session, redis_client)
         self.oracle_config = oracle_config
         self.authenticator = OracleAuthenticator(config, oracle_config)

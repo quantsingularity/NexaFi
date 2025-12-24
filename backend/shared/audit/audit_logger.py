@@ -107,7 +107,7 @@ class AuditEvent:
 class AuditLogger:
     """Audit logging system with integrity verification"""
 
-    def __init__(self, storage_backend: Any = None) -> Any:
+    def __init__(self, storage_backend: Any = None) -> None:
         self.storage_backend = storage_backend
         self.event_queue = queue.Queue()
         self.worker_thread = None

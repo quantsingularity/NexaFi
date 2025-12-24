@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class MessageQueue:
     """RabbitMQ message queue manager"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.connection = None
         self.channel = None
         self.config = InfrastructureConfig.get_rabbitmq_config()

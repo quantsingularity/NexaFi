@@ -148,7 +148,9 @@ Index("idx_node_timestamp", NodeMetrics.timestamp)
 class MessageQueue:
     """Distributed message queue abstraction"""
 
-    def __init__(self, queue_type: str = "redis", config: Dict[str, Any] = None) -> Any:
+    def __init__(
+        self, queue_type: str = "redis", config: Optional[Dict[str, Any]] = None
+    ) -> None:
         self.queue_type = queue_type
         self.config = config or {}
         self.logger = structlog.get_logger(__name__)
@@ -248,7 +250,7 @@ class MessageQueue:
 class LoadBalancer:
     """Intelligent load balancer for transaction distribution"""
 
-    def __init__(self, redis_client: redis.Redis) -> Any:
+    def __init__(self, redis_client: redis.Redis) -> None:
         self.redis_client = redis_client
         self.logger = structlog.get_logger(__name__)
         self.nodes = {}
@@ -301,7 +303,7 @@ class LoadBalancer:
 
     def _get_healthy_nodes(self) -> List[Dict[str, Any]]:
         """Get list of healthy nodes"""
-        healthy_nodes = []
+        healthy_nodes: List[Any] = []
         current_time = time.time()
         for node_id, node_info in self.nodes.items():
             if (
@@ -320,7 +322,7 @@ class LoadBalancer:
 
     def _weighted_round_robin_selection(self, nodes: List[Dict[str, Any]]) -> str:
         """Weighted round robin based on node capacity"""
-        weights = []
+        weights: List[Any] = []
         for node in nodes:
             available_capacity = node["capacity"] - node["current_load"]
             weights.append(max(1, available_capacity))
@@ -358,7 +360,9 @@ class LoadBalancer:
 class TransactionProcessor:
     """Individual transaction processor"""
 
-    def __init__(self, node_id: str, db_session: Any, redis_client: redis.Redis) -> Any:
+    def __init__(
+        self, node_id: str, db_session: Any, redis_client: redis.Redis
+    ) -> None:
         self.node_id = node_id
         self.db_session = db_session
         self.redis_client = redis_client
@@ -596,8 +600,8 @@ class TransactionProcessor:
         self,
         transaction: Transaction,
         status: TransactionStatus,
-        processing_time: float = None,
-        error_message: str = None,
+        processing_time: Optional[float] = None,
+        error_message: Optional[str] = None,
     ) -> Any:
         """Update transaction status in database"""
         try:
@@ -633,7 +637,7 @@ class TransactionProcessor:
 class DistributedTransactionManager:
     """Main distributed transaction management system"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         self.message_queue = MessageQueue(
@@ -668,7 +672,7 @@ class DistributedTransactionManager:
             "transaction_throughput", "Transaction throughput per second"
         )
 
-    def start_processing(self, num_workers: int = None) -> Any:
+    def start_processing(self, num_workers: Optional[int] = None) -> Any:
         """Start distributed transaction processing"""
         if self.is_running:
             return
@@ -677,7 +681,7 @@ class DistributedTransactionManager:
             num_workers = min(mp.cpu_count() * 2, 16)
         self.logger.info(f"Starting {num_workers} transaction processors")
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
-            futures = []
+            futures: List[Any] = []
             for i in range(num_workers):
                 node_id = f"processor_{i}_{int(time.time())}"
                 self.load_balancer.register_node(
@@ -800,7 +804,7 @@ class DistributedTransactionManager:
     def get_system_metrics(self) -> Dict[str, Any]:
         """Get system performance metrics"""
         try:
-            queue_sizes = {}
+            queue_sizes: Dict[str, Any] = {}
             for priority in Priority:
                 size = self.message_queue.get_queue_size(
                     f"transaction_queue_{priority.name.lower()}"

@@ -1,17 +1,19 @@
+from typing import Optional
+
 from database.manager import BaseModel
 
 
 class KYCVerification(BaseModel):
-    table_name = "kyc_verifications"
+    table_name: Optional[str] = "kyc_verifications"
 
 
 class AMLCheck(BaseModel):
-    table_name = "aml_checks"
+    table_name: Optional[str] = "aml_checks"
 
 
 class SanctionsScreening(BaseModel):
-    table_name = "sanctions_screening"
+    table_name: Optional[str] = "sanctions_screening"
 
 
 class ComplianceReport(BaseModel):
-    table_name = "compliance_reports"
+    table_name: Optional[str] = "compliance_reports"

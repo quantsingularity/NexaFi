@@ -13,7 +13,7 @@ from flask import g, jsonify, request
 
 class RateLimiter:
 
-    def __init__(self, redis_client: Any = None) -> Any:
+    def __init__(self, redis_client: Any = None) -> None:
         self.redis_client = redis_client or redis.Redis(
             host="localhost", port=6379, db=0, decode_responses=True
         )

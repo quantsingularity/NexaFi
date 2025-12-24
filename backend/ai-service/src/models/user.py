@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class BaseModel:
@@ -94,7 +94,7 @@ class BaseModel:
 
 
 class AIModel(BaseModel):
-    table_name = "ai_models"
+    table_name: Optional[str] = "ai_models"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
@@ -108,7 +108,7 @@ class AIModel(BaseModel):
 
 
 class AIPrediction(BaseModel):
-    table_name = "ai_predictions"
+    table_name: Optional[str] = "ai_predictions"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
@@ -124,7 +124,7 @@ class AIPrediction(BaseModel):
 
 
 class FinancialInsight(BaseModel):
-    table_name = "financial_insights"
+    table_name: Optional[str] = "financial_insights"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
@@ -138,7 +138,7 @@ class FinancialInsight(BaseModel):
 
 
 class ConversationSession(BaseModel):
-    table_name = "conversation_sessions"
+    table_name: Optional[str] = "conversation_sessions"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
@@ -152,7 +152,7 @@ class ConversationSession(BaseModel):
 
 
 class ConversationMessage(BaseModel):
-    table_name = "conversation_messages"
+    table_name: Optional[str] = "conversation_messages"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
@@ -165,7 +165,7 @@ class ConversationMessage(BaseModel):
 
 
 class FeatureStore(BaseModel):
-    table_name = "feature_store"
+    table_name: Optional[str] = "feature_store"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()
@@ -183,7 +183,7 @@ class FeatureStore(BaseModel):
 
 
 class ModelTrainingJob(BaseModel):
-    table_name = "model_training_jobs"
+    table_name: Optional[str] = "model_training_jobs"
 
     def to_dict(self) -> Dict[str, Any]:
         data = super().to_dict()

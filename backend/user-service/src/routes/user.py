@@ -4,7 +4,7 @@ import json
 import secrets
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any
+from typing import Any, Dict
 
 import jwt
 import qrcode
@@ -489,7 +489,7 @@ def get_profile() -> Any:
         profile_data = user.to_dict()
         if user.profile:
             profile_data["profile"] = user.profile.to_dict()
-        custom_fields = {}
+        custom_fields: Dict[str, Any] = {}
         for cf in user.custom_fields:
             custom_fields[cf.field_name] = cf.get_typed_value()
         profile_data["custom_fields"] = custom_fields

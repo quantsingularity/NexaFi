@@ -1,7 +1,7 @@
 import os
 import sys
 from datetime import datetime
-from typing import Any, Optional, List, Optional, Tuple
+from typing import Any, Optional, Optional
 
 import uuid
 from decimal import Decimal
@@ -70,123 +70,8 @@ for version, migration in LEDGER_MIGRATIONS.items():
         version, migration["description"], migration["sql"]
     )
 BaseModel.set_db_manager(db_manager)
-
-
-class Account(BaseModel):
-    table_name = "accounts"
-
-    def get_balance(self, as_of_date: Optional[datetime] = None) -> Decimal:
-        """Get account balance as of a specific date"""
-        if as_of_date is None:
-            return Decimal(str(self.current_balance))
-        query = "\n        SELECT\n            COALESCE(SUM(debit_amount), 0) as total_debits,\n            COALESCE(SUM(credit_amount), 0) as total_credits\n        FROM journal_entry_lines jel\n        JOIN journal_entries je ON jel.journal_entry_id = je.id\n        WHERE jel.account_id = ? AND je.posting_date <= ? AND je.status = 'posted'\n        "
-        rows = db_manager.execute_query(query, (self.id, as_of_date.date()))
-        if rows:
-            total_debits = Decimal(str(rows[0]["total_debits"]))
-            total_credits = Decimal(str(rows[0]["total_credits"]))
-            if self.account_type in ["asset", "expense"]:
-                return Decimal(str(self.opening_balance)) + total_debits - total_credits
-            else:
-                return Decimal(str(self.opening_balance)) + total_credits - total_debits
-        return Decimal(str(self.opening_balance))
-
-    def update_balance(self) -> Any:
-        """Update current balance from journal entries"""
-        self.current_balance = float(self.get_balance())
-        self.save()
-
-
-class JournalEntry(BaseModel):
-    table_name = "journal_entries"
-
-    def get_lines(self) -> List["JournalEntryLine"]:
-        """Get journal entry lines"""
-        return JournalEntryLine.find_all(
-            "journal_entry_id = ? ORDER BY line_number", (self.id,)
-        )
-
-    def validate_entry(self) -> Tuple[bool, str]:
-        """Validate journal entry (debits = credits)"""
-        lines = self.get_lines()
-        if not lines:
-            return (False, "Journal entry must have at least one line")
-        total_debits = sum((Decimal(str(line.debit_amount)) for line in lines))
-        total_credits = sum((Decimal(str(line.credit_amount)) for line in lines))
-        if total_debits != total_credits:
-            return (
-                False,
-                f"Debits ({total_debits}) do not equal credits ({total_credits})",
-            )
-        return (True, "Entry is balanced")
-
-    def post_entry(self, posted_by: str) -> Any:
-        """Post journal entry and update account balances"""
-        is_valid, message = self.validate_entry()
-        if not is_valid:
-            raise ValueError(message)
-        self.status = "posted"
-        self.posting_date = datetime.utcnow().date()
-        self.posted_by = posted_by
-        self.save()
-        lines = self.get_lines()
-        affected_accounts = set()
-        for line in lines:
-            account = Account.find_by_id(line.account_id)
-            if account:
-                account.update_balance()
-                affected_accounts.add(account.id)
-        audit_logger.log_event(
-            AuditEventType.JOURNAL_ENTRY_POST,
-            "journal_entry_posted",
-            user_id=posted_by,
-            resource_type="journal_entry",
-            resource_id=str(self.id),
-            details={
-                "entry_number": self.entry_number,
-                "total_debit": str(self.total_debit),
-                "total_credit": str(self.total_credit),
-                "affected_accounts": list(affected_accounts),
-            },
-            severity=AuditSeverity.HIGH,
-        )
-
-
-class JournalEntryLine(BaseModel):
-    table_name = "journal_entry_lines"
-
-
-class ExchangeRate(BaseModel):
-    table_name = "exchange_rates"
-
-    @classmethod
-    def get_rate(
-        cls: Any,
-        from_currency: str,
-        to_currency: str,
-        rate_date: Optional[datetime] = None,
-    ) -> Decimal:
-        """Get exchange rate for currency conversion"""
-        if from_currency == to_currency:
-            return Decimal("1.0")
-        if rate_date is None:
-            rate_date = datetime.utcnow()
-        rate_record = cls.find_one(
-            "from_currency = ? AND to_currency = ? AND rate_date <= ? AND is_active = 1 ORDER BY rate_date DESC",
-            (from_currency, to_currency, rate_date.date()),
-        )
-        if rate_record:
-            return Decimal(str(rate_record.rate))
-        inverse_rate = cls.find_one(
-            "from_currency = ? AND to_currency = ? AND rate_date <= ? AND is_active = 1 ORDER BY rate_date DESC",
-            (to_currency, from_currency, rate_date.date()),
-        )
-        if inverse_rate:
-            return Decimal("1.0") / Decimal(str(inverse_rate.rate))
-        return Decimal("1.0")
-
-
-class Reconciliation(BaseModel):
-    table_name = "reconciliations"
+# Note: Account, JournalEntry, JournalEntryLine, ExchangeRate, and Reconciliation
+# classes are imported from models.user - no redefinition needed
 
 
 class EnhancedAccountSchema(AccountSchema):
@@ -466,13 +351,14 @@ def create_account() -> Any:
 @require_permission("account:read")
 def get_account_balance(account_id: Any) -> Any:
     """Get account balance as of a specific date"""
-    as_of_date = request.args.get("as_of_date")
+    as_of_date_str = request.args.get("as_of_date")
+    as_of_date: Optional[datetime] = None
     account = Account.find_by_id(account_id)
     if not account:
         return (jsonify({"error": "Account not found"}), 404)
-    if as_of_date:
+    if as_of_date_str:
         try:
-            as_of_date = datetime.fromisoformat(as_of_date)
+            as_of_date = datetime.fromisoformat(as_of_date_str)
         except ValueError:
             return (jsonify({"error": "Invalid date format"}), 400)
     balance = account.get_balance(as_of_date)
@@ -484,7 +370,9 @@ def get_account_balance(account_id: Any) -> Any:
             "balance": str(balance),
             "currency": account.currency,
             "as_of_date": (
-                as_of_date.isoformat() if as_of_date else datetime.utcnow().isoformat()
+                as_of_date.isoformat()
+                if isinstance(as_of_date, datetime)
+                else as_of_date if as_of_date else datetime.utcnow().isoformat()
             ),
         }
     )
@@ -738,11 +626,12 @@ def create_reconciliation() -> Any:
 @require_permission("report:read")
 def trial_balance() -> Any:
     """Generate trial balance report"""
-    as_of_date = request.args.get("as_of_date")
+    as_of_date_str = request.args.get("as_of_date")
+    as_of_date: Optional[datetime] = None
     currency = request.args.get("currency", "USD")
-    if as_of_date:
+    if as_of_date_str:
         try:
-            as_of_date = datetime.fromisoformat(as_of_date)
+            as_of_date = datetime.fromisoformat(as_of_date_str)
         except ValueError:
             return (jsonify({"error": "Invalid date format"}), 400)
     else:
@@ -776,7 +665,11 @@ def trial_balance() -> Any:
     return jsonify(
         {
             "report_type": "trial_balance",
-            "as_of_date": as_of_date.isoformat(),
+            "as_of_date": (
+                as_of_date.isoformat()
+                if isinstance(as_of_date, datetime)
+                else as_of_date
+            ),
             "currency": currency,
             "accounts": trial_balance_data,
             "totals": {
@@ -794,11 +687,12 @@ def trial_balance() -> Any:
 @require_permission("report:read")
 def balance_sheet() -> Any:
     """Generate balance sheet report"""
-    as_of_date = request.args.get("as_of_date")
+    as_of_date_str = request.args.get("as_of_date")
+    as_of_date: Optional[datetime] = None
     currency = request.args.get("currency", "USD")
-    if as_of_date:
+    if as_of_date_str:
         try:
-            as_of_date = datetime.fromisoformat(as_of_date)
+            as_of_date = datetime.fromisoformat(as_of_date_str)
         except ValueError:
             return (jsonify({"error": "Invalid date format"}), 400)
     else:
@@ -838,7 +732,11 @@ def balance_sheet() -> Any:
     return jsonify(
         {
             "report_type": "balance_sheet",
-            "as_of_date": as_of_date.isoformat(),
+            "as_of_date": (
+                as_of_date.isoformat()
+                if isinstance(as_of_date, datetime)
+                else as_of_date
+            ),
             "currency": currency,
             "assets": {"accounts": assets_data, "total": str(total_assets)},
             "liabilities": {

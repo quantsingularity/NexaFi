@@ -106,7 +106,7 @@ class RiskScorer:
     @staticmethod
     def calculate_transaction_risk(
         transaction_data: Dict[str, Any],
-    ) -> tuple[int, List[str]]:
+    ) -> tuple[int, List[str], str]:
         """Calculate risk score for a transaction"""
         risk_score = 0
         flags = []

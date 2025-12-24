@@ -8,9 +8,9 @@ class BaseModel:
 
 
 class User(BaseModel):
-    table_name = "users"
+    table_name: Optional[str] = "users"
 
-    def __init__(self, **kwargs) -> Any:
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         if not hasattr(self, "created_at"):
             self.created_at = datetime.utcnow()
@@ -95,9 +95,9 @@ class User(BaseModel):
 
 
 class UserSession(BaseModel):
-    table_name = "user_sessions"
+    table_name: Optional[str] = "user_sessions"
 
-    def __init__(self, **kwargs) -> Any:
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         if not hasattr(self, "created_at"):
             self.created_at = datetime.utcnow()

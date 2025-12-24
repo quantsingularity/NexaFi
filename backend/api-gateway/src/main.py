@@ -12,7 +12,7 @@ from nexafi_logging.logger import get_logger, log_security_event, setup_request_
 from audit.audit_logger import audit_logger
 from middleware.auth import init_auth_manager, optional_auth
 from middleware.rate_limiter import add_rate_limit_headers, rate_limit
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -74,7 +74,7 @@ circuit_breaker_state: Dict[str, Dict[str, Any]] = {}
 def get_service_for_route(path: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
     """Determine which service should handle the request"""
     for service_name, config in SERVICES.items():
-        for route_prefix in config["routes"]:
+        for route_prefix in cast(List[str], config["routes"]):
             if path.startswith(route_prefix):
                 return (service_name, config)
     return (None, None)
@@ -89,12 +89,11 @@ def is_circuit_breaker_open(service_name: str) -> bool:
             "state": "closed",
         }
     state = circuit_breaker_state[service_name]
-    config = SERVICES[service_name]["circuit_breaker"]
+    config_cb = cast(Dict[str, Any], SERVICES[service_name]["circuit_breaker"])
     if state["state"] == "open":
         last_failure = state["last_failure_time"]
-        if (
-            last_failure is not None
-            and time.time() - last_failure > config["recovery_timeout"]
+        if last_failure is not None and time.time() - last_failure > cast(
+            int, config_cb["recovery_timeout"]
         ):
             state["state"] = "half-open"
             logger.info(f"Circuit breaker for {service_name} moved to half-open state")
@@ -119,7 +118,7 @@ def record_service_failure(service_name: str) -> None:
     else:
         state["failure_count"] = 1
     state["last_failure_time"] = time.time()
-    if state["failure_count"] >= config["failure_threshold"]:
+    if state["failure_count"] >= cast(int, config["failure_threshold"]):
         state["state"] = "open"
         logger.warning(f"Circuit breaker opened for {service_name}")
         log_security_event(
@@ -154,7 +153,7 @@ def forward_request(
     url = f"{service_config['url']}{path}"
     timeout = service_config.get("timeout", 30)
     retry_count = service_config.get("retry_count", 3)
-    forward_headers = {}
+    forward_headers: Dict[str, Any] = {}
     if headers:
         for header_name in ["Authorization", "Content-Type", "X-User-ID"]:
             if header_name in headers:
@@ -271,7 +270,7 @@ def health_check() -> Response:
 @optional_auth
 def list_services() -> Response:
     """List available services and their status"""
-    service_status = {}
+    service_status: Dict[str, Any] = {}
     for service_name, config in SERVICES.items():
         try:
             health_url = f"{config['url']}{config['health_endpoint']}"

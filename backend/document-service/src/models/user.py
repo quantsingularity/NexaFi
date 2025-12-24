@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class BaseModel:
@@ -97,7 +97,7 @@ class BaseModel:
 
 
 class Document(BaseModel):
-    table_name = "documents"
+    table_name: Optional[str] = "documents"
 
     def get_metadata(self) -> Any:
         return json.loads(self.metadata) if self.metadata else {}
@@ -119,7 +119,7 @@ class Document(BaseModel):
 
 
 class DocumentTemplate(BaseModel):
-    table_name = "document_templates"
+    table_name: Optional[str] = "document_templates"
 
     def get_fields(self) -> Any:
         return json.loads(self.fields) if self.fields else []
@@ -141,14 +141,14 @@ class DocumentTemplate(BaseModel):
 
 
 class DocumentShare(BaseModel):
-    table_name = "document_shares"
+    table_name: Optional[str] = "document_shares"
 
     def to_dict(self) -> Any:
         return super().to_dict()
 
 
 class DocumentVersion(BaseModel):
-    table_name = "document_versions"
+    table_name: Optional[str] = "document_versions"
 
     def to_dict(self) -> Any:
         return super().to_dict()

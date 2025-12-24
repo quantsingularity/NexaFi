@@ -99,7 +99,7 @@ class BaseModel:
 
 
 class Account(BaseModel):
-    table_name = "accounts"
+    table_name: Optional[str] = "accounts"
 
     def get_balance(self, as_of_date: Optional[datetime] = None) -> Decimal:
         """Calculate account balance as of a specific date"""
@@ -116,7 +116,7 @@ class Account(BaseModel):
 
 
 class JournalEntry(BaseModel):
-    table_name = "journal_entries"
+    table_name: Optional[str] = "journal_entries"
 
     def to_dict(self, include_lines: Any = False) -> Any:
         data = super().to_dict()
@@ -128,7 +128,7 @@ class JournalEntry(BaseModel):
 
 
 class JournalEntryLine(BaseModel):
-    table_name = "journal_entry_lines"
+    table_name: Optional[str] = "journal_entry_lines"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -138,7 +138,7 @@ class JournalEntryLine(BaseModel):
 
 
 class ExchangeRate(BaseModel):
-    table_name = "exchange_rates"
+    table_name: Optional[str] = "exchange_rates"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -147,7 +147,7 @@ class ExchangeRate(BaseModel):
 
 
 class Reconciliation(BaseModel):
-    table_name = "reconciliations"
+    table_name: Optional[str] = "reconciliations"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -158,14 +158,14 @@ class Reconciliation(BaseModel):
 
 
 class FinancialPeriod(BaseModel):
-    table_name = "financial_periods"
+    table_name: Optional[str] = "financial_periods"
 
     def to_dict(self) -> Any:
         return super().to_dict()
 
 
 class Budget(BaseModel):
-    table_name = "budgets"
+    table_name: Optional[str] = "budgets"
 
     def to_dict(self) -> Any:
         data = super().to_dict()

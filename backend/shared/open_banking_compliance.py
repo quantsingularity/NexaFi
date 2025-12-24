@@ -90,7 +90,7 @@ class SCAData:
 class FAPI2SecurityProfile:
     """FAPI 2.0 Security Profile Implementation"""
 
-    def __init__(self, private_key_path: str, public_key_path: str) -> Any:
+    def __init__(self, private_key_path: str, public_key_path: str) -> None:
         self.private_key = self._load_private_key(private_key_path)
         self.public_key = self._load_public_key(public_key_path)
         self.algorithm = "RS256"
@@ -170,7 +170,7 @@ class FAPI2SecurityProfile:
             raise ValueError(f"Invalid JWT: {str(e)}")
 
     def create_dpop_proof(
-        self, http_method: str, http_uri: str, access_token: str = None
+        self, http_method: str, http_uri: str, access_token: Optional[str] = None
     ) -> str:
         """Create DPoP (Demonstrating Proof of Possession) proof JWT"""
         now = datetime.utcnow()
@@ -195,7 +195,7 @@ class FAPI2SecurityProfile:
 class PSD2ConsentManager:
     """PSD2 Consent Management"""
 
-    def __init__(self, db_manager: Any) -> Any:
+    def __init__(self, db_manager: Any) -> None:
         self.db_manager = db_manager
         self._initialize_consent_tables()
 
@@ -209,7 +209,7 @@ class PSD2ConsentManager:
         psu_id: str,
         tpp_id: str,
         access_data: Dict[str, Any],
-        valid_until: datetime = None,
+        valid_until: Optional[datetime] = None,
         frequency_per_day: int = 4,
     ) -> ConsentData:
         """Create new PSD2 consent"""
@@ -298,7 +298,7 @@ class PSD2ConsentManager:
 class SCAManager:
     """Strong Customer Authentication Manager"""
 
-    def __init__(self, db_manager: Any) -> Any:
+    def __init__(self, db_manager: Any) -> None:
         self.db_manager = db_manager
         self._initialize_sca_tables()
 
@@ -311,8 +311,8 @@ class SCAManager:
         self,
         psu_id: str,
         sca_method: AuthenticationMethod,
-        consent_id: str = None,
-        transaction_id: str = None,
+        consent_id: Optional[str] = None,
+        transaction_id: Optional[str] = None,
     ) -> SCAData:
         """Initiate Strong Customer Authentication"""
         authentication_id = f"sca_{secrets.token_urlsafe(16)}"
@@ -433,7 +433,7 @@ class OpenBankingAPIValidator:
     @staticmethod
     def validate_fapi_headers(headers: Dict[str, str]) -> Tuple[bool, List[str]]:
         """Validate FAPI required headers"""
-        errors = []
+        errors: List[Any] = []
         required_headers = [
             "x-fapi-auth-date",
             "x-fapi-customer-ip-address",
@@ -465,7 +465,7 @@ class TransactionRiskAnalysis:
     ) -> Tuple[int, List[str]]:
         """Calculate transaction risk score for SCA exemption eligibility"""
         risk_score = 0
-        risk_factors = []
+        risk_factors: List[Any] = []
         amount = float(transaction_data.get("amount", 0))
         transaction_data.get("currency", "EUR")
         merchant_category = transaction_data.get("merchant_category", "")

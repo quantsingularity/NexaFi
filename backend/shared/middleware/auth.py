@@ -11,7 +11,7 @@ from flask import g, jsonify, request
 
 class AuthManager:
 
-    def __init__(self, secret_key: str, redis_client: Any = None) -> Any:
+    def __init__(self, secret_key: str, redis_client: Any = None) -> None:
         self.secret_key = secret_key
         self.redis_client = redis_client or redis.Redis(
             host="localhost", port=6379, db=1, decode_responses=True

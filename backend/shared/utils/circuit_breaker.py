@@ -6,7 +6,7 @@ import threading
 import time
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from ..config.infrastructure import InfrastructureConfig
 
@@ -21,8 +21,10 @@ class CircuitBreaker:
     """Circuit breaker implementation"""
 
     def __init__(
-        self, failure_threshold: int = None, recovery_timeout: int = None
-    ) -> Any:
+        self,
+        failure_threshold: Optional[int] = None,
+        recovery_timeout: Optional[int] = None,
+    ) -> None:
         self.failure_threshold = (
             failure_threshold or InfrastructureConfig.CIRCUIT_BREAKER_FAILURE_THRESHOLD
         )
@@ -67,7 +69,9 @@ class CircuitBreaker:
             self.state = CircuitState.OPEN
 
 
-def circuit_breaker(failure_threshold: int = None, recovery_timeout: int = None) -> Any:
+def circuit_breaker(
+    failure_threshold: Optional[int] = None, recovery_timeout: Optional[int] = None
+) -> Any:
     """Decorator for circuit breaker protection"""
 
     def decorator(func):

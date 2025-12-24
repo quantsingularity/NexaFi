@@ -41,15 +41,15 @@ class SAPConfig:
     enable_odata: bool = True
     enable_soap: bool = False
     enable_idoc: bool = False
-    custom_fields: Dict[str, str] = None
-    business_partner_config: Dict[str, Any] = None
-    financial_config: Dict[str, Any] = None
+    custom_fields: Optional[Dict[str, str]] = None
+    business_partner_config: Optional[Dict[str, Any]] = None
+    financial_config: Optional[Dict[str, Any]] = None
 
 
 class SAPAuthenticator:
     """SAP authentication handler"""
 
-    def __init__(self, config: IntegrationConfig, sap_config: SAPConfig) -> Any:
+    def __init__(self, config: IntegrationConfig, sap_config: SAPConfig) -> None:
         self.config = config
         self.sap_config = sap_config
         self.logger = logging.getLogger(__name__)
@@ -193,7 +193,7 @@ class SAPAuthenticator:
 
     def get_auth_headers(self) -> Dict[str, str]:
         """Get authentication headers"""
-        headers = {}
+        headers: Dict[str, Any] = {}
         if self.config.auth_method == AuthMethod.OAUTH2:
             if self.access_token:
                 headers["Authorization"] = f"Bearer {self.access_token}"
@@ -236,7 +236,7 @@ class SAPAuthenticator:
 class SAPRFCConnector:
     """SAP RFC connector for direct system access"""
 
-    def __init__(self, config: IntegrationConfig, sap_config: SAPConfig) -> Any:
+    def __init__(self, config: IntegrationConfig, sap_config: SAPConfig) -> None:
         self.config = config
         self.sap_config = sap_config
         self.logger = logging.getLogger(__name__)
@@ -281,16 +281,16 @@ class SAPRFCConnector:
     def read_table(
         self,
         table_name: str,
-        fields: List[str] = None,
-        where_clause: str = None,
+        fields: Optional[List[str]] = None,
+        where_clause: Optional[str] = None,
         max_rows: int = 1000,
     ) -> List[Dict[str, Any]]:
         """Read data from SAP table"""
         try:
-            options = []
+            options: List[Any] = []
             if where_clause:
                 options.append({"TEXT": where_clause})
-            fields_param = []
+            fields_param: List[Any] = []
             if fields:
                 fields_param = [{"FIELDNAME": field} for field in fields]
             result = self.call_function(
@@ -301,7 +301,7 @@ class SAPRFCConnector:
                 OPTIONS=options,
                 ROWCOUNT=max_rows,
             )
-            data = []
+            data: List[Any] = []
             field_names = [field["FIELDNAME"] for field in result["FIELDS"]]
             for row in result["DATA"]:
                 row_data = row["WA"].split("|")
@@ -321,7 +321,7 @@ class SAPODataConnector:
         config: IntegrationConfig,
         sap_config: SAPConfig,
         authenticator: SAPAuthenticator,
-    ) -> Any:
+    ) -> None:
         self.config = config
         self.sap_config = sap_config
         self.authenticator = authenticator
@@ -332,19 +332,19 @@ class SAPODataConnector:
         self,
         service_name: str,
         entity_set: str,
-        filters: Dict[str, Any] = None,
-        select: List[str] = None,
-        top: int = None,
-        skip: int = None,
+        filters: Optional[Dict[str, Any]] = None,
+        select: Optional[List[str]] = None,
+        top: Optional[int] = None,
+        skip: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Get data from OData entity set"""
         try:
             url = (
                 f"{self.config.base_url}/sap/opu/odata/sap/{service_name}/{entity_set}"
             )
-            params = {}
+            params: Dict[str, Any] = {}
             if filters:
-                filter_parts = []
+                filter_parts: List[Any] = []
                 for field, value in filters.items():
                     if isinstance(value, str):
                         filter_parts.append(f"{field} eq '{value}'")
@@ -428,17 +428,19 @@ class SAPBusinessPartnerSync:
 
     def __init__(
         self, odata_connector: SAPODataConnector, data_transformer: DataTransformer
-    ) -> Any:
+    ) -> None:
         self.odata_connector = odata_connector
         self.data_transformer = data_transformer
         self.logger = logging.getLogger(__name__)
 
-    def sync_business_partners(self, filters: Dict[str, Any] = None) -> SyncResult:
+    def sync_business_partners(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> SyncResult:
         """Sync business partners from SAP"""
         start_time = datetime.utcnow()
         records_processed = 0
         records_failed = 0
-        errors = []
+        errors: List[Any] = []
         try:
             business_partners = self.odata_connector.get_entity_set(
                 "API_BUSINESS_PARTNER",
@@ -521,7 +523,7 @@ class SAPFinancialSync:
         odata_connector: SAPODataConnector,
         rfc_connector: SAPRFCConnector,
         data_transformer: DataTransformer,
-    ) -> Any:
+    ) -> None:
         self.odata_connector = odata_connector
         self.rfc_connector = rfc_connector
         self.data_transformer = data_transformer
@@ -531,8 +533,8 @@ class SAPFinancialSync:
         self,
         company_code: str,
         fiscal_year: str,
-        date_from: str = None,
-        date_to: str = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> SyncResult:
         """Sync General Ledger data from SAP"""
         start_time = datetime.utcnow()
@@ -625,7 +627,7 @@ class SAPIntegration(BaseIntegration):
         sap_config: SAPConfig,
         db_session: Any = None,
         redis_client: Any = None,
-    ) -> Any:
+    ) -> None:
         super().__init__(config, db_session, redis_client)
         self.sap_config = sap_config
         self.authenticator = SAPAuthenticator(config, sap_config)
@@ -771,7 +773,7 @@ class SAPIntegration(BaseIntegration):
             return None
 
     def get_financial_documents(
-        self, company_code: str, fiscal_year: str, document_type: str = None
+        self, company_code: str, fiscal_year: str, document_type: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get financial documents from SAP"""
         if not self.rfc_connector:

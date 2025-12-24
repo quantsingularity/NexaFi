@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class DatabaseManager:
     """Database connection and transaction manager"""
 
-    def __init__(self, db_path: str, pool_size: int = 10) -> Any:
+    def __init__(self, db_path: str, pool_size: int = 10) -> None:
         self.db_path = db_path
         self.pool_size = pool_size
         self.connections = []
@@ -101,7 +101,7 @@ class DatabaseManager:
 class MigrationManager:
     """Database migration management"""
 
-    def __init__(self, db_manager: DatabaseManager) -> Any:
+    def __init__(self, db_manager: DatabaseManager) -> None:
         self.db_manager = db_manager
         self.migrations_table = "schema_migrations"
         self._ensure_migrations_table()
@@ -159,7 +159,7 @@ class BaseModel:
     table_name = None
     db_manager = None
 
-    def __init__(self, **kwargs) -> Any:
+    def __init__(self, **kwargs) -> None:
         for key, value in kwargs.items():
             setattr(self, key, value)
 

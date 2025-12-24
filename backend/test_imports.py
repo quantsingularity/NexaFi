@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Test script to identify import and runtime issues in all services"""
 
+from typing import Dict
+
 import os
 import sys
 import traceback
@@ -50,7 +52,7 @@ def main():
         ("document-service", os.path.join(base_dir, "document-service")),
     ]
 
-    results = {}
+    results: Dict[str, Any] = {}
     for service_name, service_path in services:
         if os.path.exists(os.path.join(service_path, "src", "main.py")):
             results[service_name] = test_service_imports(service_name, service_path)

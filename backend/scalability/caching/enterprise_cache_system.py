@@ -132,7 +132,7 @@ class CacheMetrics(Base):
 class CacheConfiguration:
     """Cache configuration management"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
 
@@ -239,7 +239,7 @@ class SerializationManager:
 class L1MemoryCache:
     """Level 1 in-process memory cache"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         max_size = config.get("max_size_mb", 256) * 1024 * 1024
@@ -319,7 +319,7 @@ class L1MemoryCache:
 class L2RedisCache:
     """Level 2 Redis cache"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         redis_config = config.get("redis", {})
@@ -430,7 +430,7 @@ class L2RedisCache:
 class L3MemcachedCache:
     """Level 3 Memcached cache"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         memcached_config = config.get("memcached", {})
@@ -512,7 +512,7 @@ class L3MemcachedCache:
 class MultiTierCache:
     """Multi-tier cache system"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         self.caches = {}
@@ -590,7 +590,7 @@ class MultiTierCache:
 
     def get_stats(self) -> Dict[str, CacheStats]:
         """Get statistics for all cache levels"""
-        stats = {}
+        stats: Dict[str, Any] = {}
         for level, cache in self.caches.items():
             stats[level.name] = cache.get_stats()
         return stats
@@ -605,7 +605,7 @@ class MultiTierCache:
 class CacheManager:
     """Central cache management system"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         self.config_manager = CacheConfiguration(config)

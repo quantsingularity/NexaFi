@@ -73,7 +73,7 @@ class SecurityEvent:
 class AdvancedEncryption:
     """Advanced encryption utilities for sensitive data"""
 
-    def __init__(self, master_key: str = None) -> Any:
+    def __init__(self, master_key: Optional[str] = None) -> None:
         if master_key:
             self.master_key = master_key.encode()
         else:
@@ -98,7 +98,7 @@ class AdvancedEncryption:
         return base64.urlsafe_b64encode(encrypted).decode()
 
     def decrypt_sensitive_data(
-        self, encrypted_data: str, max_age_seconds: int = None
+        self, encrypted_data: str, max_age_seconds: Optional[int] = None
     ) -> str:
         """Decrypt sensitive data with optional age validation"""
         try:
@@ -143,7 +143,7 @@ class AdvancedEncryption:
 class MultiFactorAuthentication:
     """Multi-Factor Authentication implementation"""
 
-    def __init__(self, db_manager: Any) -> Any:
+    def __init__(self, db_manager: Any) -> None:
         self.db_manager = db_manager
         self._initialize_mfa_tables()
 
@@ -194,7 +194,11 @@ class MultiFactorAuthentication:
         return (secret, provisioning_uri, backup_codes)
 
     def verify_totp(
-        self, user_id: str, token: str, ip_address: str = None, user_agent: str = None
+        self,
+        user_id: str,
+        token: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ) -> bool:
         """Verify TOTP token"""
         query_sql = "SELECT totp_secret, last_totp_used FROM user_mfa_settings WHERE user_id = ? AND totp_enabled = 1"
@@ -219,7 +223,11 @@ class MultiFactorAuthentication:
         return False
 
     def verify_backup_code(
-        self, user_id: str, code: str, ip_address: str = None, user_agent: str = None
+        self,
+        user_id: str,
+        code: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ) -> bool:
         """Verify backup recovery code"""
         query_sql = "SELECT backup_codes, recovery_codes_used FROM user_mfa_settings WHERE user_id = ?"
@@ -246,8 +254,8 @@ class MultiFactorAuthentication:
         user_id: str,
         method: str,
         success: bool,
-        ip_address: str = None,
-        user_agent: str = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ) -> Any:
         """Log MFA attempt"""
         insert_sql = "\n        INSERT INTO mfa_attempts (user_id, method, success, ip_address, user_agent)\n        VALUES (?, ?, ?, ?, ?)\n        "
@@ -259,7 +267,7 @@ class MultiFactorAuthentication:
 class FraudDetectionEngine:
     """Advanced fraud detection and prevention"""
 
-    def __init__(self, db_manager: Any) -> Any:
+    def __init__(self, db_manager: Any) -> None:
         self.db_manager = db_manager
         self.user_behavior_cache = defaultdict(
             lambda: {
@@ -308,11 +316,11 @@ class FraudDetectionEngine:
         user_id: str,
         ip_address: str,
         user_agent: str,
-        device_fingerprint: str = None,
+        device_fingerprint: Optional[str] = None,
     ) -> Tuple[int, List[str]]:
         """Analyze login behavior for fraud indicators"""
         risk_score = 0
-        risk_factors = []
+        risk_factors: List[Any] = []
         user_cache = self.user_behavior_cache[user_id]
         current_time = datetime.utcnow()
         if ip_address not in user_cache["ip_addresses"]:
@@ -355,7 +363,7 @@ class FraudDetectionEngine:
     ) -> Tuple[int, List[str]]:
         """Analyze transaction behavior for fraud indicators"""
         risk_score = 0
-        risk_factors = []
+        risk_factors: List[Any] = []
         user_cache = self.user_behavior_cache[user_id]
         typical_amounts = list(user_cache["transaction_amounts"])
         if typical_amounts:
@@ -432,7 +440,7 @@ class FraudDetectionEngine:
 class SecurityMonitor:
     """Real-time security monitoring and alerting"""
 
-    def __init__(self, db_manager: Any) -> Any:
+    def __init__(self, db_manager: Any) -> None:
         self.db_manager = db_manager
         self.security_events = deque(maxlen=10000)
         self.threat_indicators = defaultdict(int)
@@ -500,7 +508,7 @@ class SecurityMonitor:
 
     def _update_threat_indicators(self, event: SecurityEvent) -> Any:
         """Update threat indicators based on event"""
-        indicators = []
+        indicators: List[Any] = []
         if event.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]:
             indicators.append(("malicious_ip", event.ip_address))
         if event.event_type == SecurityEventType.FRAUD_DETECTION:
@@ -582,7 +590,7 @@ class SecurityMonitor:
 class SecureSessionManager:
     """Secure session management with advanced features"""
 
-    def __init__(self, db_manager: Any, encryption: AdvancedEncryption) -> Any:
+    def __init__(self, db_manager: Any, encryption: AdvancedEncryption) -> None:
         self.db_manager = db_manager
         self.encryption = encryption
         self.active_sessions = {}
@@ -619,8 +627,8 @@ class SecureSessionManager:
         self,
         user_id: str,
         ip_address: str,
-        user_agent: str = None,
-        device_fingerprint: str = None,
+        user_agent: Optional[str] = None,
+        device_fingerprint: Optional[str] = None,
         security_level: SecurityLevel = SecurityLevel.MEDIUM,
     ) -> str:
         """Create new secure session"""
@@ -630,7 +638,7 @@ class SecureSessionManager:
             expires_at = datetime.utcnow() + timedelta(hours=8)
         elif security_level == SecurityLevel.CRITICAL:
             expires_at = datetime.utcnow() + timedelta(hours=2)
-        session_data = {
+        session_data: Dict[str, Any] = {
             "created_ip": ip_address,
             "security_level": security_level.value,
             "permissions": [],
@@ -658,7 +666,10 @@ class SecureSessionManager:
         return session_id
 
     def validate_session(
-        self, session_id: str, ip_address: str = None, require_mfa: bool = False
+        self,
+        session_id: str,
+        ip_address: Optional[str] = None,
+        require_mfa: bool = False,
     ) -> Tuple[bool, Optional[str], Dict[str, Any]]:
         """Validate session with security checks"""
         if session_id in self.active_sessions:
@@ -683,7 +694,7 @@ class SecureSessionManager:
                 self.encryption.decrypt_sensitive_data(result["session_data"])
             )
         except ValueError:
-            session_data = {}
+            session_data: Dict[str, Any] = {}
         self._update_session_activity(session_id)
         return (
             True,

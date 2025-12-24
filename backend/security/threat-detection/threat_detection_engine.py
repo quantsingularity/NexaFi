@@ -188,7 +188,7 @@ class AnomalyModel(Base):
 class ThreatIntelligenceCollector:
     """Collects threat intelligence from various sources"""
 
-    def __init__(self, db_session: Any, redis_client: redis.Redis) -> Any:
+    def __init__(self, db_session: Any, redis_client: redis.Redis) -> None:
         self.db_session = db_session
         self.redis_client = redis_client
         self.logger = logging.getLogger(__name__)
@@ -317,7 +317,7 @@ class ThreatIntelligenceCollector:
 class AnomalyDetector:
     """Machine learning-based anomaly detection"""
 
-    def __init__(self, db_session: Any, redis_client: redis.Redis) -> Any:
+    def __init__(self, db_session: Any, redis_client: redis.Redis) -> None:
         self.db_session = db_session
         self.redis_client = redis_client
         self.logger = logging.getLogger(__name__)
@@ -472,7 +472,7 @@ class AnomalyDetector:
 class ThreatDetectionRules:
     """Rule-based threat detection engine"""
 
-    def __init__(self, db_session: Any, redis_client: redis.Redis) -> Any:
+    def __init__(self, db_session: Any, redis_client: redis.Redis) -> None:
         self.db_session = db_session
         self.redis_client = redis_client
         self.logger = logging.getLogger(__name__)
@@ -522,7 +522,7 @@ class ThreatDetectionRules:
 
     def evaluate_rules(self, event_data: Dict[str, Any]) -> List[ThreatEvent]:
         """Evaluate all rules against event data"""
-        threats = []
+        threats: List[Any] = []
         for rule in self.rules:
             if not rule["enabled"]:
                 continue
@@ -786,7 +786,7 @@ class ThreatDetectionRules:
 class AutomatedResponseSystem:
     """Automated threat response system"""
 
-    def __init__(self, redis_client: redis.Redis, config: Dict[str, Any]) -> Any:
+    def __init__(self, redis_client: redis.Redis, config: Dict[str, Any]) -> None:
         self.redis_client = redis_client
         self.config = config
         self.logger = logging.getLogger(__name__)
@@ -805,7 +805,7 @@ class AutomatedResponseSystem:
 
     def execute_response(self, threat_event: ThreatEvent) -> Dict[str, Any]:
         """Execute automated response actions"""
-        results = {}
+        results: Dict[str, Any] = {}
         for action in threat_event.response_actions:
             try:
                 if action in self.response_handlers:
@@ -1021,7 +1021,7 @@ class ThreatDetectionEngine:
 
     def __init__(
         self, db_session: Any, redis_client: redis.Redis, config: Dict[str, Any]
-    ) -> Any:
+    ) -> None:
         self.db_session = db_session
         self.redis_client = redis_client
         self.config = config
@@ -1044,7 +1044,7 @@ class ThreatDetectionEngine:
     def analyze_event(self, event_data: Dict[str, Any]) -> List[ThreatEvent]:
         """Analyze event for threats"""
         start_time = time.time()
-        threats = []
+        threats: List[Any] = []
         try:
             rule_threats = self.rule_engine.evaluate_rules(event_data)
             threats.extend(rule_threats)
@@ -1063,7 +1063,7 @@ class ThreatDetectionEngine:
 
     def _detect_anomalies(self, event_data: Dict[str, Any]) -> List[ThreatEvent]:
         """Detect anomalies in event data"""
-        threats = []
+        threats: List[Any] = []
         try:
             user_features = self._extract_user_features(event_data)
             network_features = self._extract_network_features(event_data)
@@ -1129,7 +1129,7 @@ class ThreatDetectionEngine:
         self, event_data: Dict[str, Any]
     ) -> List[ThreatEvent]:
         """Check event against threat intelligence"""
-        threats = []
+        threats: List[Any] = []
         try:
             ip_address = event_data.get("ip_address")
             if ip_address:

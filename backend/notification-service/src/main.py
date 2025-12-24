@@ -142,9 +142,9 @@ DEFAULT_TEMPLATES = {
 class NotificationQueue:
     """Notification queue processor"""
 
-    def __init__(self) -> Any:
-        self.queue = queue.Queue()
-        self.worker_thread = None
+    def __init__(self) -> None:
+        self.queue: Any = queue.Queue()
+        self.worker_thread: Optional[Any] = None
         self.running = False
         self.smtp_config = {
             "host": os.environ.get("SMTP_HOST", "localhost"),
@@ -221,15 +221,19 @@ class NotificationQueue:
             )
             return
         msg = MIMEMultipart()
-        msg["From"] = self.smtp_config["username"]
+        msg["From"] = str(self.smtp_config["username"])
         msg["To"] = f"user{notification.user_id}@example.com"
         msg["Subject"] = notification.subject or "NexaFi Notification"
         msg.attach(MIMEText(notification.message, "plain"))
-        with smtplib.SMTP(self.smtp_config["host"], self.smtp_config["port"]) as server:
+        with smtplib.SMTP(
+            str(self.smtp_config["host"]), int(str(self.smtp_config["port"]))
+        ) as server:
             if self.smtp_config["use_tls"]:
                 server.starttls()
             if self.smtp_config["username"] and self.smtp_config["password"]:
-                server.login(self.smtp_config["username"], self.smtp_config["password"])
+                server.login(
+                    str(self.smtp_config["username"]), str(self.smtp_config["password"])
+                )
             server.send_message(msg)
 
     def _send_sms(self, notification: Notification) -> Any:

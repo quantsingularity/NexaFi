@@ -92,7 +92,7 @@ class ExplanationRequest:
     instance_data: Optional[Dict[str, Any]] = None
     feature_names: Optional[List[str]] = None
     target_class: Optional[Union[int, str]] = None
-    compliance_standards: List[ComplianceStandard] = None
+    compliance_standards: Optional[List[ComplianceStandard]] = None
     explanation_depth: str = "standard"
     include_visualizations: bool = True
     output_format: str = "json"
@@ -156,7 +156,7 @@ class SHAPExplainer:
 
     def __init__(
         self, model: Any, model_type: ModelType, feature_names: List[str]
-    ) -> Any:
+    ) -> None:
         self.model = model
         self.model_type = model_type
         self.feature_names = feature_names
@@ -211,7 +211,7 @@ class SHAPExplainer:
         try:
             shap_values = self.explainer.shap_values(X)
             if isinstance(shap_values, list):
-                explanations = {}
+                explanations: Dict[str, Any] = {}
                 for i, class_shap_values in enumerate(shap_values):
                     explanations[f"class_{i}"] = {
                         "feature_importance": np.abs(class_shap_values)
@@ -237,7 +237,7 @@ class SHAPExplainer:
             instance = X[instance_idx : instance_idx + 1]
             shap_values = self.explainer.shap_values(instance)
             if isinstance(shap_values, list):
-                explanations = {}
+                explanations: Dict[str, Any] = {}
                 for i, class_shap_values in enumerate(shap_values):
                     explanations[f"class_{i}"] = {
                         "shap_values": class_shap_values[0].tolist(),
@@ -257,7 +257,7 @@ class SHAPExplainer:
 
     def generate_visualizations(self, X: np.ndarray, output_dir: str) -> Dict[str, str]:
         """Generate SHAP visualizations"""
-        visualizations = {}
+        visualizations: Dict[str, Any] = {}
         try:
             os.makedirs(output_dir, exist_ok=True)
             shap_values = self.explainer.shap_values(X)
@@ -337,7 +337,7 @@ class LIMEExplainer:
         feature_names: List[str],
         training_data: np.ndarray,
         mode: str = "classification",
-    ) -> Any:
+    ) -> None:
         self.model = model
         self.model_type = model_type
         self.feature_names = feature_names
@@ -396,7 +396,7 @@ class LIMEExplainer:
         self, instance: np.ndarray, output_dir: str, num_features: int = 10
     ) -> Dict[str, str]:
         """Generate LIME visualizations"""
-        visualizations = {}
+        visualizations: Dict[str, Any] = {}
         try:
             os.makedirs(output_dir, exist_ok=True)
             if hasattr(self.model, "predict_proba"):
@@ -431,7 +431,7 @@ class LIMEExplainer:
 class PermutationImportanceExplainer:
     """Permutation importance-based explanations"""
 
-    def __init__(self, model: Any, feature_names: List[str]) -> Any:
+    def __init__(self, model: Any, feature_names: List[str]) -> None:
         self.model = model
         self.feature_names = feature_names
         self.logger = structlog.get_logger(__name__)
@@ -463,7 +463,7 @@ class PermutationImportanceExplainer:
         self, X: np.ndarray, y: np.ndarray, output_dir: str, scoring: str = "accuracy"
     ) -> Dict[str, str]:
         """Generate permutation importance visualizations"""
-        visualizations = {}
+        visualizations: Dict[str, Any] = {}
         try:
             os.makedirs(output_dir, exist_ok=True)
             perm_importance = permutation_importance(
@@ -497,7 +497,7 @@ class PermutationImportanceExplainer:
 class PartialDependenceExplainer:
     """Partial dependence plot explanations"""
 
-    def __init__(self, model: Any, feature_names: List[str]) -> Any:
+    def __init__(self, model: Any, feature_names: List[str]) -> None:
         self.model = model
         self.feature_names = feature_names
         self.logger = structlog.get_logger(__name__)
@@ -507,7 +507,7 @@ class PartialDependenceExplainer:
     ) -> Dict[str, Any]:
         """Generate partial dependence explanations"""
         try:
-            explanations = {}
+            explanations: Dict[str, Any] = {}
             for feature in features:
                 if isinstance(feature, str):
                     feature_idx = self.feature_names.index(feature)
@@ -530,7 +530,7 @@ class PartialDependenceExplainer:
         self, X: np.ndarray, features: List[Union[int, str]], output_dir: str
     ) -> Dict[str, str]:
         """Generate partial dependence visualizations"""
-        visualizations = {}
+        visualizations: Dict[str, Any] = {}
         try:
             os.makedirs(output_dir, exist_ok=True)
             for feature in features:
@@ -562,7 +562,7 @@ class PartialDependenceExplainer:
 class ComplianceChecker:
     """Regulatory compliance checker for AI explanations"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.logger = structlog.get_logger(__name__)
         self.compliance_rules = self._load_compliance_rules()
 
@@ -620,7 +620,7 @@ class ComplianceChecker:
         self, explanation_result: ExplanationResult, standards: List[ComplianceStandard]
     ) -> Dict[ComplianceStandard, bool]:
         """Check compliance against specified standards"""
-        compliance_status = {}
+        compliance_status: Dict[str, Any] = {}
         for standard in standards:
             try:
                 compliance_status[standard] = self._check_standard_compliance(
@@ -697,7 +697,7 @@ class ComplianceChecker:
         self, compliance_status: Dict[ComplianceStandard, bool]
     ) -> List[str]:
         """Generate recommendations for improving compliance"""
-        recommendations = []
+        recommendations: List[Any] = []
         for standard, is_compliant in compliance_status.items():
             if not is_compliant:
                 if standard == ComplianceStandard.GDPR:
@@ -722,7 +722,7 @@ class ComplianceChecker:
 class ExplainableAIEngine:
     """Main explainable AI engine"""
 
-    def __init__(self, config: Dict[str, Any]) -> Any:
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.logger = structlog.get_logger(__name__)
         db_url = config.get("database_url", "sqlite:///explainable_ai.db")
@@ -743,9 +743,9 @@ class ExplainableAIEngine:
         model: Any,
         model_type: ModelType,
         feature_names: List[str],
-        target_names: List[str] = None,
+        target_names: Optional[List[str]] = None,
         training_data: np.ndarray = None,
-        compliance_requirements: List[ComplianceStandard] = None,
+        compliance_requirements: Optional[List[ComplianceStandard]] = None,
     ) -> bool:
         """Register a model for explainability"""
         try:
@@ -788,8 +788,8 @@ class ExplainableAIEngine:
             model_type = model_info["model_type"]
             feature_names = model_info["feature_names"]
             training_data = model_info["training_data"]
-            explanations = {}
-            visualizations = {}
+            explanations: Dict[str, Any] = {}
+            visualizations: Dict[str, Any] = {}
             if request.explanation_type == ExplanationType.SHAP_VALUES:
                 explanations, visualizations = self._generate_shap_explanations(
                     model, model_type, feature_names, request, explanation_id
@@ -865,8 +865,8 @@ class ExplainableAIEngine:
     ) -> Tuple[Dict[str, Any], Dict[str, str]]:
         """Generate SHAP explanations"""
         explainer = SHAPExplainer(model, model_type, feature_names)
-        explanations = {}
-        visualizations = {}
+        explanations: Dict[str, Any] = {}
+        visualizations: Dict[str, Any] = {}
         if request.instance_data:
             X = np.array([list(request.instance_data.values())])
             explanations = explainer.explain_local(X, 0)
@@ -887,8 +887,8 @@ class ExplainableAIEngine:
         if training_data is None:
             raise ValueError("Training data required for LIME explanations")
         explainer = LIMEExplainer(model, model_type, feature_names, training_data)
-        explanations = {}
-        visualizations = {}
+        explanations: Dict[str, Any] = {}
+        visualizations: Dict[str, Any] = {}
         if request.instance_data:
             instance = np.array(list(request.instance_data.values()))
             explanations = explainer.explain_local(instance)
@@ -904,8 +904,8 @@ class ExplainableAIEngine:
         explanation_id: str,
     ) -> Tuple[Dict[str, Any], Dict[str, str]]:
         """Generate feature importance explanations"""
-        explanations = {}
-        visualizations = {}
+        explanations: Dict[str, Any] = {}
+        visualizations: Dict[str, Any] = {}
         if hasattr(model, "feature_importances_"):
             explanations["feature_importance"] = {
                 "importances": model.feature_importances_.tolist(),
@@ -942,8 +942,8 @@ class ExplainableAIEngine:
         explanation_id: str,
     ) -> Tuple[Dict[str, Any], Dict[str, str]]:
         """Generate partial dependence explanations"""
-        explanations = {}
-        visualizations = {}
+        explanations: Dict[str, Any] = {}
+        visualizations: Dict[str, Any] = {}
         if request.instance_data:
             X = np.array([list(request.instance_data.values())])
             explainer = PartialDependenceExplainer(model, feature_names)
@@ -965,8 +965,8 @@ class ExplainableAIEngine:
         explanation_id: str,
     ) -> Tuple[Dict[str, Any], Dict[str, str]]:
         """Generate comprehensive explanations using multiple methods"""
-        explanations = {}
-        visualizations = {}
+        explanations: Dict[str, Any] = {}
+        visualizations: Dict[str, Any] = {}
         try:
             shap_explainer = SHAPExplainer(model, model_type, feature_names)
             if request.instance_data:

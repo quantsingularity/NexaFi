@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from functools import wraps
-from typing import Any
+from typing import Any, List
 
 import uuid
 from decimal import Decimal
@@ -46,7 +46,7 @@ def get_accounts() -> Any:
         accounts = Account.find_all(
             where_clause + " ORDER BY account_code", tuple(params)
         )
-        account_data = []
+        account_data: List[Any] = []
         for account in accounts:
             data = account.to_dict()
             data["balance"] = data["current_balance"]
@@ -225,7 +225,7 @@ def create_journal_entry() -> Any:
         )
         total_debits = Decimal("0")
         total_credits = Decimal("0")
-        lines_to_save = []
+        lines_to_save: List[Any] = []
         for i, line_data in enumerate(data["lines"]):
             account = Account.find_one(
                 "id = ? AND user_id = ?", (line_data.get("account_id"), request.user_id)

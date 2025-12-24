@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+from typing import Dict, List
+
 Comprehensive service testing script
 Tests each service's ability to start and respond to health checks
 """
@@ -65,7 +67,7 @@ services = [
     },
 ]
 
-running_processes = []
+running_processes: List[Any] = []
 
 
 def start_service(service):
@@ -174,8 +176,7 @@ def cleanup():
 
 
 def main():
-    results = {}
-
+    results: Dict[str, Any] = {}
     try:
         for service in services:
             success, process = test_service(service)

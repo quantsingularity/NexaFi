@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class BaseModel:
@@ -98,7 +98,7 @@ class BaseModel:
 
 
 class CreditScoreModel(BaseModel):
-    table_name = "credit_score_models"
+    table_name: Optional[str] = "credit_score_models"
 
     def get_features(self) -> Any:
         return json.loads(self.features) if self.features else []
@@ -127,7 +127,7 @@ class CreditScoreModel(BaseModel):
 
 
 class CreditScore(BaseModel):
-    table_name = "credit_scores"
+    table_name: Optional[str] = "credit_scores"
 
     def get_input_features(self) -> Any:
         return json.loads(self.input_features) if self.input_features else {}
@@ -204,7 +204,7 @@ class CreditScore(BaseModel):
 
 
 class LoanApplication(BaseModel):
-    table_name = "loan_applications"
+    table_name: Optional[str] = "loan_applications"
 
     def get_applicant_data(self) -> Any:
         return json.loads(self.applicant_data) if self.applicant_data else {}
@@ -271,7 +271,7 @@ class LoanApplication(BaseModel):
 
 
 class Loan(BaseModel):
-    table_name = "loans"
+    table_name: Optional[str] = "loans"
 
     def calculate_remaining_balance(self) -> Any:
         """Calculate remaining loan balance"""
@@ -311,7 +311,7 @@ class Loan(BaseModel):
 
 
 class LoanPayment(BaseModel):
-    table_name = "loan_payments"
+    table_name: Optional[str] = "loan_payments"
 
     def is_late(self) -> Any:
         if self.payment_date and self.due_date:
@@ -351,7 +351,7 @@ class LoanPayment(BaseModel):
 
 
 class RiskAssessment(BaseModel):
-    table_name = "risk_assessments"
+    table_name: Optional[str] = "risk_assessments"
 
     def get_risk_factors(self) -> Any:
         return json.loads(self.risk_factors) if self.risk_factors else {}
@@ -407,7 +407,7 @@ class RiskAssessment(BaseModel):
 
 
 class LoanDocument(BaseModel):
-    table_name = "loan_documents"
+    table_name: Optional[str] = "loan_documents"
 
     def get_extracted_data(self) -> Any:
         return json.loads(self.extracted_data) if self.extracted_data else {}
@@ -422,7 +422,7 @@ class LoanDocument(BaseModel):
 
 
 class LoanApplicationHistory(BaseModel):
-    table_name = "loan_application_history"
+    table_name: Optional[str] = "loan_application_history"
 
     def to_dict(self) -> Any:
         return super().to_dict()

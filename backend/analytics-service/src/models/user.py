@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class BaseModel:
@@ -95,7 +95,7 @@ class BaseModel:
 
 
 class Dashboard(BaseModel):
-    table_name = "dashboards"
+    table_name: Optional[str] = "dashboards"
 
     def get_layout(self) -> Any:
         return json.loads(self.layout) if self.layout else {}
@@ -117,7 +117,7 @@ class Dashboard(BaseModel):
 
 
 class Report(BaseModel):
-    table_name = "reports"
+    table_name: Optional[str] = "reports"
 
     def get_parameters(self) -> Any:
         return json.loads(self.parameters) if self.parameters else {}
@@ -139,7 +139,7 @@ class Report(BaseModel):
 
 
 class ReportExecution(BaseModel):
-    table_name = "report_executions"
+    table_name: Optional[str] = "report_executions"
 
     def get_result_data(self) -> Any:
         return json.loads(self.result_data) if self.result_data else None
@@ -190,7 +190,7 @@ class ReportExecution(BaseModel):
 
 
 class DataSource(BaseModel):
-    table_name = "data_sources"
+    table_name: Optional[str] = "data_sources"
 
     def get_connection_config(self) -> Any:
         return json.loads(self.connection_config) if self.connection_config else {}
@@ -230,7 +230,7 @@ class DataSource(BaseModel):
 
 
 class Metric(BaseModel):
-    table_name = "metrics"
+    table_name: Optional[str] = "metrics"
 
     def get_format_config(self) -> Any:
         return json.loads(self.format_config) if self.format_config else {}
@@ -268,7 +268,7 @@ class Metric(BaseModel):
 
 
 class MetricHistory(BaseModel):
-    table_name = "metric_history"
+    table_name: Optional[str] = "metric_history"
 
     def get_calculation_details(self) -> Any:
         return json.loads(self.calculation_details) if self.calculation_details else {}

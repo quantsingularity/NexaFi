@@ -30,7 +30,7 @@ class Colors:
 
 class TestRunner:
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.passed = 0
         self.failed = 0
         self.access_token = None

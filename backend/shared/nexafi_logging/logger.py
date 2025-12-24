@@ -69,7 +69,7 @@ class NexaFiFormatter(jsonlogger.JsonFormatter):
 class LoggerManager:
     """Centralized logger management for NexaFi"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.loggers = {}
         self.setup_root_logger()
 
@@ -279,7 +279,7 @@ def setup_request_logging(app: Any) -> Any:
 
 
 def log_function_call(
-    logger_name: str = None, log_args: bool = False, log_result: bool = False
+    logger_name: Optional[str] = None, log_args: bool = False, log_result: bool = False
 ) -> Any:
     """Decorator to log function calls"""
 

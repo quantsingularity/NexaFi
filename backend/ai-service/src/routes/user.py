@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from functools import wraps
-from typing import Any
+from typing import Any, List
 
 import random
 from decimal import Decimal
@@ -39,7 +39,7 @@ def generate_cash_flow_forecast(
     base_amount = historical_data.get("average_monthly_cash_flow", 10000)
     seasonal_factor = 1 + 0.1 * np.sin(2 * np.pi * datetime.now().month / 12)
     trend_factor = 1.02
-    forecasts = []
+    forecasts: List[Any] = []
     current_date = datetime.now().date()
     for i in range(days_ahead):
         date = current_date + timedelta(days=i)
@@ -292,7 +292,7 @@ def generate_insights() -> Any:
     try:
         data = request.get_json()
         financial_data = data.get("financial_data", {})
-        insights_to_create = []
+        insights_to_create: List[Any] = []
         if financial_data.get("cash_flow_trend") == "declining":
             insights_to_create.append(
                 {
@@ -359,7 +359,7 @@ def generate_insights() -> Any:
                 ],
             }
         )
-        created_insights = []
+        created_insights: List[Any] = []
         for insight_data in insights_to_create:
             insight = FinancialInsight(
                 user_id=request.user_id,

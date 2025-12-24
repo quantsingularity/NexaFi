@@ -14,7 +14,7 @@ from ..config.infrastructure import InfrastructureConfig
 class CacheManager:
     """Redis-based cache manager"""
 
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self.redis_client = redis.Redis(**InfrastructureConfig.get_redis_config())
         self.default_timeout = InfrastructureConfig.CACHE_DEFAULT_TIMEOUT
         self.key_prefix = InfrastructureConfig.CACHE_KEY_PREFIX

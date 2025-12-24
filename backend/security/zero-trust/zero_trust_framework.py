@@ -177,8 +177,11 @@ class ContextAnalyzer:
     """Analyzes security context for zero-trust decisions"""
 
     def __init__(
-        self, redis_client: redis.Redis, db_session: Any, geoip_db_path: str = None
-    ) -> Any:
+        self,
+        redis_client: redis.Redis,
+        db_session: Any,
+        geoip_db_path: Optional[str] = None,
+    ) -> None:
         self.redis_client = redis_client
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
@@ -476,7 +479,7 @@ class ContextAnalyzer:
         self, user_id: str, ip_address: str, location: Dict[str, Any]
     ) -> float:
         """Get anomaly risk score"""
-        risk_factors = []
+        risk_factors: List[Any] = []
         try:
             if location:
                 cache_key = f"user_locations:{user_id}"
@@ -595,7 +598,7 @@ class ContextAnalyzer:
             )
             if not recent_behaviors:
                 return 0.5
-            action_counts = {}
+            action_counts: Dict[str, Any] = {}
             for behavior in recent_behaviors:
                 action_counts[behavior.action_type] = (
                     action_counts.get(behavior.action_type, 0) + 1
@@ -666,7 +669,7 @@ class ContextAnalyzer:
 class PolicyEngine:
     """Zero-trust policy engine"""
 
-    def __init__(self, redis_client: redis.Redis, db_session: Any) -> Any:
+    def __init__(self, redis_client: redis.Redis, db_session: Any) -> None:
         self.redis_client = redis_client
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
@@ -841,8 +844,11 @@ class ZeroTrustFramework:
     """Main zero-trust framework"""
 
     def __init__(
-        self, redis_client: redis.Redis, db_session: Any, geoip_db_path: str = None
-    ) -> Any:
+        self,
+        redis_client: redis.Redis,
+        db_session: Any,
+        geoip_db_path: Optional[str] = None,
+    ) -> None:
         self.redis_client = redis_client
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
@@ -1016,7 +1022,7 @@ class ZeroTrustFramework:
 
 
 def create_zero_trust_framework(
-    database_url: str, redis_url: str, geoip_db_path: str = None
+    database_url: str, redis_url: str, geoip_db_path: Optional[str] = None
 ) -> ZeroTrustFramework:
     """Factory function to create zero-trust framework"""
     engine = create_engine(database_url)

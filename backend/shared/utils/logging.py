@@ -13,7 +13,7 @@ from ..config.infrastructure import InfrastructureConfig
 class StructuredLogger:
     """Structured logging for better log analysis"""
 
-    def __init__(self, service_name: str) -> Any:
+    def __init__(self, service_name: str) -> None:
         self.service_name = service_name
         self.logger = logging.getLogger(service_name)
         self.logger.setLevel(getattr(logging, InfrastructureConfig.LOG_LEVEL))

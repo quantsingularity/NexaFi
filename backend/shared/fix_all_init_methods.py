@@ -1,4 +1,5 @@
 # Fix all _initialize methods
+
 with open("enhanced_security.py", "r") as f:
     lines = f.readlines()
 

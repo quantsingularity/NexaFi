@@ -100,7 +100,7 @@ class SanitizationMixin:
     def sanitize_strings(self, data: Any, **kwargs) -> Any:
         """Sanitize string inputs"""
         if isinstance(data, dict):
-            sanitized = {}
+            sanitized: Dict[str, Any] = {}
             for key, value in data.items():
                 if isinstance(value, str):
                     sanitized[key] = bleach.clean(value.strip(), tags=[], strip=True)

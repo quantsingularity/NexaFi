@@ -1,11 +1,11 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class BaseModel:
     table_name = None
     db_manager = None
 
-    def __init__(self, **kwargs) -> Any:
+    def __init__(self, **kwargs) -> None:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -32,7 +32,7 @@ class BaseModel:
 
 
 class PaymentMethod(BaseModel):
-    table_name = "payment_methods"
+    table_name: Optional[str] = "payment_methods"
 
     def to_dict(self, include_sensitive: Any = False) -> Any:
         data = super().to_dict()
@@ -61,7 +61,7 @@ class PaymentMethod(BaseModel):
 
 
 class Transaction(BaseModel):
-    table_name = "transactions"
+    table_name: Optional[str] = "transactions"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -72,7 +72,7 @@ class Transaction(BaseModel):
 
 
 class Wallet(BaseModel):
-    table_name = "wallets"
+    table_name: Optional[str] = "wallets"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -84,7 +84,7 @@ class Wallet(BaseModel):
 
 
 class WalletBalanceHistory(BaseModel):
-    table_name = "wallet_balance_history"
+    table_name: Optional[str] = "wallet_balance_history"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -95,7 +95,7 @@ class WalletBalanceHistory(BaseModel):
 
 
 class PaymentProcessor(BaseModel):
-    table_name = "payment_processors"
+    table_name: Optional[str] = "payment_processors"
 
     def to_dict(self, include_sensitive: Any = False) -> Any:
         data = super().to_dict()
@@ -105,7 +105,7 @@ class PaymentProcessor(BaseModel):
 
 
 class RecurringPayment(BaseModel):
-    table_name = "recurring_payments"
+    table_name: Optional[str] = "recurring_payments"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
@@ -114,7 +114,7 @@ class RecurringPayment(BaseModel):
 
 
 class ExchangeRate(BaseModel):
-    table_name = "exchange_rates"
+    table_name: Optional[str] = "exchange_rates"
 
     def to_dict(self) -> Any:
         data = super().to_dict()
