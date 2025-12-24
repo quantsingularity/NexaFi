@@ -7,10 +7,10 @@ import os
 import re
 import sys
 from datetime import datetime, timezone
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 
 from dotenv import load_dotenv
-from flask import Flask, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request
 from flask_cors import CORS
 
 # Load environment variables at the very beginning
@@ -38,7 +38,7 @@ from middleware.auth import (
     require_auth,
     require_permission,
 )
-from validators.schemas import (
+from validation_schemas.schemas import (
     UserLoginSchema,
     UserRegistrationSchema,
     UserUpdateSchema,
@@ -215,7 +215,7 @@ def health_check() -> Any:
 )
 def register() -> Tuple[Any, int]:
     """User registration with enhanced security"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     existing_user = User.find_one("email = ?", (data["email"],))
 
     if existing_user:
@@ -264,7 +264,7 @@ def register() -> Tuple[Any, int]:
 @audit_action(AuditEventType.USER_LOGIN, "user_login", severity=AuditSeverity.MEDIUM)
 def login() -> Tuple[Any, int]:
     """User login with enhanced security"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     user = User.find_one("email = ?", (data["email"],))
 
     if not user:
@@ -338,7 +338,7 @@ def login() -> Tuple[Any, int]:
 
 
 @app.route("/api/v1/auth/refresh", methods=["POST"])
-def refresh_token() -> Tuple[Any, int]:
+def refresh_token() -> Union[Tuple[Response, int], Response]:
     """Refresh access token"""
     data = request.get_json() or {}
     refresh_token = data.get("refresh_token")
@@ -353,7 +353,10 @@ def refresh_token() -> Tuple[Any, int]:
 
     access_token, new_refresh_token = result
 
-    return jsonify({"access_token": access_token, "refresh_token": new_refresh_token})
+    return (
+        jsonify({"access_token": access_token, "refresh_token": new_refresh_token}),
+        200,
+    )
 
 
 @app.route("/api/v1/auth/logout", methods=["POST"])
@@ -401,7 +404,7 @@ def get_profile() -> Tuple[Any, int]:
 @audit_action(AuditEventType.USER_UPDATE, "user_profile_update")
 def update_profile() -> Tuple[Any, int]:
     """Update authenticated user profile"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     user_id = g.current_user["user_id"]
     user = User.find_by_id(user_id)
 

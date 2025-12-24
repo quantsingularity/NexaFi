@@ -1,7 +1,7 @@
 import os
 import sys
 from datetime import datetime
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional, List, Optional, Tuple
 
 import uuid
 from decimal import Decimal
@@ -21,7 +21,7 @@ from models.user import (
 )
 from middleware.auth import require_auth, require_permission
 from routes.user import ledger_bp
-from validators.schemas import (
+from validation_schemas.schemas import (
     AccountSchema,
     FinancialValidators,
     JournalEntrySchema,
@@ -160,7 +160,10 @@ class ExchangeRate(BaseModel):
 
     @classmethod
     def get_rate(
-        cls: Any, from_currency: str, to_currency: str, rate_date: datetime = None
+        cls: Any,
+        from_currency: str,
+        to_currency: str,
+        rate_date: Optional[datetime] = None,
     ) -> Decimal:
         """Get exchange rate for currency conversion"""
         if from_currency == to_currency:
@@ -421,7 +424,7 @@ def list_accounts() -> Any:
 )
 def create_account() -> Any:
     """Create a new account"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     existing = Account.find_one("account_code = ?", (data["account_code"],))
     if existing:
         return (jsonify({"error": "Account code already exists"}), 409)
@@ -498,7 +501,7 @@ def get_account_balance(account_id: Any) -> Any:
 )
 def create_journal_entry() -> Any:
     """Create a new journal entry"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     lines_data = request.get_json().get("lines", [])
     if not lines_data:
         return (jsonify({"error": "Journal entry must have at least one line"}), 400)
@@ -627,7 +630,7 @@ def post_journal_entry(entry_id: Any) -> Any:
 )
 def update_exchange_rate() -> Any:
     """Update exchange rate"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     existing_rates = ExchangeRate.find_all(
         "from_currency = ? AND to_currency = ? AND rate_date = ?",
         (
@@ -682,7 +685,7 @@ def update_exchange_rate() -> Any:
 )
 def create_reconciliation() -> Any:
     """Create account reconciliation"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     account = Account.find_by_id(data["account_id"])
     if not account:
         return (jsonify({"error": "Account not found"}), 404)

@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 import requests
-from flask import Flask, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request
 from flask_cors import CORS
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
@@ -12,7 +12,7 @@ from nexafi_logging.logger import get_logger, log_security_event, setup_request_
 from audit.audit_logger import audit_logger
 from middleware.auth import init_auth_manager, optional_auth
 from middleware.rate_limiter import add_rate_limit_headers, rate_limit
-from typing import Any
+from typing import Any, Dict, Optional, Tuple
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -68,10 +68,10 @@ SERVICES = {
         "circuit_breaker": {"failure_threshold": 3, "recovery_timeout": 120},
     },
 }
-circuit_breaker_state = {}
+circuit_breaker_state: Dict[str, Dict[str, Any]] = {}
 
 
-def get_service_for_route(path: Any) -> Any:
+def get_service_for_route(path: str) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
     """Determine which service should handle the request"""
     for service_name, config in SERVICES.items():
         for route_prefix in config["routes"]:
@@ -80,7 +80,7 @@ def get_service_for_route(path: Any) -> Any:
     return (None, None)
 
 
-def is_circuit_breaker_open(service_name: Any) -> Any:
+def is_circuit_breaker_open(service_name: str) -> bool:
     """Check if circuit breaker is open for service"""
     if service_name not in circuit_breaker_state:
         circuit_breaker_state[service_name] = {
@@ -91,7 +91,11 @@ def is_circuit_breaker_open(service_name: Any) -> Any:
     state = circuit_breaker_state[service_name]
     config = SERVICES[service_name]["circuit_breaker"]
     if state["state"] == "open":
-        if time.time() - state["last_failure_time"] > config["recovery_timeout"]:
+        last_failure = state["last_failure_time"]
+        if (
+            last_failure is not None
+            and time.time() - last_failure > config["recovery_timeout"]
+        ):
             state["state"] = "half-open"
             logger.info(f"Circuit breaker for {service_name} moved to half-open state")
             return False
@@ -99,7 +103,7 @@ def is_circuit_breaker_open(service_name: Any) -> Any:
     return False
 
 
-def record_service_failure(service_name: Any) -> Any:
+def record_service_failure(service_name: str) -> None:
     """Record service failure for circuit breaker"""
     if service_name not in circuit_breaker_state:
         circuit_breaker_state[service_name] = {
@@ -109,7 +113,11 @@ def record_service_failure(service_name: Any) -> Any:
         }
     state = circuit_breaker_state[service_name]
     config = SERVICES[service_name]["circuit_breaker"]
-    state["failure_count"] += 1
+    failure_count = state.get("failure_count", 0)
+    if isinstance(failure_count, int):
+        state["failure_count"] = failure_count + 1
+    else:
+        state["failure_count"] = 1
     state["last_failure_time"] = time.time()
     if state["failure_count"] >= config["failure_threshold"]:
         state["state"] = "open"
@@ -121,7 +129,7 @@ def record_service_failure(service_name: Any) -> Any:
         )
 
 
-def record_service_success(service_name: Any) -> Any:
+def record_service_success(service_name: str) -> None:
     """Record service success for circuit breaker"""
     if service_name in circuit_breaker_state:
         state = circuit_breaker_state[service_name]
@@ -132,14 +140,14 @@ def record_service_success(service_name: Any) -> Any:
 
 
 def forward_request(
-    service_name: Any,
-    service_config: Any,
-    path: Any,
-    method: Any,
-    headers: Any = None,
-    data: Any = None,
-    params: Any = None,
-) -> Any:
+    service_name: str,
+    service_config: Dict[str, Any],
+    path: str,
+    method: str,
+    headers: Optional[Dict[str, str]] = None,
+    data: Optional[Dict[str, Any]] = None,
+    params: Optional[Dict[str, str]] = None,
+) -> Tuple[Dict[str, Any], int]:
     """Forward request to appropriate service with retry and circuit breaker"""
     if is_circuit_breaker_open(service_name):
         return ({"error": "Service temporarily unavailable"}, 503)
@@ -213,16 +221,16 @@ def forward_request(
             wait_time = 2**attempt * 0.1
             time.sleep(wait_time)
     record_service_failure(service_name)
-    if "timeout" in last_exception.lower():
+    if last_exception and "timeout" in last_exception.lower():
         return ({"error": last_exception}, 504)
-    elif "unavailable" in last_exception.lower():
+    elif last_exception and "unavailable" in last_exception.lower():
         return ({"error": last_exception}, 503)
     else:
-        return ({"error": last_exception}, 500)
+        return ({"error": last_exception if last_exception else "Unknown error"}, 500)
 
 
 @app.before_request
-def before_request() -> Any:
+def before_request() -> None:
     """Pre-request processing"""
     if request.method == "POST" and (not request.is_json):
         if "multipart/form-data" not in request.content_type:
@@ -234,7 +242,7 @@ def before_request() -> Any:
 
 
 @app.after_request
-def after_request(response: Any) -> Any:
+def after_request(response: Response) -> Response:
     """Post-request processing"""
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -247,7 +255,7 @@ def after_request(response: Any) -> Any:
 
 
 @app.route("/health", methods=["GET"])
-def health_check() -> Any:
+def health_check() -> Response:
     """Gateway health check"""
     return jsonify(
         {
@@ -261,7 +269,7 @@ def health_check() -> Any:
 
 @app.route("/api/v1/services", methods=["GET"])
 @optional_auth
-def list_services() -> Any:
+def list_services() -> Response:
     """List available services and their status"""
     service_status = {}
     for service_name, config in SERVICES.items():
@@ -293,11 +301,11 @@ def list_services() -> Any:
 @app.route("/api/v1/<path:path>", methods=["GET", "POST", "PUT", "DELETE"])
 @rate_limit
 @optional_auth
-def proxy_request(path: Any) -> Any:
+def proxy_request(path: str) -> Tuple[Response, int]:
     """Proxy requests to appropriate microservice"""
     full_path = f"/api/v1/{path}"
     service_name, service_config = get_service_for_route(full_path)
-    if not service_name:
+    if not service_name or not service_config:
         log_security_event(
             "unknown_endpoint",
             f"Request to unknown endpoint: {full_path}",
@@ -329,7 +337,7 @@ def proxy_request(path: Any) -> Any:
 
 
 @app.errorhandler(404)
-def not_found(error: Any) -> Any:
+def not_found(error: Exception) -> Tuple[Response, int]:
     """Handle 404 errors"""
     log_security_event(
         "not_found",
@@ -340,7 +348,7 @@ def not_found(error: Any) -> Any:
 
 
 @app.errorhandler(500)
-def internal_error(error: Any) -> Any:
+def internal_error(error: Exception) -> Tuple[Response, int]:
     """Handle 500 errors"""
     logger.error(f"Internal server error: {str(error)}")
     return (jsonify({"error": "Internal server error"}), 500)

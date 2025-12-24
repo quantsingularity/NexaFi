@@ -23,7 +23,7 @@ from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audi
 from database.manager import BaseModel, initialize_database
 from models.user import Notification, NotificationPreferences, NotificationTemplate
 from middleware.auth import require_auth, require_permission
-from validators.schemas import (
+from validation_schemas.schemas import (
     SanitizationMixin,
     Schema,
     fields,
@@ -315,7 +315,7 @@ def health_check() -> Any:
 )
 def send_notification() -> Any:
     """Send a notification"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     preferences = NotificationPreferences.find_one("user_id = ?", (data["user_id"],))
     if preferences:
         channel = data["channel"]
@@ -436,7 +436,7 @@ def update_notification_preferences(user_id: Any) -> Any:
         )
     ):
         return (jsonify({"error": "Access denied"}), 403)
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     preferences = NotificationPreferences.find_one("user_id = ?", (user_id,))
     if not preferences:
         preferences = NotificationPreferences(user_id=user_id)

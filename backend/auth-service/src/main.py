@@ -34,7 +34,7 @@ from enhanced_security import (
 )
 from middleware.auth import require_auth
 from open_banking_compliance import FAPI2SecurityProfile
-from validators.schemas import (
+from validation_schemas.schemas import (
     SanitizationMixin,
     Schema,
     fields,
@@ -319,7 +319,7 @@ def health_check() -> Any:
 @audit_action(AuditEventType.USER_LOGIN, "login_attempt", severity=AuditSeverity.MEDIUM)
 def login() -> Any:
     """Enhanced login with fraud detection"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
 
     # 1. Fraud Detection Analysis
     risk_score, risk_factors = fraud_engine.analyze_login_behavior(
@@ -366,7 +366,7 @@ def login() -> Any:
     user = authenticate_user_credentials(data["username"], data["password"])
 
     if user:
-        user_id = user.id
+        user_id = str(user.id)
 
         # Determine Security Level based on Risk
         if risk_score > 50:
@@ -440,7 +440,7 @@ def login() -> Any:
 @audit_action(AuditEventType.USER_UPDATE, "mfa_setup", severity=AuditSeverity.HIGH)
 def setup_mfa() -> Any:
     """Setup Multi-Factor Authentication"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     user_id = g.user_id
 
     # Retrieve user email for TOTP issuer (optimization)
@@ -493,7 +493,7 @@ def setup_mfa() -> Any:
 )
 def verify_mfa() -> Any:
     """Verify Multi-Factor Authentication"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     user_id = g.user_id
     session_id = g.session_id
     is_verified = False
@@ -564,7 +564,7 @@ def oauth2_authorize() -> Any:
             "code_challenge_method": request.args.get("code_challenge_method", "S256"),
         }
     else:
-        data = request.validated_data
+        data = request.validated_data  # type: ignore[attr-defined]
 
     client = OAuthClient.find_by_field("client_id", data["client_id"])
     if not client or not client.is_active:
@@ -635,8 +635,9 @@ def oauth2_authorize() -> Any:
     code_record.save()
 
     redirect_params = {"code": auth_code}
-    if data.get("state"):
-        redirect_params["state"] = data["state"]
+    state_param = data.get("state")
+    if state_param:
+        redirect_params["state"] = state_param
 
     redirect_url = f"{data['redirect_uri']}?{urlencode(redirect_params)}"
     return redirect(redirect_url)
@@ -646,7 +647,7 @@ def oauth2_authorize() -> Any:
 @validate_json_request(OAuth2TokenSchema)
 def oauth2_token() -> Any:
     """OAuth 2.1 Token Endpoint with FAPI 2.0 compliance"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     client_secret = data.get("client_secret")
 
     if not verify_client_authentication(data["client_id"], client_secret):

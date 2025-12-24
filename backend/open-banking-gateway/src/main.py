@@ -45,7 +45,7 @@ from open_banking_compliance import (
     SCAManager,
     TransactionRiskAnalysis,
 )
-from validators.schemas import (
+from validation_schemas.schemas import (
     SanitizationMixin,
     Schema,
     fields,

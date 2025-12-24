@@ -18,7 +18,7 @@ from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audi
 from database.manager import BaseModel, initialize_database
 from models.user import KYCVerification, AMLCheck, SanctionsScreening, ComplianceReport
 from middleware.auth import require_auth, require_permission
-from validators.schemas import (
+from validation_schemas.schemas import (
     SanitizationMixin,
     Schema,
     fields,
@@ -229,7 +229,7 @@ def health_check() -> Any:
 )
 def initiate_kyc_verification() -> Any:
     """Initiate KYC verification for a user"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     kyc = KYCVerification(
         user_id=data["user_id"],
         verification_type=data["verification_type"],
@@ -314,7 +314,7 @@ def complete_kyc_verification(verification_id: Any) -> Any:
 )
 def perform_aml_check() -> Any:
     """Perform AML check on a transaction"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     transaction_data = request.get_json().get("transaction_data", {})
     risk_score, flags, risk_level = RiskScorer.calculate_transaction_risk(
         transaction_data
@@ -366,7 +366,7 @@ def perform_aml_check() -> Any:
 )
 def screen_sanctions() -> Any:
     """Screen entity against sanctions lists"""
-    data = request.validated_data
+    data = request.validated_data  # type: ignore[attr-defined]
     result, match_score, matched_lists = SanctionsChecker.screen_entity(
         data["entity_name"]
     )
