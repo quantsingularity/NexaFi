@@ -31,6 +31,7 @@ import {
   Area,
   BarChart,
   Bar,
+  Pie,
   PieChart as RechartsPieChart,
   Cell,
   XAxis,

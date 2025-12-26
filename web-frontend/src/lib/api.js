@@ -1,9 +1,12 @@
 // API configuration and utilities
-const API_BASE_URL = "http://localhost:5000/api/v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT || 30000;
 
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
+    this.timeout = API_TIMEOUT;
     this.token = localStorage.getItem("access_token");
   }
 
@@ -39,13 +42,21 @@ class ApiClient {
       config.body = JSON.stringify(config.body);
     }
 
+    // Add timeout support
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    config.signal = controller.signal;
+
     try {
       const response = await fetch(url, config);
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+          errorData.error ||
+            errorData.message ||
+            `HTTP ${response.status}: ${response.statusText}`,
         );
       }
 
@@ -56,6 +67,10 @@ class ApiClient {
 
       return await response.text();
     } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        throw new Error("Request timeout");
+      }
       console.error("API Request failed:", error);
       throw error;
     }
@@ -70,16 +85,27 @@ class ApiClient {
   }
 
   async login(credentials) {
-    return this.request("/auth/login", {
+    const response = await this.request("/auth/login", {
       method: "POST",
       body: credentials,
     });
+
+    // Store token if present in response
+    if (response.access_token) {
+      this.setToken(response.access_token);
+    }
+
+    return response;
   }
 
   async logout() {
-    return this.request("/auth/logout", {
-      method: "POST",
-    });
+    try {
+      await this.request("/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      this.setToken(null);
+    }
   }
 
   async refreshToken() {
