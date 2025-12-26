@@ -32,11 +32,13 @@ pnpm install
 ## Configuration
 
 1. Copy the environment example file:
+
 ```bash
 cp .env.example .env
 ```
 
 2. Update `.env` with your configuration:
+
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api/v1
 VITE_API_TIMEOUT=30000
@@ -112,12 +114,14 @@ web-frontend/
 ## Key Components
 
 ### Authentication (AuthPage)
+
 - Login and registration forms
 - Form validation with error handling
 - JWT token management
 - Automatic session persistence
 
 ### Dashboard
+
 - Financial metrics overview
 - Cash flow trends chart
 - Expense breakdown visualization
@@ -125,18 +129,21 @@ web-frontend/
 - Recent transactions list
 
 ### Accounting Module
+
 - Chart of accounts management
 - Journal entries creation
 - Financial reports (Trial Balance, Balance Sheet, Income Statement)
 - Account filtering and search
 
 ### Payments Module
+
 - Payment methods management
 - Transaction history
 - Multi-currency wallet support
 - Payment analytics dashboard
 
 ### AI Insights Module
+
 - Cash flow predictions
 - Credit score analysis
 - AI-powered recommendations
@@ -144,6 +151,7 @@ web-frontend/
 - Insight management
 
 ### Settings Module
+
 - User profile management
 - Security settings (password change, 2FA)
 - Notification preferences
@@ -155,6 +163,7 @@ web-frontend/
 The frontend communicates with the backend through a centralized API client (`src/lib/api.js`).
 
 ### API Client Features:
+
 - Automatic JWT token handling
 - Request/response interceptors
 - Error handling and retries
@@ -162,13 +171,14 @@ The frontend communicates with the backend through a centralized API client (`sr
 - TypeScript-friendly
 
 ### Example Usage:
+
 ```javascript
-import apiClient from './lib/api';
+import apiClient from "./lib/api";
 
 // Login
 const { access_token, user } = await apiClient.login({
-  email: 'user@example.com',
-  password: 'password123'
+  email: "user@example.com",
+  password: "password123",
 });
 
 // Fetch accounts
@@ -176,33 +186,37 @@ const { accounts } = await apiClient.getAccounts();
 
 // Create transaction
 const transaction = await apiClient.createTransaction({
-  amount: 100.00,
-  description: 'Payment received',
-  type: 'income'
+  amount: 100.0,
+  description: "Payment received",
+  type: "income",
 });
 ```
 
 ## Testing Strategy
 
 ### Unit Tests
+
 - Component rendering tests
 - API client tests
 - Context provider tests
 - Utility function tests
 
 ### Integration Tests
+
 - User authentication flow
 - Data fetching and display
 - Form submissions
 - Navigation and routing
 
 ### Test Coverage
+
 - Current coverage: ~85%
 - Goal: 90%+
 
 ## Styling
 
 The project uses:
+
 - **Tailwind CSS 4**: Utility-first CSS framework
 - **shadcn/ui**: High-quality, accessible React components
 - **Framer Motion**: Animation library
@@ -235,11 +249,13 @@ The project uses:
 ### Common Issues
 
 1. **Dependencies installation fails**
+
    ```bash
    npm install --legacy-peer-deps
    ```
 
 2. **Build fails with memory error**
+
    ```bash
    NODE_OPTIONS=--max_old_space_size=4096 npm run build
    ```
