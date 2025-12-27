@@ -5,11 +5,15 @@ import {
   Navigate,
 } from "react-router-dom";
 import { MobileProviders, useAuth } from "./contexts/MobileContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import MobileHomepage from "./components/MobileHomepage";
 import MobileAuthPage from "./components/MobileAuthPage";
 import MobileLayout from "./components/MobileLayout";
 import MobileDashboard from "./components/MobileDashboard";
 import MobileAccountingModule from "./components/MobileAccountingModule";
+import MobilePaymentsModule from "./components/MobilePaymentsModule";
+import MobileAIInsightsModule from "./components/MobileAIInsightsModule";
+import MobileSettingsModule from "./components/MobileSettingsModule";
 import "./App.css";
 
 // Protected Route Component
@@ -74,12 +78,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MobileLayout>
-              <div className="p-4">
-                <h1 className="text-2xl font-bold">Payments</h1>
-                <p className="text-gray-600">
-                  Mobile payments module coming soon!
-                </p>
-              </div>
+              <MobilePaymentsModule />
             </MobileLayout>
           </ProtectedRoute>
         }
@@ -90,12 +89,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MobileLayout>
-              <div className="p-4">
-                <h1 className="text-2xl font-bold">AI Insights</h1>
-                <p className="text-gray-600">
-                  Mobile AI insights module coming soon!
-                </p>
-              </div>
+              <MobileAIInsightsModule />
             </MobileLayout>
           </ProtectedRoute>
         }
@@ -106,12 +100,7 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MobileLayout>
-              <div className="p-4">
-                <h1 className="text-2xl font-bold">Settings</h1>
-                <p className="text-gray-600">
-                  Mobile settings module coming soon!
-                </p>
-              </div>
+              <MobileSettingsModule />
             </MobileLayout>
           </ProtectedRoute>
         }
@@ -125,13 +114,15 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <MobileProviders>
-      <Router>
-        <div className="App">
-          <AppRoutes />
-        </div>
-      </Router>
-    </MobileProviders>
+    <ErrorBoundary>
+      <MobileProviders>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+          </div>
+        </Router>
+      </MobileProviders>
+    </ErrorBoundary>
   );
 }
 
