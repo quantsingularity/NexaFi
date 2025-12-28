@@ -246,29 +246,29 @@ REDIS_URL = "redis://redis-host:6379/0"
 
 ## File Structure
 
-| Directory/File               | Type      | Description                                                |
-| :--------------------------- | :-------- | :--------------------------------------------------------- |
-| `backend/` | Directory | Root of the refactored backend project                     |
-| `├── shared/`                | Directory | Shared components used across microservices                |
-| `│   ├── middleware/`        | Directory | Authentication, rate limiting, and other common middleware |
-| `│   ├── validators/`        | Directory | Input validation schemas and financial data validators     |
-| `│   ├── logging/`           | Directory | Structured logging implementation                          |
-| `│   ├── audit/`             | Directory | Immutable audit logging system                             |
-| `│   ├── database/`          | Directory | Database management and migration tools                    |
-| `│   └── security/`          | Directory | Encryption, hashing, and security utilities                |
-| `├── api-gateway/`           | Directory | API Gateway microservice                                   |
-| `├── user-service/`          | Directory | User Service microservice                                  |
-| `├── ledger-service/`        | Directory | Ledger Service microservice                                |
-| `├── payment-service/`       | Directory | Payment Service (original) microservice                    |
-| `├── ai-service/`            | Directory | AI Service (original) microservice                         |
-| `├── compliance-service/`    | Directory | **NEW**: Dedicated Compliance Service                      |
-| `├── notification-service/`  | Directory | **NEW**: Multi-channel Notification Service                |
-| `├── logs/`                  | Directory | Service, audit, and security logs                          |
-| `├── requirements.txt`       | File      | Python dependencies                                        |
-| `├── start_services.sh`      | File      | Startup script for all services                            |
-| `├── stop_services.sh`       | File      | Stop script for all services                               |
-| `├── test_suite.py`          | File      | Comprehensive test suite script                            |
-| `└── README.md`              | File      | This documentation file                                    |
+| Directory/File              | Type      | Description                                                |
+| :-------------------------- | :-------- | :--------------------------------------------------------- |
+| `backend/`                  | Directory | Root of the refactored backend project                     |
+| `├── shared/`               | Directory | Shared components used across microservices                |
+| `│   ├── middleware/`       | Directory | Authentication, rate limiting, and other common middleware |
+| `│   ├── validators/`       | Directory | Input validation schemas and financial data validators     |
+| `│   ├── logging/`          | Directory | Structured logging implementation                          |
+| `│   ├── audit/`            | Directory | Immutable audit logging system                             |
+| `│   ├── database/`         | Directory | Database management and migration tools                    |
+| `│   └── security/`         | Directory | Encryption, hashing, and security utilities                |
+| `├── api-gateway/`          | Directory | API Gateway microservice                                   |
+| `├── user-service/`         | Directory | User Service microservice                                  |
+| `├── ledger-service/`       | Directory | Ledger Service microservice                                |
+| `├── payment-service/`      | Directory | Payment Service (original) microservice                    |
+| `├── ai-service/`           | Directory | AI Service (original) microservice                         |
+| `├── compliance-service/`   | Directory | **NEW**: Dedicated Compliance Service                      |
+| `├── notification-service/` | Directory | **NEW**: Multi-channel Notification Service                |
+| `├── logs/`                 | Directory | Service, audit, and security logs                          |
+| `├── requirements.txt`      | File      | Python dependencies                                        |
+| `├── start_services.sh`     | File      | Startup script for all services                            |
+| `├── stop_services.sh`      | File      | Stop script for all services                               |
+| `├── test_suite.py`         | File      | Comprehensive test suite script                            |
+| `└── README.md`             | File      | This documentation file                                    |
 
 ## Support and Maintenance
 

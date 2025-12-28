@@ -164,9 +164,7 @@ class AuditLogger:
 
         os.makedirs("/backend/logs/audit", exist_ok=True)
         date_str = datetime.now().strftime("%Y-%m-%d")
-        log_file = (
-            f"/backend/logs/audit/audit_{date_str}.jsonl"
-        )
+        log_file = f"/backend/logs/audit/audit_{date_str}.jsonl"
         with open(log_file, "a") as f:
             f.write(json.dumps(event_data) + "\n")
 

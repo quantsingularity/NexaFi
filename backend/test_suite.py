@@ -438,9 +438,7 @@ class TestRunner:
 
     def run_all_tests(self) -> Any:
         """Run all tests"""
-        self.log(
-            f"\n{Colors.BOLD}=== NexaFi Backend Test Suite ==={Colors.ENDC}"
-        )
+        self.log(f"\n{Colors.BOLD}=== NexaFi Backend Test Suite ==={Colors.ENDC}")
         self.log(f"Testing against: {BASE_URL}")
         self.log(f"Timestamp: {datetime.utcnow().isoformat()}")
         self.log("\nWaiting for services to be ready...")
