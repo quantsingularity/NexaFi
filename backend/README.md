@@ -248,7 +248,7 @@ REDIS_URL = "redis://redis-host:6379/0"
 
 | Directory/File               | Type      | Description                                                |
 | :--------------------------- | :-------- | :--------------------------------------------------------- |
-| `nexafi_backend_refactored/` | Directory | Root of the refactored backend project                     |
+| `backend/` | Directory | Root of the refactored backend project                     |
 | `├── shared/`                | Directory | Shared components used across microservices                |
 | `│   ├── middleware/`        | Directory | Authentication, rate limiting, and other common middleware |
 | `│   ├── validators/`        | Directory | Input validation schemas and financial data validators     |

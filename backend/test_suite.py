@@ -413,7 +413,7 @@ class TestRunner:
     def test_audit_logging(self) -> Any:
         """Test audit logging functionality"""
         self.log("\n=== Testing Audit Logging ===", Colors.BOLD)
-        audit_log_dir = "/home/ubuntu/nexafi_backend_refactored/logs/audit"
+        audit_log_dir = "/backend/logs/audit"
         if os.path.exists(audit_log_dir):
             log_files = os.listdir(audit_log_dir)
             if log_files:
@@ -424,7 +424,7 @@ class TestRunner:
                 self.warning("Audit log directory exists but no log files found")
         else:
             self.warning("Audit log directory not found")
-        log_dir = "/home/ubuntu/nexafi_backend_refactored/logs"
+        log_dir = "/backend/logs"
         if os.path.exists(log_dir):
             log_files = [f for f in os.listdir(log_dir) if f.endswith(".log")]
             if log_files:

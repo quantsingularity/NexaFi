@@ -162,10 +162,10 @@ class AuditLogger:
         """Write audit event to file"""
         import os
 
-        os.makedirs("/home/ubuntu/nexafi_backend_refactored/logs/audit", exist_ok=True)
+        os.makedirs("/backend/logs/audit", exist_ok=True)
         date_str = datetime.now().strftime("%Y-%m-%d")
         log_file = (
-            f"/home/ubuntu/nexafi_backend_refactored/logs/audit/audit_{date_str}.jsonl"
+            f"/backend/logs/audit/audit_{date_str}.jsonl"
         )
         with open(log_file, "a") as f:
             f.write(json.dumps(event_data) + "\n")

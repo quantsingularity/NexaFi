@@ -40,6 +40,6 @@ def serve(path: Any) -> Any:
 
 if __name__ == "__main__":
     os.makedirs(
-        "/home/ubuntu/NexaFi/backend/credit-service/src/database", exist_ok=True
+        "/NexaFi/backend/credit-service/src/database", exist_ok=True
     )
     app.run(host="0.0.0.0", port=5005, debug=True)

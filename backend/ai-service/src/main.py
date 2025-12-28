@@ -51,5 +51,5 @@ def internal_error(error: Any) -> Any:
 
 
 if __name__ == "__main__":
-    os.makedirs("/home/ubuntu/NexaFi/backend/ai-service/src/database", exist_ok=True)
+    os.makedirs("/NexaFi/backend/ai-service/src/database", exist_ok=True)
     app.run(host="0.0.0.0", port=5004, debug=True)

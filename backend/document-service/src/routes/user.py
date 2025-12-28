@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, request, send_file
 from .models.user import Document, DocumentTemplate, DocumentShare, DocumentVersion
 
 document_bp = Blueprint("document", __name__)
-DOCUMENT_STORAGE_PATH = "/home/ubuntu/NexaFi/backend/document-service/storage"
+DOCUMENT_STORAGE_PATH = "/NexaFi/backend/document-service/storage"
 
 
 def require_user_id(f: Any) -> Any:
