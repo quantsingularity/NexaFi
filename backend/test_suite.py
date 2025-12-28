@@ -439,7 +439,7 @@ class TestRunner:
     def run_all_tests(self) -> Any:
         """Run all tests"""
         self.log(
-            f"\n{Colors.BOLD}=== NexaFi Enhanced Backend Test Suite ==={Colors.ENDC}"
+            f"\n{Colors.BOLD}=== NexaFi Backend Test Suite ==={Colors.ENDC}"
         )
         self.log(f"Testing against: {BASE_URL}")
         self.log(f"Timestamp: {datetime.utcnow().isoformat()}")
@@ -463,7 +463,7 @@ class TestRunner:
         self.log(f"Success rate: {success_rate:.1f}%")
         if self.failed == 0:
             self.log(
-                f"\n{Colors.GREEN}{Colors.BOLD}🎉 All tests passed! NexaFi Enhanced Backend is working correctly.{Colors.ENDC}"
+                f"\n{Colors.GREEN}{Colors.BOLD}🎉 All tests passed! NexaFi Backend is working correctly.{Colors.ENDC}"
             )
             return True
         else:

@@ -26,7 +26,7 @@ sys.path.append(os.path.join(BASE_DIR, "..", "..", "shared"))
 from nexafi_logging.logger import get_logger, setup_request_logging
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import initialize_database
-from enhanced_security import (
+from security import (
     AdvancedEncryption,
     FraudDetectionEngine,
     MultiFactorAuthentication,

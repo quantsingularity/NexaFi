@@ -715,7 +715,7 @@ class ComplianceChecker:
                     recommendations.append("Ensure fair lending practices")
                 elif standard == ComplianceStandard.SOX:
                     recommendations.append("Implement comprehensive audit trail")
-                    recommendations.append("Enhance model documentation")
+                    recommendations.append("Model documentation")
         return recommendations
 
 

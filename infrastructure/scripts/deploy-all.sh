@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Enhanced deployment script for NexaFi infrastructure
+# Deployment script for NexaFi infrastructure
 # This script implements comprehensive security checks and compliance validation
 
 set -euo pipefail

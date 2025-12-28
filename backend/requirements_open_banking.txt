@@ -1,5 +1,5 @@
 """
-Requirements file for Open Banking and Enhanced Security modules
+Requirements file for Open Banking and Security modules
 """
 
 # Core Flask dependencies

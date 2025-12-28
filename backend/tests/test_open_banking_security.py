@@ -1,5 +1,5 @@
 """
-Comprehensive Test Suite for Open Banking Compliance and Enhanced Security
+Comprehensive Test Suite for Open Banking Compliance and Security
 """
 
 import json

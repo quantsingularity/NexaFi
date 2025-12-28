@@ -151,7 +151,7 @@ def require_mfa_if_enabled(f: Any) -> Any:
 @user_bp.route("/api/v1/auth/register", methods=["POST"])
 @cross_origin()
 def register() -> Any:
-    """User registration with enhanced validation"""
+    """User registration with validation"""
     try:
         data = request.get_json()
         required_fields = ["email", "password", "first_name", "last_name"]
@@ -234,7 +234,7 @@ def register() -> Any:
 @user_bp.route("/api/v1/auth/login", methods=["POST"])
 @cross_origin()
 def login() -> Any:
-    """Enhanced login with MFA support and security features"""
+    """Login with MFA support and security features"""
     try:
         data = request.get_json()
         email = data.get("email", "").lower().strip()

@@ -4,12 +4,12 @@
 
 This is a comprehensive backend system for NexaFi, implementing financial industry standards, security best practices, and advanced compliance features. The backend provides enterprise-grade security, comprehensive audit trails, and regulatory compliance capabilities suitable for financial services.
 
-## Key Enhancements
+## Key Features
 
 | Category                        | Feature                       | Description                                                                       |
 | :------------------------------ | :---------------------------- | :-------------------------------------------------------------------------------- |
-| **Security Enhancements**       | Rate Limiting                 | Implemented comprehensive rate limiting with Redis backend                        |
-|                                 | Enhanced Authentication       | JWT-based authentication with refresh tokens and role-based access control (RBAC) |
+| **Security Features**           | Rate Limiting                 | Implemented comprehensive rate limiting with Redis backend                        |
+|                                 | Authentication                | JWT-based authentication with refresh tokens and role-based access control (RBAC) |
 |                                 | Input Validation              | Comprehensive validation using Marshmallow schemas with financial data validators |
 |                                 | Password Security             | Strong password requirements with complexity validation                           |
 |                                 | Account Lockout               | Automatic account lockout after failed login attempts                             |
@@ -23,25 +23,25 @@ This is a comprehensive backend system for NexaFi, implementing financial indust
 |                                 | Structured Logging            | JSON-formatted logs with correlation IDs                                          |
 |                                 | Security Event Logging        | Comprehensive security event tracking                                             |
 |                                 | Financial Transaction Logging | Detailed logging of all financial operations                                      |
-| **Advanced Financial Features** | Multi-Currency Support        | Enhanced ledger with foreign exchange capabilities                                |
+| **Advanced Financial Features** | Multi-Currency Support        | Ledger with foreign exchange capabilities                                         |
 |                                 | Automated Reconciliation      | Bank reconciliation workflows                                                     |
 |                                 | Complex Financial Instruments | Support for advanced financial products                                           |
-|                                 | Real-time Analytics           | Enhanced AI service with predictive capabilities                                  |
+|                                 | Real-time Analytics           | AI service with predictive capabilities                                           |
 | **New Services**                | Compliance Service            | Dedicated service for AML, KYC, and sanctions screening                           |
 |                                 | Notification Service          | Multi-channel notification system with templates                                  |
-|                                 | Enhanced Ledger Service       | Advanced accounting features with multi-currency support                          |
+|                                 | Ledger Service                | Advanced accounting features with multi-currency support                          |
 
 ### Microservices
 
-| Service              | Port | Description                                                 |
-| :------------------- | :--- | :---------------------------------------------------------- |
-| API Gateway          | 5000 | Enhanced with rate limiting, circuit breakers, and security |
-| User Service         | 5001 | Enhanced authentication and user management                 |
-| Ledger Service       | 5002 | Advanced accounting with multi-currency support             |
-| Payment Service      | 5003 | Enhanced payment processing (original)                      |
-| AI Service           | 5004 | Machine learning and analytics (original)                   |
-| Compliance Service   | 5005 | AML, KYC, and sanctions screening (NEW)                     |
-| Notification Service | 5006 | Multi-channel notifications (NEW)                           |
+| Service              | Port | Description                                     |
+| :------------------- | :--- | :---------------------------------------------- |
+| API Gateway          | 5000 | Rate limiting, circuit breakers, and security   |
+| User Service         | 5001 | Authentication and user management              |
+| Ledger Service       | 5002 | Advanced accounting with multi-currency support |
+| Payment Service      | 5003 | Ppayment processing (original)                  |
+| AI Service           | 5004 | Machine learning and analytics (original)       |
+| Compliance Service   | 5005 | AML, KYC, and sanctions screening (NEW)         |
+| Notification Service | 5006 | Multi-channel notifications (NEW)               |
 
 ### Shared Components
 
@@ -50,7 +50,7 @@ This is a comprehensive backend system for NexaFi, implementing financial indust
 | Middleware | Rate limiting, authentication, and authorization |
 | Validators | Financial data validation and sanitization       |
 | Logging    | Structured logging with audit capabilities       |
-| Database   | Enhanced database management with migrations     |
+| Database   | Database management with migrations              |
 | Security   | Encryption, hashing, and security utilities      |
 
 ## Financial Industry Standards Compliance
@@ -88,7 +88,7 @@ pip install -r requirements.txt
 ./start_services.sh
 
 # Run tests
-python enhanced_test_suite.py
+python test_suite.py
 
 # Stop services
 ./stop_services.sh
@@ -178,7 +178,7 @@ Authorization: Bearer <access_token>
 |                                 | Risk scoring algorithms          | To assess the risk profile of transactions and customers  |
 |                                 | Suspicious activity reporting    | Automated generation of required reports                  |
 |                                 | Customer risk assessment         | Ongoing assessment of customer risk profiles              |
-|                                 | Enhanced due diligence workflows | For high-risk customers and transactions                  |
+|                                 | Due diligence workflows          | For high-risk customers and transactions                  |
 | **KYC (Know Your Customer)**    | Identity verification workflows  | Streamlined process for verifying customer identity       |
 |                                 | Document validation              | Automated validation of submitted identity documents      |
 |                                 | Risk-based verification levels   | Tiered verification based on risk                         |
@@ -192,7 +192,7 @@ Authorization: Bearer <access_token>
 
 ## Testing
 
-The enhanced test suite validates:
+The test suite validates:
 
 | Component                        | Validation Focus                                                         |
 | :------------------------------- | :----------------------------------------------------------------------- |
@@ -207,7 +207,7 @@ The enhanced test suite validates:
 Run tests with:
 
 ```bash
-python enhanced_test_suite.py
+python test_suite.py
 ```
 
 ## Production Deployment
@@ -256,18 +256,18 @@ REDIS_URL = "redis://redis-host:6379/0"
 | `│   ├── audit/`             | Directory | Immutable audit logging system                             |
 | `│   ├── database/`          | Directory | Database management and migration tools                    |
 | `│   └── security/`          | Directory | Encryption, hashing, and security utilities                |
-| `├── api-gateway/`           | Directory | Enhanced API Gateway microservice                          |
-| `├── user-service/`          | Directory | Enhanced User Service microservice                         |
-| `├── ledger-service/`        | Directory | Enhanced Ledger Service microservice                       |
+| `├── api-gateway/`           | Directory | API Gateway microservice                                   |
+| `├── user-service/`          | Directory | User Service microservice                                  |
+| `├── ledger-service/`        | Directory | Ledger Service microservice                                |
 | `├── payment-service/`       | Directory | Payment Service (original) microservice                    |
 | `├── ai-service/`            | Directory | AI Service (original) microservice                         |
 | `├── compliance-service/`    | Directory | **NEW**: Dedicated Compliance Service                      |
 | `├── notification-service/`  | Directory | **NEW**: Multi-channel Notification Service                |
 | `├── logs/`                  | Directory | Service, audit, and security logs                          |
 | `├── requirements.txt`       | File      | Python dependencies                                        |
-| `├── start_services.sh`      | File      | Enhanced startup script for all services                   |
-| `├── stop_services.sh`       | File      | Enhanced stop script for all services                      |
-| `├── enhanced_test_suite.py` | File      | Comprehensive test suite script                            |
+| `├── start_services.sh`      | File      | Startup script for all services                            |
+| `├── stop_services.sh`       | File      | Stop script for all services                               |
+| `├── test_suite.py`          | File      | Comprehensive test suite script                            |
 | `└── README.md`              | File      | This documentation file                                    |
 
 ## Support and Maintenance

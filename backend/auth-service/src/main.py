@@ -21,7 +21,7 @@ from database.manager import BaseModel, initialize_database
 
 # Assuming User model exists based on SQL references, added import
 from models.user import OAuthClient, AuthorizationCode, AccessToken, User
-from enhanced_security import (
+from security import (
     AdvancedEncryption,
     FraudDetectionEngine,
     MultiFactorAuthentication,
@@ -46,7 +46,7 @@ from validation_schemas.schemas import (
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
-    "SECRET_KEY", "nexafi-enhanced-auth-service-secret-key-2024"
+    "SECRET_KEY", "nexafi-auth-service-secret-key-2024"
 )
 
 # Optimization: Restrict CORS origins in production
@@ -66,7 +66,7 @@ CORS(
 )
 
 setup_request_logging(app)
-logger = get_logger("enhanced_auth_service")
+logger = get_logger("auth_service")
 
 # --- Database & Security Initialization ---
 
@@ -300,7 +300,7 @@ def health_check() -> Any:
     return jsonify(
         {
             "status": "healthy",
-            "service": "enhanced-auth-service",
+            "service": "auth-service",
             "timestamp": datetime.utcnow().isoformat(),
             "version": "1.0.0",
             "features": {
@@ -318,7 +318,7 @@ def health_check() -> Any:
 @validate_json_request(LoginSchema)
 @audit_action(AuditEventType.USER_LOGIN, "login_attempt", severity=AuditSeverity.MEDIUM)
 def login() -> Any:
-    """Enhanced login with fraud detection"""
+    """Login with fraud detection"""
     data = request.validated_data  # type: ignore[attr-defined]
 
     # 1. Fraud Detection Analysis

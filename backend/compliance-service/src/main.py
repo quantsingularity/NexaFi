@@ -87,7 +87,7 @@ class AMLCheckSchema(SanitizationMixin, Schema):
     check_type = fields.Str(
         required=True,
         validate=validate.OneOf(
-            ["transaction_monitoring", "customer_screening", "enhanced_due_diligence"]
+            ["transaction_monitoring", "customer_screening", "due_diligence"]
         ),
     )
 

@@ -4,7 +4,7 @@
 
 set -e
 
-echo "Starting NexaFi Backend Services (Enhanced Version)..."
+echo "Starting NexaFi Backend Services ..."
 
 # Colors for output
 RED='\033[0;31m'

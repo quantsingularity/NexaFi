@@ -44,8 +44,8 @@ db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
 LEDGER_MIGRATIONS = {
-    "011_create_enhanced_accounts_table": {
-        "description": "Create enhanced accounts table with multi-currency support",
+    "011_create_accounts_table": {
+        "description": "Create accounts table with multi-currency support",
         "sql": "\n        CREATE TABLE IF NOT EXISTS accounts (\n            id INTEGER PRIMARY KEY AUTOINCREMENT,\n            account_code TEXT UNIQUE NOT NULL,\n            name TEXT NOT NULL,\n            account_type TEXT NOT NULL,\n            account_subtype TEXT,\n            parent_account_id INTEGER,\n            currency TEXT NOT NULL DEFAULT 'USD',\n            is_active BOOLEAN DEFAULT 1,\n            is_system BOOLEAN DEFAULT 0,\n            description TEXT,\n            opening_balance DECIMAL(15,2) DEFAULT 0.00,\n            current_balance DECIMAL(15,2) DEFAULT 0.00,\n            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n            FOREIGN KEY (parent_account_id) REFERENCES accounts(id)\n        );\n\n        CREATE INDEX IF NOT EXISTS idx_accounts_code ON accounts(account_code);\n        CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);\n        CREATE INDEX IF NOT EXISTS idx_accounts_parent ON accounts(parent_account_id);\n        ",
     },
     "012_create_journal_entries_table": {
@@ -74,7 +74,7 @@ BaseModel.set_db_manager(db_manager)
 # classes are imported from models.user - no redefinition needed
 
 
-class EnhancedAccountSchema(AccountSchema):
+class AccountSchema(AccountSchema):
     account_code = fields.Str(required=True, validate=validate.Length(min=3, max=20))
     account_subtype = fields.Str(
         required=False,
@@ -106,7 +106,7 @@ class EnhancedAccountSchema(AccountSchema):
     )
 
 
-class EnhancedJournalEntrySchema(JournalEntrySchema):
+class JournalEntrySchema(JournalEntrySchema):
     currency = fields.Str(
         required=False, validate=FinancialValidators.validate_currency_code
     )
@@ -303,7 +303,7 @@ def list_accounts() -> Any:
 @app.route("/api/v1/accounts", methods=["POST"])
 @require_auth
 @require_permission("account:write")
-@validate_json_request(EnhancedAccountSchema)
+@validate_json_request(AccountSchema)
 @audit_action(
     AuditEventType.ACCOUNT_CREATE, "account_created", severity=AuditSeverity.MEDIUM
 )
@@ -381,7 +381,7 @@ def get_account_balance(account_id: Any) -> Any:
 @app.route("/api/v1/journal-entries", methods=["POST"])
 @require_auth
 @require_permission("transaction:write")
-@validate_json_request(EnhancedJournalEntrySchema)
+@validate_json_request(JournalEntrySchema)
 @audit_action(
     AuditEventType.JOURNAL_ENTRY_CREATE,
     "journal_entry_created",

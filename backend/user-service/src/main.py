@@ -214,7 +214,7 @@ def health_check() -> Any:
     AuditEventType.USER_REGISTRATION, "user_registration", severity=AuditSeverity.HIGH
 )
 def register() -> Tuple[Any, int]:
-    """User registration with enhanced security"""
+    """User registration with security"""
     data = request.validated_data  # type: ignore[attr-defined]
     existing_user = User.find_one("email = ?", (data["email"],))
 
@@ -263,7 +263,7 @@ def register() -> Tuple[Any, int]:
 @validate_json_request(UserLoginSchema)
 @audit_action(AuditEventType.USER_LOGIN, "user_login", severity=AuditSeverity.MEDIUM)
 def login() -> Tuple[Any, int]:
-    """User login with enhanced security"""
+    """User login with security"""
     data = request.validated_data  # type: ignore[attr-defined]
     user = User.find_one("email = ?", (data["email"],))
 

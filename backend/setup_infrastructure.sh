@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # NexaFi Backend Infrastructure Setup
-# This script sets up the infrastructure components for the enhanced backend
+# This script sets up the infrastructure components for the backend
 
 echo "🚀 Setting up NexaFi Backend Infrastructure..."
 
