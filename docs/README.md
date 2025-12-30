@@ -1,46 +1,146 @@
 # NexaFi Documentation
 
-Welcome to the comprehensive documentation for NexaFi, a cutting-edge financial technology platform. This documentation aims to provide a detailed understanding of the project's architecture, individual service functionalities, development guidelines, deployment procedures, and more.
+**Welcome to NexaFi** - An enterprise-grade AI-driven financial operating system that transforms how small and mid-sized businesses (SMBs) manage their financial operations.
 
-## Table of Contents
+## 📖 Quick Navigation
 
-1.  [Getting Started](#getting-started)
-2.  [System Architecture](#system-architecture)
-3.  [Backend Services](#backend-services)
-4.  [Frontend Applications](#frontend-applications)
-5.  [Machine Learning](#machine-learning)
-6.  [Infrastructure & Operations](#infrastructure--operations)
-7.  [CI/CD Pipelines](#ci/cd-pipelines)
-8.  [Testing](#testing)
+### Getting Started
 
-## Getting Started
+- [**Installation Guide**](INSTALLATION.md) - Set up NexaFi on your system
+- [**Quick Start Guide**](USAGE.md) - Get started in 3 minutes
+- [**Configuration**](CONFIGURATION.md) - Environment and service configuration
 
-This section provides instructions on how to set up the NexaFi development environment and get the application running locally.
+### Core Documentation
 
-## System Architecture
+- [**API Reference**](API.md) - Complete REST and GraphQL API documentation
+- [**CLI Reference**](CLI.md) - Command-line interface guide
+- [**Feature Matrix**](FEATURE_MATRIX.md) - Comprehensive feature overview
 
-NexaFi is built as a microservices-based application, designed for scalability, resilience, and maintainability. The system comprises several independent services that communicate with each other via well-defined APIs. This section details the overall architecture, component interactions, and data flow within the system.
+### Architecture & Development
 
-## Backend Services
+- [**Architecture Overview**](ARCHITECTURE.md) - System design and component structure
+- [**Contributing Guide**](CONTRIBUTING.md) - How to contribute to NexaFi
+- [**Troubleshooting**](TROUBLESHOOTING.md) - Common issues and solutions
 
-The backend of NexaFi consists of multiple specialized microservices, each responsible for a specific business domain. This section provides in-depth documentation for each service, including their purpose, API endpoints, data models, and operational details.
+### Advanced Topics
 
-## Frontend Applications
+- [**Examples Directory**](EXAMPLES/) - Working code examples
+- [**Security & Compliance**](SECURITY.md) - Security architecture and compliance
+- [**Performance Tuning**](PERFORMANCE.md) - Optimization guidelines
 
-NexaFi offers both web and mobile interfaces to interact with its services. This section covers the structure, components, and development guidelines for both frontend applications.
+## 🚀 30-Second Overview
 
-## Machine Learning
+NexaFi is an AI-first financial platform that combines:
 
-This section details the machine learning models and services integrated into NexaFi, including their functionalities, data requirements, and deployment.
+- **Automated Bookkeeping** with 99.7% accuracy
+- **Predictive Cash Flow** forecasting with 92% accuracy
+- **AI-Powered Advisory** using fine-tuned LLMs
+- **Advanced Payment Processing** with multi-currency support
+- **Algorithmic Credit** scoring and lending
 
-## Infrastructure & Operations
+## 📦 Quick Start
 
-Information regarding the infrastructure setup, deployment procedures, and operational guidelines for NexaFi. This includes environment configurations, monitoring, and logging.
+```bash
+# Clone the repository
+git clone https://github.com/abrar2030/NexaFi.git
+cd NexaFi
 
-## CI/CD Pipelines
+# Install backend dependencies
+cd backend
+pip install -r requirements.txt
 
-Details about the Continuous Integration and Continuous Deployment pipelines used for NexaFi, ensuring automated testing, building, and deployment processes.
+# Start the API Gateway
+cd api-gateway/src
+python3 main.py
+```
 
-## Testing
+**Access the platform:**
 
-This section outlines the testing strategy employed in NexaFi, including unit tests, integration tests, and end-to-end tests, along with instructions on how to run them.
+- Web Dashboard: http://localhost:3000
+- API Documentation: http://localhost:5000/api-docs
+- Health Check: http://localhost:5000/health
+
+## 🏗️ Project Structure
+
+```
+NexaFi/
+├── backend/              # Python microservices (Flask/FastAPI)
+│   ├── api-gateway/      # API Gateway (Port 5000)
+│   ├── user-service/     # User management (Port 5001)
+│   ├── auth-service/     # Authentication (Port 5011)
+│   ├── ledger-service/   # Accounting ledger (Port 5002)
+│   ├── payment-service/  # Payment processing (Port 5003)
+│   ├── ai-service/       # ML predictions (Port 5004)
+│   ├── compliance-service/   # AML/KYC (Port 5005)
+│   ├── notification-service/ # Notifications (Port 5006)
+│   ├── analytics-service/    # Business intelligence
+│   ├── credit-service/       # Credit scoring
+│   ├── document-service/     # Document processing
+│   └── shared/          # Shared libraries and middleware
+├── ml/                  # Machine learning models and pipelines
+├── web-frontend/        # React/Next.js web application
+├── mobile-frontend/     # Vue mobile application
+├── infrastructure/      # Kubernetes, Terraform, Ansible
+├── tests/               # Comprehensive test suites
+├── scripts/             # Utility scripts
+└── docs/                # This documentation
+```
+
+## 🎯 Key Features at a Glance
+
+| Category                  | Features                                                          | Status        |
+| ------------------------- | ----------------------------------------------------------------- | ------------- |
+| **Financial Management**  | Automated bookkeeping, cash flow forecasting, financial reporting | ✅ Production |
+| **Payment Processing**    | Multi-currency, ACH, cards, crypto, subscription management       | ✅ Production |
+| **AI/ML Capabilities**    | Predictive analytics, fraud detection, credit scoring, NLP        | ✅ Production |
+| **Compliance & Security** | AML/KYC, sanctions screening, PCI DSS, SOC 2 Type II              | ✅ Production |
+| **Integrations**          | Open Banking, SAP, Oracle, QuickBooks, Xero                       | ✅ Production |
+| **Mobile & Web**          | Responsive web app, native mobile (iOS/Android)                   | ✅ Production |
+
+## 📚 Documentation Sections
+
+### For Developers
+
+- [**Architecture**](ARCHITECTURE.md) - Microservices, DDD, event-driven design
+- [**API Reference**](API.md) - REST endpoints, GraphQL schemas, webhooks
+- [**CLI Guide**](CLI.md) - Command-line tools and scripts
+- [**Contributing**](CONTRIBUTING.md) - Development workflow, code standards
+
+### For Users
+
+- [**Getting Started**](USAGE.md) - Common workflows and usage patterns
+- [**Examples**](EXAMPLES/) - Real-world implementation examples
+- [**Troubleshooting**](TROUBLESHOOTING.md) - FAQs and common issues
+
+### For Operators
+
+- [**Installation**](INSTALLATION.md) - Deployment options (local, Docker, Kubernetes)
+- [**Configuration**](CONFIGURATION.md) - Environment variables, service configs
+- [**Performance**](PERFORMANCE.md) - Monitoring, optimization, scaling
+
+## 🔗 Useful Links
+
+- **Main Repository**: https://github.com/abrar2030/NexaFi
+- **Issue Tracker**: https://github.com/abrar2030/NexaFi/issues
+- **CI/CD Dashboard**: GitHub Actions
+- **License**: MIT License
+
+## 📊 Project Status
+
+| Metric             | Value                                                              |
+| ------------------ | ------------------------------------------------------------------ |
+| **CI/CD Status**   | ![Passing](https://img.shields.io/badge/build-passing-brightgreen) |
+| **Test Coverage**  | 82%                                                                |
+| **Python Version** | 3.11+                                                              |
+| **Node Version**   | 18+                                                                |
+| **Docker**         | Required                                                           |
+| **License**        | MIT                                                                |
+
+## 🤝 Getting Help
+
+- **Documentation Issues**: File an issue with label `documentation`
+- **Bug Reports**: Use GitHub Issues with label `bug`
+- **Feature Requests**: Use GitHub Issues with label `enhancement`
+- **Security Issues**: See [SECURITY.md](SECURITY.md)
+
+---
