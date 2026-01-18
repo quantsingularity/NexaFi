@@ -29,7 +29,7 @@ Thank you for your interest in contributing to NexaFi! This guide will help you 
 ```bash
 # Fork the repository on GitHub
 # Then clone your fork
-git clone https://github.com/abrar2030/NexaFi.git
+git clone https://github.com/quantsingularity/NexaFi.git
 cd NexaFi
 ```
 

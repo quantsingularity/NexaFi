@@ -1,8 +1,8 @@
 # 🤖 NexaFi - Enterprise-Grade AI-Driven Fintech Platform
 
-![CI/CD Status](https://img.shields.io/github/actions/workflow/status/abrar2030/NexaFi/cicd.yml?branch=main&label=CI/CD&logo=github)
-[![Test Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/abrar2030/NexaFi/tests)
-[![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/abrar2030/NexaFi/LICENSE)
+![CI/CD Status](https://img.shields.io/github/actions/workflow/status/quantsingularity/NexaFi/cicd.yml?branch=main&label=CI/CD&logo=github)
+[![Test Coverage](https://img.shields.io/badge/coverage-82%25-brightgreen)](https://github.com/quantsingularity/NexaFi/tests)
+[![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/quantsingularity/NexaFi/LICENSE)
 
 NexaFi is a revolutionary AI-powered financial operating system that transforms how small and mid-sized businesses (SMBs) manage their financial operations through deep integration of advanced artificial intelligence, distributed ledger technology, and automated financial workflows.
 
@@ -252,13 +252,13 @@ NexaFi employs a sophisticated multi-environment deployment architecture designe
 
 Follow these steps for local development using a simplified Docker-based environment:
 
-| Step                       | Command                                                          | Description                                                     |
-| :------------------------- | :--------------------------------------------------------------- | :-------------------------------------------------------------- |
-| **1. Clone Repository**    | `git clone https://github.com/abrar2030/nexafi.git && cd nexafi` | Download the source code and navigate to the project directory. |
-| **2. Run Setup Script**    | `./scripts/setup_dev_environment.sh`                             | Installs dependencies and configures the local environment.     |
-| **3. Start Services**      | `docker-compose -f docker-compose.dev.yml up`                    | Starts the core backend services and infrastructure components. |
-| **4. Initialize Database** | `./scripts/init_local_db.sh`                                     | Runs necessary migrations and seeds the local database.         |
-| **5. Start Frontend**      | `cd frontend/web && npm run dev`                                 | Starts the web dashboard development server.                    |
+| Step                       | Command                                                                 | Description                                                     |
+| :------------------------- | :---------------------------------------------------------------------- | :-------------------------------------------------------------- |
+| **1. Clone Repository**    | `git clone https://github.com/quantsingularity/nexafi.git && cd nexafi` | Download the source code and navigate to the project directory. |
+| **2. Run Setup Script**    | `./scripts/setup_dev_environment.sh`                                    | Installs dependencies and configures the local environment.     |
+| **3. Start Services**      | `docker-compose -f docker-compose.dev.yml up`                           | Starts the core backend services and infrastructure components. |
+| **4. Initialize Database** | `./scripts/init_local_db.sh`                                            | Runs necessary migrations and seeds the local database.         |
+| **5. Start Frontend**      | `cd frontend/web && npm run dev`                                        | Starts the web dashboard development server.                    |
 
 **Access the Development Environment:**
 

@@ -54,7 +54,7 @@ Complete installation guide for NexaFi across different platforms and deployment
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/abrar2030/NexaFi.git
+git clone https://github.com/quantsingularity/NexaFi.git
 cd NexaFi
 
 # 2. Install backend dependencies
@@ -113,7 +113,7 @@ sudo usermod -aG docker $USER
 sudo apt install git
 
 # Clone NexaFi
-git clone https://github.com/abrar2030/NexaFi.git
+git clone https://github.com/quantsingularity/NexaFi.git
 cd NexaFi
 
 # Install backend dependencies
@@ -125,13 +125,13 @@ cd ../web-frontend
 npm install
 ```
 
-| Step                 | Command                                             | Notes                           |
-| -------------------- | --------------------------------------------------- | ------------------------------- |
-| **Update system**    | `sudo apt update && sudo apt upgrade`               | Recommended before installation |
-| **Install Python**   | `sudo apt install python3.11 python3-pip`           | Python 3.11+ required           |
-| **Install Node.js**  | Use NodeSource repository                           | Node 18+ required               |
-| **Install Docker**   | Use official Docker script                          | Add user to docker group        |
-| **Clone repository** | `git clone https://github.com/abrar2030/NexaFi.git` | Requires Git                    |
+| Step                 | Command                                                    | Notes                           |
+| -------------------- | ---------------------------------------------------------- | ------------------------------- |
+| **Update system**    | `sudo apt update && sudo apt upgrade`                      | Recommended before installation |
+| **Install Python**   | `sudo apt install python3.11 python3-pip`                  | Python 3.11+ required           |
+| **Install Node.js**  | Use NodeSource repository                                  | Node 18+ required               |
+| **Install Docker**   | Use official Docker script                                 | Add user to docker group        |
+| **Clone repository** | `git clone https://github.com/quantsingularity/NexaFi.git` | Requires Git                    |
 
 ### macOS
 
@@ -152,7 +152,7 @@ brew install --cask docker
 brew install git
 
 # Clone NexaFi
-git clone https://github.com/abrar2030/NexaFi.git
+git clone https://github.com/quantsingularity/NexaFi.git
 cd NexaFi
 
 # Install backend dependencies
@@ -189,7 +189,7 @@ winget install Docker.DockerDesktop
 winget install Git.Git
 
 # Clone NexaFi (using Git Bash or PowerShell)
-git clone https://github.com/abrar2030/NexaFi.git
+git clone https://github.com/quantsingularity/NexaFi.git
 cd NexaFi
 
 # Install backend dependencies

@@ -42,7 +42,7 @@ NexaFi is an AI-first financial platform that combines:
 
 ```bash
 # Clone the repository
-git clone https://github.com/abrar2030/NexaFi.git
+git clone https://github.com/quantsingularity/NexaFi.git
 cd NexaFi
 
 # Install backend dependencies
@@ -120,8 +120,8 @@ NexaFi/
 
 ## 🔗 Useful Links
 
-- **Main Repository**: https://github.com/abrar2030/NexaFi
-- **Issue Tracker**: https://github.com/abrar2030/NexaFi/issues
+- **Main Repository**: https://github.com/quantsingularity/NexaFi
+- **Issue Tracker**: https://github.com/quantsingularity/NexaFi/issues
 - **CI/CD Dashboard**: GitHub Actions
 - **License**: MIT License
 

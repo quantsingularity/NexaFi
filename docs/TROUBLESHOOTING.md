@@ -308,7 +308,7 @@ find . -type d -name "__pycache__" -exec rm -r {} +
 
 If you can't resolve the issue:
 
-1. **Search GitHub Issues**: https://github.com/abrar2030/NexaFi/issues
+1. **Search GitHub Issues**: https://github.com/quantsingularity/NexaFi/issues
 2. **Check Logs**: `backend/logs/` directory
 3. **Enable Debug Mode**: `export DEBUG=true`
 4. **Create Issue**: Provide logs, steps to reproduce, environment details
