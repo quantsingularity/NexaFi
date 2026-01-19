@@ -13,9 +13,9 @@ NexaFi is a revolutionary AI-powered financial operating system that transforms 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Project Structure](#project-structure)
 - [Core Value Proposition](#core-value-proposition)
 - [Key Features](#key-features)
-- [Project Structure](#project-structure)
 - [Technology Stack](#technology-stack)
 - [Technical Architecture](#technical-architecture)
 - [Installation & Setup](#installation--setup)
@@ -29,11 +29,7 @@ NexaFi is a revolutionary AI-powered financial operating system that transforms 
 
 ## Overview
 
-NexaFi represents the next generation of financial technology platforms, serving as a verticalized fintech "operating system" for SMBs. It seamlessly integrates accounting, payments, lending, and advisory services into a unified, intelligent ecosystem. The platform leverages cutting-edge artificial intelligence to automate traditionally manual financial processes, including bookkeeping, cash-flow forecasting, credit underwriting, and personalized advisory services.
-
-Unlike conventional siloed financial tools, NexaFi employs a proprietary infrastructure and closed-loop data architecture (similar to Chime's successful model), enabling comprehensive end-to-end AI optimization of the entire user experience. Through its extensive API ecosystem, NexaFi integrates directly into businesses' existing operational workflows, ensuring that financial management becomes an embedded, automated, and intelligent component of daily operations rather than a separate task.
-
-The platform addresses the fragmented nature of current financial technology solutions by creating a comprehensive, AI-first system where machine learning serves as the core differentiator. By combining the capabilities traditionally found in separate accounting suites, payment processors, neo-banks, and standalone AI tools, NexaFi creates a powerful unified platform that continuously learns from each business's unique patterns to deliver increasingly personalized financial insights, automation, and optimization.
+NexaFi is an AI-first fintech operating system for SMBs that unifies accounting, payments, lending, analytics, and advisory into one platform. It automates workflows, learns from business data to deliver predictive insights and personalized guidance, and embeds finance into daily operations via deep APIs.
 
 ---
 
@@ -41,7 +37,7 @@ The platform addresses the fragmented nature of current financial technology sol
 
 The project is organized into several main components:
 
-````
+```
 NexaFi/
 ├── code/                   # Core backend logic, services, and shared utilities
 ├── docs/                   # Project documentation
@@ -52,7 +48,10 @@ NexaFi/
 ├── LICENSE                 # License information
 ├── README.md               # Project overview and instructions
 ├── eslint.config.js        # ESLint configuration
-└── package.json            # Nod
+└── package.json            # Node.js project metadata and dependencies
+```
+
+---
 
 ## Core Value Proposition
 
@@ -119,40 +118,22 @@ NexaFi's core functionality is organized into five intelligent domains, each lev
 
 ---
 
-## Project Structure
-
-The NexaFi repository is organized into a monorepo structure, separating the core microservices, shared libraries, and frontend applications for maintainability and independent deployment.
-
-| Directory          | Description                                                                                     |
-| :----------------- | :---------------------------------------------------------------------------------------------- |
-| `backend/`         | Contains all Python-based microservices (AI, Ledger, Payment, User, etc.) and shared libraries. |
-| `web-frontend/`    | The main web application built with React and TypeScript.                                       |
-| `mobile-frontend/` | The cross-platform mobile application built with React Native.                                  |
-| `scripts/`         | Essential shell scripts for setup, building, testing, and running the application.              |
-| `tests/`           | Comprehensive test suite covering unit, integration, E2E, performance, and security testing.    |
-| `docs/`            | Documentation, including architecture diagrams and feature specifications.                      |
-| `.github/`         | Configuration for GitHub Actions, CI/CD pipelines, and repository templates.                    |
-
----
-
 ## Technology Stack
 
 NexaFi is built on a modern, cloud-native stack optimized for high performance, scalability, and data-intensive financial operations.
 
-| Category     | Component        | Technology           | Detail                                                                        |
-| :----------- | :--------------- | :------------------- | :---------------------------------------------------------------------------- |
-| **Backend**  | Languages        | Python               | Primary language for all microservices and AI/ML components.                  |
-|              | Frameworks       | FastAPI, Flask       | Used for building high-performance, asynchronous API endpoints.               |
-|              | Databases        | PostgreSQL, Redis    | PostgreSQL for transactional data; Redis for caching and session management.  |
-|              | Messaging        | Kafka/RabbitMQ       | Event-driven architecture for inter-service communication and data streaming. |
-| **Frontend** | Web              | React, TypeScript    | Main framework for the web dashboard.                                         |
-|              | Mobile           | React Native         | For cross-platform (iOS/Android) mobile application development.              |
-|              | Styling          | Tailwind CSS         | Utility-first CSS framework for rapid and consistent UI development.          |
-| **AI/ML**    | Frameworks       | PyTorch, TensorFlow  | For training and deploying deep learning models (e.g., Neural Bookkeeping).   |
-|              | Tools            | Scikit-learn, Pandas | For traditional ML, data processing, and feature engineering.                 |
-| **DevOps**   | Containerization | Docker               | For packaging services and ensuring environment consistency.                  |
-|              | Orchestration    | Kubernetes           | Designed for scalable deployment and management of microservices.             |
-|              | CI/CD            | GitHub Actions       | Automated build, test, and deployment pipelines.                              |
+| Category     | Component        | Technology           | Detail                                                                      |
+| :----------- | :--------------- | :------------------- | :-------------------------------------------------------------------------- |
+| **Backend**  | Languages        | Python               | Primary language for all microservices and AI/ML components.                |
+|              | Frameworks       | FastAPI, Flask       | Used for building high-performance, asynchronous API endpoints.             |
+| **Frontend** | Web              | React, TypeScript    | Main framework for the web dashboard.                                       |
+|              | Mobile           | React Native         | For cross-platform (iOS/Android) mobile application development.            |
+|              | Styling          | Tailwind CSS         | Utility-first CSS framework for rapid and consistent UI development.        |
+| **AI/ML**    | Frameworks       | PyTorch, TensorFlow  | For training and deploying deep learning models (e.g., Neural Bookkeeping). |
+|              | Tools            | Scikit-learn, Pandas | For traditional ML, data processing, and feature engineering.               |
+| **DevOps**   | Containerization | Docker               | For packaging services and ensuring environment consistency.                |
+|              | Orchestration    | Kubernetes           | Designed for scalable deployment and management of microservices.           |
+|              | CI/CD            | GitHub Actions       | Automated build, test, and deployment pipelines.                            |
 
 ---
 
@@ -160,29 +141,31 @@ NexaFi is built on a modern, cloud-native stack optimized for high performance, 
 
 NexaFi employs a **Microservices Architecture** with an **Event-Driven Design** to ensure maximum decoupling, resilience, and scalability. The system is divided into independent, domain-specific services communicating primarily through an asynchronous message bus.
 
-    NexaFi/
-    ├── API Gateway (Authentication, Rate Limiting)
-    ├── Frontend Applications
-    │   ├── Web Dashboard (React/TS)
-    │   └── Mobile App (React Native)
-    ├── Core Microservices
-    │   ├── User Service (Auth, Profile)
-    │   ├── Ledger Service (Accounting, Transactions)
-    │   ├── Payment Service (Processing, FX)
-    │   ├── Credit Service (Underwriting, Lending)
-    │   ├── Document Service (OCR, NLP)
-    │   └── Analytics Service (BI, Reporting)
-    ├── AI/ML Engine
-    │   ├── AI Service (Forecasting, Advisory LLM)
-    │   └── Anomaly Detection Engine
-    ├── Shared Infrastructure
-    │   ├── Message Queue (Kafka/RabbitMQ)
-    │   ├── Distributed Cache (Redis)
-    │   ├── Audit & Logging Service
-    │   └── Open Banking Gateway
-    └── Enterprise Integration Layer
-        ├── SAP Integration
-        └── Oracle Integration
+```
+NexaFi/
+├── API Gateway (Authentication, Rate Limiting)
+├── Frontend Applications
+│   ├── Web Dashboard (React/TS)
+│   └── Mobile App (React Native)
+├── Core Microservices
+│   ├── User Service (Auth, Profile)
+│   ├── Ledger Service (Accounting, Transactions)
+│   ├── Payment Service (Processing, FX)
+│   ├── Credit Service (Underwriting, Lending)
+│   ├── Document Service (OCR, NLP)
+│   └── Analytics Service (BI, Reporting)
+├── AI/ML Engine
+│   ├── AI Service (Forecasting, Advisory LLM)
+│   └── Anomaly Detection Engine
+├── Shared Infrastructure
+│   ├── Message Queue (Kafka/RabbitMQ)
+│   ├── Distributed Cache (Redis)
+│   ├── Audit & Logging Service
+│   └── Open Banking Gateway
+└── Enterprise Integration Layer
+    ├── SAP Integration
+    └── Oracle Integration
+```
 
 ---
 
@@ -219,7 +202,7 @@ docker-compose -f backend/infrastructure/docker-compose.yml up -d
 # Run the web frontend (in a separate terminal)
 cd web-frontend
 pnpm start
-````
+```
 
 ### Manual Setup (Backend)
 
