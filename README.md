@@ -37,6 +37,23 @@ The platform addresses the fragmented nature of current financial technology sol
 
 ---
 
+## Project Structure
+
+The project is organized into several main components:
+
+````
+NexaFi/
+├── code/                   # Core backend logic, services, and shared utilities
+├── docs/                   # Project documentation
+├── infrastructure/         # DevOps, deployment, and infra-related code
+├── mobile-frontend/        # Mobile application
+├── web-frontend/           # Web dashboard
+├── scripts/                # Automation, setup, and utility scripts
+├── LICENSE                 # License information
+├── README.md               # Project overview and instructions
+├── eslint.config.js        # ESLint configuration
+└── package.json            # Nod
+
 ## Core Value Proposition
 
 NexaFi delivers transformative value through a set of key differentiators, focusing on an AI-first approach and a unified ecosystem:
@@ -202,7 +219,7 @@ docker-compose -f backend/infrastructure/docker-compose.yml up -d
 # Run the web frontend (in a separate terminal)
 cd web-frontend
 pnpm start
-```
+````
 
 ### Manual Setup (Backend)
 
