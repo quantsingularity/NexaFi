@@ -15,18 +15,15 @@ NexaFi is a revolutionary AI-powered financial operating system that transforms 
 - [Overview](#overview)
 - [Core Value Proposition](#core-value-proposition)
 - [Key Features](#key-features)
-- [Technical Architecture](#technical-architecture)
+- [Project Structure](#project-structure)
 - [Technology Stack](#technology-stack)
-- [System Design Principles](#system-design-principles)
-- [Deployment Architecture](#deployment-architecture)
+- [Technical Architecture](#technical-architecture)
 - [Installation & Setup](#installation--setup)
-- [API Documentation](#api-documentation)
-- [Use Cases & Implementation Scenarios](#use-cases--implementation-scenarios)
-- [Security & Compliance Framework](#security--compliance-framework)
-- [Performance Benchmarks](#performance-benchmarks)
-- [AI/ML Model Documentation](#aiml-model-documentation)
+- [Testing](#testing)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Documentation](#documentation)
 - [Contributing Guidelines](#contributing-guidelines)
-- [License & Legal Information](#license--legal-information)
+- [License](#license)
 
 ---
 
@@ -105,344 +102,212 @@ NexaFi's core functionality is organized into five intelligent domains, each lev
 
 ---
 
-## Technical Architecture
+## Project Structure
 
-NexaFi implements a sophisticated cloud-native microservices architecture designed for enterprise-grade reliability, security, and scalability. The platform utilizes **Domain-Driven Design (DDD)** principles to separate core business domains into independent services connected through an asynchronous, event-driven messaging system.
+The NexaFi repository is organized into a monorepo structure, separating the core microservices, shared libraries, and frontend applications for maintainability and independent deployment.
 
-### Key Architectural Principles
-
-| Principle                      | Description                                                                        | Implementation Details                                                                                                                                                                 |
-| :----------------------------- | :--------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Microservices & DDD**        | True microservices architecture with bounded contexts aligned to business domains. | Each service maintains its own data store, exposes well-defined REST/GraphQL APIs, and utilizes containerization (Docker) and orchestration (Kubernetes) for deployment flexibility.   |
-| **Event-Driven Communication** | Utilizes an event-driven architecture for high scalability and performance.        | Enables asynchronous processing, event sourcing for audit trails, and CQRS (Command Query Responsibility Segregation) for optimized operations.                                        |
-| **Advanced Data Management**   | Sophisticated multi-tiered data strategy with polyglot persistence.                | Uses specialized databases for different data types, ensures transactional integrity through distributed sagas, and includes comprehensive data governance and intelligent caching.    |
-| **AI/ML Infrastructure**       | Production-grade MLOps architecture for continuous model deployment.               | Features a feature store for consistent feature engineering, automated MLOps pipelines, A/B testing framework, and explainability tools for regulatory compliance.                     |
-| **Security by Design**         | Security embedded throughout the architecture with a zero-trust model.             | Includes end-to-end encryption, secure multi-tenancy, comprehensive audit logging, and advanced threat detection with behavioral analytics.                                            |
-| **High Availability & DR**     | Designed for enterprise-grade reliability with multi-region deployment.            | Features active-active configuration, automated failover with zero data loss guarantees, horizontal scaling with predictive auto-scaling, and blue-green/canary deployment strategies. |
-
-### Architectural Structure
-
-The codebase is logically organized into several key components:
-
-| Component                   | Sub-Components                                                                             | Description                                                        |
-| :-------------------------- | :----------------------------------------------------------------------------------------- | :----------------------------------------------------------------- |
-| **Core Domain Services**    | Identity, Ledger, Payments, Treasury, Credit, Analytics, Advisory                          | Independent microservices for core business logic.                 |
-| **Supporting Services**     | Document Processing, Notification, Audit, Integration, Workflow Orchestration              | Services providing cross-cutting concerns and utility functions.   |
-| **AI/ML Infrastructure**    | Feature Store, Model Registry, Training Pipeline, Inference Engine                         | MLOps components for managing the AI lifecycle.                    |
-| **Frontend Applications**   | Web Dashboard (React), Mobile Application (Flutter), Embedded Widgets                      | User-facing applications and integration components.               |
-| **API Layer**               | API Gateway, GraphQL Federation, Webhook Manager                                           | Unified access layer for internal and external consumers.          |
-| **Data Infrastructure**     | Transactional Store, Analytical Store, Event Store, Cache Layer, Data Lake                 | Polyglot persistence and data management layers.                   |
-| **Platform Infrastructure** | Service Mesh, Secret Management, Observability Stack, Identity Provider, Security Services | Shared infrastructure for security, communication, and monitoring. |
+| Directory          | Description                                                                                     |
+| :----------------- | :---------------------------------------------------------------------------------------------- |
+| `backend/`         | Contains all Python-based microservices (AI, Ledger, Payment, User, etc.) and shared libraries. |
+| `web-frontend/`    | The main web application built with React and TypeScript.                                       |
+| `mobile-frontend/` | The cross-platform mobile application built with React Native.                                  |
+| `scripts/`         | Essential shell scripts for setup, building, testing, and running the application.              |
+| `tests/`           | Comprehensive test suite covering unit, integration, E2E, performance, and security testing.    |
+| `docs/`            | Documentation, including architecture diagrams and feature specifications.                      |
+| `.github/`         | Configuration for GitHub Actions, CI/CD pipelines, and repository templates.                    |
 
 ---
 
 ## Technology Stack
 
-The NexaFi platform is built using a modern, polyglot technology stack optimized for performance, scalability, and maintainability.
+NexaFi is built on a modern, cloud-native stack optimized for high performance, scalability, and data-intensive financial operations.
 
-### Backend Technologies
-
-| Category                | Key Technologies                                                                                       | Description                                                                                             |
-| :---------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------ |
-| **Primary Languages**   | Python 3.11+ (FastAPI), Node.js 18+ (NestJS), Go 1.20+, Rust                                           | Chosen for specific performance and domain requirements (AI/ML, APIs, high-throughput, security).       |
-| **Databases & Storage** | PostgreSQL 15+ (TimescaleDB), MongoDB 6.0+, Redis 7.0+, Elasticsearch 8.0+, Apache Cassandra, MinIO/S3 | Polyglot persistence strategy for specialized data types and access patterns.                           |
-| **Messaging & Events**  | Apache Kafka 3.0+, RabbitMQ, gRPC, WebSockets                                                          | Enables high-throughput event streaming, reliable message queuing, and real-time service communication. |
-| **API & Integration**   | GraphQL (Apollo Federation), OpenAPI 3.1, Protocol Buffers, OAuth 2.1, JWT                             | Provides flexible, documented, and secure API access.                                                   |
-
-### Frontend Technologies
-
-| Category                | Key Technologies                                                                          | Description                                                                                                    |
-| :---------------------- | :---------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| **Web Platform**        | React 18+ (TypeScript), Next.js, Redux Toolkit, Tailwind CSS, D3.js/Recharts, WebAssembly | Modern stack for a responsive, high-performance web dashboard with server-side rendering.                      |
-| **Mobile Platform**     | Flutter 3.0+                                                                              | Cross-platform (iOS/Android) development with a custom widget library and local SQLite for offline capability. |
-| **Embedded Components** | Web Components                                                                            | Framework-agnostic components for seamless third-party integration.                                            |
-
-### AI/ML Technologies
-
-| Category                   | Key Technologies                                                                  | Description                                                                                          |
-| :------------------------- | :-------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
-| **Frameworks & Libraries** | PyTorch 2.0+, TensorFlow 2.0+, Scikit-learn, Hugging Face Transformers, ONNX, Ray | Comprehensive suite for deep learning, traditional ML, NLP, and distributed computing.               |
-| **MLOps & Infrastructure** | MLflow, Kubeflow, Feast, Weights & Biases, NVIDIA Triton, TensorRT                | Tools for experiment tracking, orchestration, feature store implementation, and optimized inference. |
-| **Specialized Components** | Sentence-BERT, Prophet/GluonTS, XGBoost/LightGBM, Isolation Forest/LSTM           | Models for semantic search, time series forecasting, gradient boosting, and anomaly detection.       |
-
-### Infrastructure & DevOps
-
-| Category                             | Key Technologies                                                                 | Description                                                                                      |
-| :----------------------------------- | :------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- |
-| **Containerization & Orchestration** | Docker, Kubernetes, Helm, Istio, Argo CD                                         | Ensures deployment flexibility, service mesh capabilities, and GitOps-based continuous delivery. |
-| **Cloud Providers**                  | AWS (EKS, RDS, S3, Lambda, SageMaker), GCP (GKE, Cloud SQL, BigQuery, Vertex AI) | Multi-cloud strategy for resilience and leveraging specialized services.                         |
-| **Monitoring & Observability**       | Prometheus, Grafana, Jaeger, ELK Stack, OpenTelemetry                            | Full stack observability for metrics, visualization, tracing, and log management.                |
-| **CI/CD & DevOps**                   | GitHub Actions, ArgoCD, Terraform, Vault, SonarQube                              | Automated pipelines, infrastructure as code, secrets management, and code quality assurance.     |
+| Category     | Component        | Technology           | Detail                                                                        |
+| :----------- | :--------------- | :------------------- | :---------------------------------------------------------------------------- |
+| **Backend**  | Languages        | Python               | Primary language for all microservices and AI/ML components.                  |
+|              | Frameworks       | FastAPI, Flask       | Used for building high-performance, asynchronous API endpoints.               |
+|              | Databases        | PostgreSQL, Redis    | PostgreSQL for transactional data; Redis for caching and session management.  |
+|              | Messaging        | Kafka/RabbitMQ       | Event-driven architecture for inter-service communication and data streaming. |
+| **Frontend** | Web              | React, TypeScript    | Main framework for the web dashboard.                                         |
+|              | Mobile           | React Native         | For cross-platform (iOS/Android) mobile application development.              |
+|              | Styling          | Tailwind CSS         | Utility-first CSS framework for rapid and consistent UI development.          |
+| **AI/ML**    | Frameworks       | PyTorch, TensorFlow  | For training and deploying deep learning models (e.g., Neural Bookkeeping).   |
+|              | Tools            | Scikit-learn, Pandas | For traditional ML, data processing, and feature engineering.                 |
+| **DevOps**   | Containerization | Docker               | For packaging services and ensuring environment consistency.                  |
+|              | Orchestration    | Kubernetes           | Designed for scalable deployment and management of microservices.             |
+|              | CI/CD            | GitHub Actions       | Automated build, test, and deployment pipelines.                              |
 
 ---
 
-## System Design Principles
+## Technical Architecture
 
-NexaFi adheres to industry-leading software engineering principles to ensure maintainability, scalability, and reliability.
+NexaFi employs a **Microservices Architecture** with an **Event-Driven Design** to ensure maximum decoupling, resilience, and scalability. The system is divided into independent, domain-specific services communicating primarily through an asynchronous message bus.
 
-### Code Quality Standards
-
-| Standard                 | Description                                                                                                                                                                                         |
-| :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Clean Code Practices** | Adherence to **SOLID**, **DRY**, and **KISS** principles, coupled with comprehensive documentation.                                                                                                 |
-| **Testing Strategy**     | Implementation of **Test-Driven Development (TDD)** for critical components, aiming for a minimum of **85% code coverage**. Includes Unit, Integration, End-to-End, Performance, and Chaos testing. |
-| **Code Review Process**  | Mandatory peer reviews, automated static analysis, linting, and security-focused reviews.                                                                                                           |
-
-### Architectural Governance
-
-| Governance Area     | Description                                                                                                     |
-| :------------------ | :-------------------------------------------------------------------------------------------------------------- |
-| **API Design**      | RESTful principles with versioned APIs, comprehensive OpenAPI/Swagger documentation, and rate limiting.         |
-| **Data Management** | Clear data ownership by domain services, consistent modeling, and **Privacy by Design** with data minimization. |
-| **Error Handling**  | Standardized error responses, detailed logging, and graceful degradation using circuit breakers.                |
-
-### Operational Excellence
-
-| Focus Area                | Description                                                                                                                                                            |
-| :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Deployment Strategy**   | Utilizes **Immutable Infrastructure**, **Blue-Green**, and **Canary** deployments for zero-downtime updates and risk mitigation, with automated rollback capabilities. |
-| **Monitoring & Alerting** | Based on **Golden Signals** (latency, traffic, errors, saturation) and **SLO/SLI-based alerting** for proactive issue identification.                                  |
-| **Incident Management**   | Defined severity levels, automated detection, and a blameless post-mortem process for continuous improvement.                                                          |
-
----
-
-## Deployment Architecture
-
-NexaFi employs a sophisticated multi-environment deployment architecture designed for reliability, security, and operational efficiency.
-
-### Environment Strategy
-
-| Environment     | Purpose                                                                 |
-| :-------------- | :---------------------------------------------------------------------- |
-| **Development** | Individual developer environments with local or cloud-based resources.  |
-| **Integration** | Shared environment for feature integration and testing.                 |
-| **Staging**     | Production-like environment for pre-release validation.                 |
-| **Production**  | Highly available, multi-region deployment for customer-facing services. |
-
-### Key Infrastructure Components
-
-| Component                     | Function                                                                                                   |
-| :---------------------------- | :--------------------------------------------------------------------------------------------------------- |
-| **Global Traffic Management** | Global DNS with health checking, CDN for content delivery, and DDoS protection/WAF.                        |
-| **Kubernetes Infrastructure** | Multi-zone Kubernetes clusters, Istio service mesh, Horizontal Pod Autoscaling, and Node auto-scaling.     |
-| **Data Infrastructure**       | Multi-AZ database clusters, cross-region replication, read replicas, and point-in-time recovery.           |
-| **Security Infrastructure**   | Network segmentation, private subnets, VPN/Direct Connect, and encryption for data in transit and at rest. |
-
-### Deployment Process
-
-| Step                           | Description                                                                                        |
-| :----------------------------- | :------------------------------------------------------------------------------------------------- |
-| **Continuous Integration**     | Automated builds, comprehensive testing, static code analysis, and container image scanning.       |
-| **Continuous Delivery**        | Automated deployment to lower environments, with manual approval gates for Staging and Production. |
-| **Deployment Strategies**      | Utilizes Blue-Green and Canary releases for zero-downtime updates and risk mitigation.             |
-| **Post-Deployment Validation** | Includes synthetic transaction monitoring, performance testing, and security validation.           |
+    NexaFi/
+    ├── API Gateway (Authentication, Rate Limiting)
+    ├── Frontend Applications
+    │   ├── Web Dashboard (React/TS)
+    │   └── Mobile App (React Native)
+    ├── Core Microservices
+    │   ├── User Service (Auth, Profile)
+    │   ├── Ledger Service (Accounting, Transactions)
+    │   ├── Payment Service (Processing, FX)
+    │   ├── Credit Service (Underwriting, Lending)
+    │   ├── Document Service (OCR, NLP)
+    │   └── Analytics Service (BI, Reporting)
+    ├── AI/ML Engine
+    │   ├── AI Service (Forecasting, Advisory LLM)
+    │   └── Anomaly Detection Engine
+    ├── Shared Infrastructure
+    │   ├── Message Queue (Kafka/RabbitMQ)
+    │   ├── Distributed Cache (Redis)
+    │   ├── Audit & Logging Service
+    │   └── Open Banking Gateway
+    └── Enterprise Integration Layer
+        ├── SAP Integration
+        └── Oracle Integration
 
 ---
 
 ## Installation & Setup
 
+The recommended way to set up NexaFi for development is using the provided setup script, which handles dependency installation and environment configuration.
+
 ### Prerequisites
 
-| Prerequisite  | Version/Requirement                                                                                                    |
-| :------------ | :--------------------------------------------------------------------------------------------------------------------- |
-| **Software**  | Node.js 18+, Python 3.11+, Docker Desktop 4.0+ (with Docker Compose), Kubernetes CLI (`kubectl`), Helm, and Git 2.30+. |
-| **Resources** | Minimum 16GB RAM, 50GB available disk space, and 4+ CPU cores recommended.                                             |
+| Requirement | Detail                                                                         |
+| :---------- | :----------------------------------------------------------------------------- |
+| **Python**  | 3.10+                                                                          |
+| **Node.js** | 18+                                                                            |
+| **pnpm**    | Package manager for frontend dependencies.                                     |
+| **Docker**  | Docker Engine and Docker Compose for running the microservices infrastructure. |
 
-### Quick Setup (Development)
+### Quick Start
 
-Follow these steps for local development using a simplified Docker-based environment:
-
-| Step                       | Command                                                                 | Description                                                     |
-| :------------------------- | :---------------------------------------------------------------------- | :-------------------------------------------------------------- |
-| **1. Clone Repository**    | `git clone https://github.com/quantsingularity/nexafi.git && cd nexafi` | Download the source code and navigate to the project directory. |
-| **2. Run Setup Script**    | `./scripts/setup_dev_environment.sh`                                    | Installs dependencies and configures the local environment.     |
-| **3. Start Services**      | `docker-compose -f docker-compose.dev.yml up`                           | Starts the core backend services and infrastructure components. |
-| **4. Initialize Database** | `./scripts/init_local_db.sh`                                            | Runs necessary migrations and seeds the local database.         |
-| **5. Start Frontend**      | `cd frontend/web && npm run dev`                                        | Starts the web dashboard development server.                    |
-
-**Access the Development Environment:**
-
-| Component                | Endpoint                         |
-| :----------------------- | :------------------------------- |
-| **Web Dashboard**        | `http://localhost:3000`          |
-| **API Documentation**    | `http://localhost:8080/api-docs` |
-| **Monitoring Dashboard** | `http://localhost:9090`          |
-
----
-
-## API Documentation
-
-NexaFi provides comprehensive API documentation for all services, supporting both REST and GraphQL paradigms.
-
-### REST APIs
-
-| Feature               | Description                                                                                                     |
-| :-------------------- | :-------------------------------------------------------------------------------------------------------------- |
-| **Specification**     | All REST APIs are documented using **OpenAPI 3.1** specifications.                                              |
-| **Documentation URL** | Available at `http://localhost:8080/api-docs` (Development) and `https://api.nexafi.com/api-docs` (Production). |
-
-**Example: Retrieving Account Information**
+The `setup.sh` script automates the installation of system dependencies (Docker) and project dependencies (Python, Node.js).
 
 ```bash
-curl -X GET "https://api.nexafi.com/v1/accounts/12345" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json"
+# Clone the repository
+git clone https://github.com/quantsingularity/NexaFi.git
+cd NexaFi
+
+# Run the setup script
+# This script will install Docker, Python dependencies, and frontend dependencies
+./scripts/setup.sh
+
+# Start the entire application using Docker Compose
+# This will launch all backend microservices and the database infrastructure
+docker-compose -f backend/infrastructure/docker-compose.yml up -d
+
+# Run the web frontend (in a separate terminal)
+cd web-frontend
+pnpm start
 ```
 
-The response provides a detailed JSON object including account balance, status, and metadata.
+### Manual Setup (Backend)
 
-### GraphQL API
+1.  **Install Python Dependencies:**
+    ```bash
+    for service_dir in backend/*/; do
+      if [ -f "${service_dir}requirements.txt" ]; then
+        echo "Installing dependencies for ${service_dir}..."
+        cd "${service_dir}"
+        python3 -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+        deactivate
+        cd ../..
+      fi
+    done
+    ```
+2.  **Start Infrastructure:**
+    ```bash
+    cd backend/infrastructure
+    ./start-infrastructure.sh
+    # Or using Docker Compose:
+    docker-compose up -d
+    ```
 
-| Feature      | Description                                                                                                                                            |
-| :----------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Endpoint** | `https://api.nexafi.com/graphql`                                                                                                                       |
-| **Benefit**  | Provides a flexible interface for complex data queries, allowing clients to request only the data they need in a single request, improving efficiency. |
+### Manual Setup (Frontend)
 
-### Webhooks
-
-| Feature         | Description                                                                                           |
-| :-------------- | :---------------------------------------------------------------------------------------------------- |
-| **Purpose**     | Provides webhooks for real-time event notifications (e.g., `transaction.created`, `account.updated`). |
-| **Security**    | Security is ensured via **HMAC signature verification** for payload validation.                       |
-| **Reliability** | A robust retry policy is implemented for delivery reliability.                                        |
-
----
-
-## Use Cases & Implementation Scenarios
-
-NexaFi is designed to address diverse financial management needs across various business types.
-
-### Small Business Owner (e.g., Restaurant)
-
-| Challenge                         | NexaFi Solution                                                                              | Key Outcomes                                                                      |
-| :-------------------------------- | :------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- |
-| Streamlining financial operations | Automated Accounting via POS integration, Predictive Cash Flow Engine, Payroll Optimization. | 15 hours/week reduction in financial administration, 8% improvement in cash flow. |
-
-### E-commerce Business (with multiple channels)
-
-| Challenge                           | NexaFi Solution                                                                            | Key Outcomes                                                                                |
-| :---------------------------------- | :----------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
-| Managing multi-channel revenue & FX | Multi-Currency Management, Subscription Revenue Management, Integrated Payment Processing. | 15% reduction in FX costs, 10% increase in subscription retention due to optimized billing. |
-
-### Professional Services Firm (e.g., Law Firm)
-
-| Challenge                                  | NexaFi Solution                                                                                                                  | Key Outcomes                                                                            |
-| :----------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------- |
-| Improving billing efficiency & forecasting | Integration with practice management, AI-assisted time entry, Client Trust Accounting compliance, Partner Compensation tracking. | 35% reduction in billing cycle time, 100% compliance with trust accounting regulations. |
+1.  **Install pnpm:**
+    ```bash
+    npm install -g pnpm
+    ```
+2.  **Install Dependencies and Run:**
+    ```bash
+    cd web-frontend
+    pnpm install
+    pnpm run dev
+    ```
 
 ---
 
-## Security & Compliance Framework
+## Testing
 
-NexaFi implements a comprehensive security and compliance framework designed to meet the highest standards in the financial industry.
+NexaFi employs a rigorous testing strategy to ensure reliability, performance, and security, with a current test coverage of **82%**.
 
-### Security Architecture
-
-| Principle                   | Description                                                                                                                                 |
-| :-------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Core Model**              | **Defense in Depth Strategy** with a **Zero-Trust** network model and the **Principle of Least Privilege**.                                 |
-| **Data Protection**         | End-to-end encryption (TLS 1.3) and encryption at rest (AES-256), field-level encryption for PII, and tokenization for payment information. |
-| **Access Control**          | Multi-factor authentication (MFA), Role-Based Access Control (RBAC), and Just-In-Time access provisioning.                                  |
-| **Application Security**    | Secure Development Lifecycle (SDLC), Static/Dynamic Application Security Testing (SAST/DAST), and regular third-party penetration testing.  |
-| **Infrastructure Security** | Immutable infrastructure, automated vulnerability scanning, and network segmentation.                                                       |
-
-### Compliance Controls
-
-| Regulation                | Description                                                                                                    |
-| :------------------------ | :------------------------------------------------------------------------------------------------------------- |
-| **PCI DSS**               | Compliant cardholder data environment with network segmentation and encryption.                                |
-| **SOC 2 Type II**         | Controls for security, availability, and confidentiality, with annual audit and certification.                 |
-| **GDPR & CCPA**           | Data minimization, consent management, and fulfillment of data subject rights.                                 |
-| **Financial Regulations** | Built-in controls for **AML** (Anti-Money Laundering), **KYC** (Know Your Customer), and regulatory reporting. |
-
-### Security Operations
-
-| Operation                    | Description                                                                                                                                 |
-| :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Incident Response**        | Defined plan, 24/7 Security Operations Center, and regular simulations.                                                                     |
-| **Monitoring & Detection**   | Real-time SIEM (Security Information and Event Management), User and Entity Behavior Analytics (UEBA), and threat intelligence integration. |
-| **Vulnerability Management** | Continuous scanning, risk-based prioritization, and automated patching.                                                                     |
+| Test Type                  | Location             | Purpose                                                                             |
+| :------------------------- | :------------------- | :---------------------------------------------------------------------------------- |
+| **Unit Tests**             | `tests/unit/`        | Verify individual functions and components in isolation.                            |
+| **Integration Tests**      | `tests/integration/` | Validate communication and data flow between microservices.                         |
+| **End-to-End (E2E) Tests** | `tests/e2e/`         | Simulate real user scenarios across the entire application stack (web and mobile).  |
+| **Performance Tests**      | `tests/performance/` | Benchmark system latency and throughput using tools like Locust.                    |
+| **Security Tests**         | `tests/security/`    | Automated checks for common vulnerabilities and compliance with security standards. |
 
 ---
 
-## Performance Benchmarks
+## CI/CD Pipeline
 
-NexaFi is engineered for enterprise-grade performance and scalability, with the following benchmark results from our production environment:
+BlockScore uses GitHub Actions for continuous integration and deployment:
 
-### API Performance
+| Stage                | Control Area                    | Institutional-Grade Detail                                                              |
+| :------------------- | :------------------------------ | :-------------------------------------------------------------------------------------- |
+| **Formatting Check** | Change Triggers                 | Enforced on all `push` and `pull_request` events to `main` and `develop`                |
+|                      | Manual Oversight                | On-demand execution via controlled `workflow_dispatch`                                  |
+|                      | Source Integrity                | Full repository checkout with complete Git history for auditability                     |
+|                      | Python Runtime Standardization  | Python 3.10 with deterministic dependency caching                                       |
+|                      | Backend Code Hygiene            | `autoflake` to detect unused imports/variables using non-mutating diff-based validation |
+|                      | Backend Style Compliance        | `black --check` to enforce institutional formatting standards                           |
+|                      | Non-Intrusive Validation        | Temporary workspace comparison to prevent unauthorized source modification              |
+|                      | Node.js Runtime Control         | Node.js 18 with locked dependency installation via `npm ci`                             |
+|                      | Web Frontend Formatting Control | Prettier checks for web-facing assets                                                   |
+|                      | Mobile Frontend Formatting      | Prettier enforcement for mobile application codebases                                   |
+|                      | Documentation Governance        | Repository-wide Markdown formatting enforcement                                         |
+|                      | Infrastructure Configuration    | Prettier validation for YAML/YML infrastructure definitions                             |
+|                      | Compliance Gate                 | Any formatting deviation fails the pipeline and blocks merge                            |
 
-| Endpoint                 | P50 Latency | P95 Latency | Throughput  |
-| :----------------------- | :---------- | :---------- | :---------- |
-| GET /accounts            | 45ms        | 95ms        | 2,000 req/s |
-| POST /transactions       | 65ms        | 120ms       | 1,500 req/s |
-| GET /analytics/cash-flow | 85ms        | 150ms       | 500 req/s   |
-| POST /payments           | 100ms       | 180ms       | 1,000 req/s |
+## Documentation
 
-### ML Model Performance
-
-| Model                      | Inference Time | Accuracy | F1 Score | Update Frequency |
-| :------------------------- | :------------- | :------- | :------- | :--------------- |
-| Transaction Categorization | 15ms           | 94.5%    | 0.93     | Daily            |
-| Cash Flow Prediction       | 45ms           | 92.3%    | 0.91     | Weekly           |
-| Credit Scoring             | 75ms           | 89.7%    | 0.88     | Daily            |
-| Fraud Detection            | 25ms           | 99.2%    | 0.97     | Real-time        |
-
-### Scalability and Reliability Metrics
-
-| Metric                             | Value                      | Description                                              |
-| :--------------------------------- | :------------------------- | :------------------------------------------------------- |
-| **Availability**                   | 99.99%                     | Less than 5 minutes downtime per month.                  |
-| **RTO** (Recovery Time Objective)  | <15 minutes                | Time to recover critical services after a failure.       |
-| **RPO** (Recovery Point Objective) | <1 minute                  | Maximum acceptable data loss in a disaster scenario.     |
-| **Horizontal Scaling**             | Linear up to 100 instances | Performance scales linearly with service instance count. |
-| **Database Throughput**            | 5,000+ TPS                 | Supports over 5,000 transactions per second.             |
-
----
-
-## AI/ML Model Documentation
-
-NexaFi leverages sophisticated AI/ML models to deliver intelligent financial insights and automation.
-
-### Cash Flow Forecasting Model
-
-| Detail             | Description                                                                                  |
-| :----------------- | :------------------------------------------------------------------------------------------- |
-| **Model Type**     | Ensemble of LSTM neural networks and gradient boosting.                                      |
-| **Input Features** | Historical transactions, recurring payments, seasonal factors, and macroeconomic indicators. |
-| **Output**         | Daily cash flow projections for 90 days with confidence intervals.                           |
-| **Performance**    | **92% accuracy** for 30-day forecasts.                                                       |
-| **MLOps**          | Weekly retraining with daily fine-tuning; uses SHAP values for explainability.               |
-
-### Credit Risk Assessment Model
-
-| Detail             | Description                                                                                           |
-| :----------------- | :---------------------------------------------------------------------------------------------------- |
-| **Model Type**     | Gradient boosting classifier with neural network components.                                          |
-| **Input Features** | Transaction history, payment behavior, business metrics, industry risk, and alternative data signals. |
-| **Output**         | Credit risk score (0-100) with default probability.                                                   |
-| **Performance**    | **89% accuracy** in predicting defaults, AUC of 0.92.                                                 |
-| **MLOps**          | Monthly retraining with quarterly validation; regular bias audits for fairness.                       |
-
-### Intelligent Document Processing
-
-| Detail           | Description                                                                                        |
-| :--------------- | :------------------------------------------------------------------------------------------------- |
-| **Model Type**   | Transformer-based computer vision and NLP pipeline.                                                |
-| **Capabilities** | Document classification, entity extraction (amounts, dates), summarization, and anomaly detection. |
-| **Performance**  | **95% extraction accuracy** across 15 document types; processing speed of <2 seconds per document. |
-
----
+| Document                    | Path                 | Description                                                            |
+| :-------------------------- | :------------------- | :--------------------------------------------------------------------- |
+| **README**                  | `README.md`          | High-level overview, project scope, and repository entry point         |
+| **Quickstart Guide**        | `QUICKSTART.md`      | Fast-track guide to get the system running with minimal setup          |
+| **Installation Guide**      | `INSTALLATION.md`    | Step-by-step installation and environment setup                        |
+| **Deployment Guide**        | `DEPLOYMENT.md`      | Deployment procedures, environments, and operational considerations    |
+| **API Reference**           | `API.md`             | Detailed documentation for all API endpoints                           |
+| **CLI Reference**           | `CLI.md`             | Command-line interface usage, commands, and examples                   |
+| **User Guide**              | `USAGE.md`           | Comprehensive end-user guide, workflows, and examples                  |
+| **Architecture Overview**   | `ARCHITECTURE.md`    | System architecture, components, and design rationale                  |
+| **Configuration Guide**     | `CONFIGURATION.md`   | Configuration options, environment variables, and tuning               |
+| **Feature Matrix**          | `FEATURE_MATRIX.md`  | Feature coverage, capabilities, and roadmap alignment                  |
+| **Smart Contracts**         | `SMART_CONTRACTS.md` | Smart contract architecture, interfaces, and security considerations   |
+| **Security Guide**          | `SECURITY.md`        | Security model, threat assumptions, and responsible disclosure process |
+| **Contributing Guidelines** | `CONTRIBUTING.md`    | Contribution workflow, coding standards, and PR requirements           |
+| **Troubleshooting**         | `TROUBLESHOOTING.md` | Common issues, diagnostics, and remediation steps                      |
 
 ## Contributing Guidelines
 
-| Step                | Command/Action                                                          |
-| :------------------ | :---------------------------------------------------------------------- |
-| **1. Fork**         | Fork the repository.                                                    |
-| **2. Branch**       | Create your feature branch (`git checkout -b feature/amazing-feature`). |
-| **3. Commit**       | Commit your changes (`git commit -m 'Add some amazing feature'`).       |
-| **4. Push**         | Push to the branch (`git push origin feature/amazing-feature`).         |
-| **5. Pull Request** | Open a Pull Request.                                                    |
+We welcome contributions to NexaFi. Please follow these guidelines to ensure a smooth and effective collaboration:
 
-## License & Legal Information
+1.  **Open an Issue:** Before starting work, open an issue to discuss your proposed feature or bug fix.
+2.  **Fork and Branch:** Fork the repository and create a new branch for your changes.
+3.  **Code Standards:** Adhere to the existing code style and ensure all tests pass.
+4.  **Documentation:** Update the relevant documentation for any new features or changes.
+5.  **Pull Request:** Submit a pull request with a clear description of your changes and reference the related issue.
 
-NexaFi is released under the **MIT License**.
+---
+
+## License
+
+NexaFi is released under the **MIT License**. For full details, see the [LICENSE](LICENSE) file in the repository root.
