@@ -1,4 +1,4 @@
-# NexaFi Operational Scripts: Comprehensive Documentation
+# NexaFi Automation Scripts
 
 This document provides a structured and detailed overview of the operational scripts used within the NexaFi project. These scripts are designed to streamline the entire development and deployment lifecycle, covering setup, execution, maintenance, quality assurance, and cleanup. The focus is on providing **automation, consistency, and ease of use** for developers and operators managing the NexaFi platform.
 
