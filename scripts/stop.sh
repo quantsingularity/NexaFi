@@ -11,10 +11,10 @@ echo "🛑 Stopping NexaFi Application..."
 
 # --- Stop Backend Services ---
 echo "Stopping backend services..."
-if [ -f "backend/stop_services.sh" ]; then
-    ./backend/stop_services.sh
+if [ -f "code/backend/stop_services.sh" ]; then
+    ./code/backend/stop_services.sh
 else
-    echo "Warning: backend/stop_services.sh not found. Cannot stop backend services cleanly."
+    echo "Warning: code/backend/stop_services.sh not found. Cannot stop backend services cleanly."
 fi
 
 # --- Stop Infrastructure Services ---

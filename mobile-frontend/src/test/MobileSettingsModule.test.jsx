@@ -47,18 +47,14 @@ describe("MobileSettingsModule", () => {
       expect(
         screen.getByRole("tab", { name: /security/i }),
       ).toBeInTheDocument();
-      expect(
-        screen.getByRole("tab", { name: /preferences/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /prefs/i })).toBeInTheDocument();
     });
   });
 
   it("shows notifications tab", async () => {
     render(<MobileSettingsModule />, { wrapper });
     await waitFor(() => {
-      expect(
-        screen.getByRole("tab", { name: /notifications/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /alerts/i })).toBeInTheDocument();
     });
   });
 
@@ -115,7 +111,7 @@ describe("MobileSettingsModule", () => {
     const user = userEvent.setup();
     render(<MobileSettingsModule />, { wrapper });
 
-    await user.click(screen.getByRole("tab", { name: /preferences/i }));
+    await user.click(screen.getByRole("tab", { name: /prefs/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Dark Mode/i)).toBeInTheDocument();

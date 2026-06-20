@@ -34,89 +34,97 @@ ALL_LINT_SUCCESS=true
 
 # Lint Python files (Backend)
 lint_python() {
-    print_status "Linting Python files in backend/ with flake8 and black..."
+    print_status "Linting Python files in code/backend/ with flake8 and black..."
 
     # Check for flake8
-    if ! command -v flake8 &> /dev/null; then\n        print_warning "flake8 not found. Attempting to install..."\n        pip install flake8 || { print_error "Failed to install flake8. Skipping Python linting."; return; }
+    if ! command -v flake8 &> /dev/null; then
+        print_warning "flake8 not found. Attempting to install..."
+        pip install flake8 || { print_error "Failed to install flake8. Skipping Python linting."; return; }
 
     fi
 
     # Check for black
-    if ! command -v black &> /dev/null; then\n        print_warning "black not found. Attempting to install..."\n        pip install black || { print_error "Failed to install black. Skipping Python formatting check."; return; }
+    if ! command -v black &> /dev/null; then
+        print_warning "black not found. Attempting to install..."
+        pip install black || { print_error "Failed to install black. Skipping Python formatting check."; return; }
 
     fi
 
     # Run flake8
-    if ! flake8 backend/ --exclude=venv,node_modules --max-line-length=120; then
-        print_error "flake8 found issues in backend/"
+    if ! flake8 code/backend/ --exclude=venv,node_modules --max-line-length=120; then
+        print_error "flake8 found issues in code/backend/"
         ALL_LINT_SUCCESS=false
     else
-        print_success "flake8 passed for backend/"
+        print_success "flake8 passed for code/backend/"
     fi
 
     # Run black check (no changes)
-    if ! black --check backend/; then
-        print_error "black found formatting issues in backend/. Run 'black backend/' to fix."
+    if ! black --check code/backend/; then
+        print_error "black found formatting issues in code/backend/. Run 'black code/backend/' to fix."
         ALL_LINT_SUCCESS=false
     else
-        print_success "black check passed for backend/"
+        print_success "black check passed for code/backend/"
     fi
 }
 
 # Lint JavaScript/React files (Frontend)
 lint_javascript() {
-    print_status "Linting JavaScript/React files in nexafi-frontend/ and nexafi-mobile-frontend/ with eslint and prettier..."
+    print_status "Linting JavaScript/React files in web-frontend/ and mobile-frontend/ with eslint and prettier..."
 
     # Check for eslint
-    if ! command -v eslint &> /dev/null; then\n        print_warning "eslint not found. Skipping JavaScript linting. Please ensure it's installed in your project."\n        return
+    if ! command -v eslint &> /dev/null; then
+        print_warning "eslint not found. Skipping JavaScript linting. Please ensure it's installed in your project."
+        return
 
     fi
 
     # Check for prettier
-    if ! command -v prettier &> /dev/null; then\n        print_warning "prettier not found. Skipping JavaScript formatting check. Please ensure it's installed in your project."\n        return
+    if ! command -v prettier &> /dev/null; then
+        print_warning "prettier not found. Skipping JavaScript formatting check. Please ensure it's installed in your project."
+        return
 
     fi
 
     # Lint desktop frontend
-    if [ -d "nexafi-frontend" ]; then
-        print_status "Linting nexafi-frontend/"
-        cd nexafi-frontend
+    if [ -d "web-frontend" ]; then
+        print_status "Linting web-frontend/"
+        cd web-frontend
         if ! eslint src/ --ext .js,.jsx,.ts,.tsx; then
-            print_error "eslint found issues in nexafi-frontend/"
+            print_error "eslint found issues in web-frontend/"
             ALL_LINT_SUCCESS=false
         else
-            print_success "eslint passed for nexafi-frontend/"
+            print_success "eslint passed for web-frontend/"
         fi
         if ! prettier --check src/; then
-            print_error "prettier found formatting issues in nexafi-frontend/. Run 'prettier --write src/' to fix."
+            print_error "prettier found formatting issues in web-frontend/. Run 'prettier --write src/' to fix."
             ALL_LINT_SUCCESS=false
         else
-            print_success "prettier check passed for nexafi-frontend/"
+            print_success "prettier check passed for web-frontend/"
         fi
         cd ..
     else
-        print_warning "nexafi-frontend/ directory not found. Skipping."
+        print_warning "web-frontend/ directory not found. Skipping."
     fi
 
     # Lint mobile frontend
-    if [ -d "nexafi-mobile-frontend" ]; then
-        print_status "Linting nexafi-mobile-frontend/"
-        cd nexafi-mobile-frontend
+    if [ -d "mobile-frontend" ]; then
+        print_status "Linting mobile-frontend/"
+        cd mobile-frontend
         if ! eslint src/ --ext .js,.jsx,.ts,.tsx; then
-            print_error "eslint found issues in nexafi-mobile-frontend/"
+            print_error "eslint found issues in mobile-frontend/"
             ALL_LINT_SUCCESS=false
         else
-            print_success "eslint passed for nexafi-mobile-frontend/"
+            print_success "eslint passed for mobile-frontend/"
         fi
         if ! prettier --check src/; then
-            print_error "prettier found formatting issues in nexafi-mobile-frontend/. Run 'prettier --write src/' to fix."
+            print_error "prettier found formatting issues in mobile-frontend/. Run 'prettier --write src/' to fix."
             ALL_LINT_SUCCESS=false
         else
-            print_success "prettier check passed for nexafi-mobile-frontend/"
+            print_success "prettier check passed for mobile-frontend/"
         fi
         cd ..
     else
-        print_warning "nexafi-mobile-frontend/ directory not found. Skipping."
+        print_warning "mobile-frontend/ directory not found. Skipping."
     fi
 }
 
@@ -125,7 +133,9 @@ lint_yaml() {
     print_status "Linting YAML files in infra/ with yamllint..."
 
     # Check for yamllint
-    if ! command -v yamllint &> /dev/null; then\n        print_warning "yamllint not found. Attempting to install..."\n        pip install yamllint || { print_error "Failed to install yamllint. Skipping YAML linting."; return; }
+    if ! command -v yamllint &> /dev/null; then
+        print_warning "yamllint not found. Attempting to install..."
+        pip install yamllint || { print_error "Failed to install yamllint. Skipping YAML linting."; return; }
 
     fi
 
@@ -146,12 +156,14 @@ lint_markdown() {
     print_status "Linting Markdown files with markdownlint-cli..."
 
     # Check for markdownlint-cli
-    if ! command -v markdownlint &> /dev/null; then\n        print_warning "markdownlint-cli not found. Skipping Markdown linting. Please ensure it's installed globally or locally."\n        return
+    if ! command -v markdownlint &> /dev/null; then
+        print_warning "markdownlint-cli not found. Skipping Markdown linting. Please ensure it's installed globally or locally."
+        return
 
     fi
 
     # Find all markdown files in the project, excluding node_modules and venv
-    MARKDOWN_FILES=$(find . -name "*.md" -not -path "./node_modules/*" -not -path "./venv/*" -not -path "./backend/*/venv/*" -not -path "./nexafi-frontend/node_modules/*" -not -path "./nexafi-mobile-frontend/node_modules/*")
+    MARKDOWN_FILES=$(find . -name "*.md" -not -path "./node_modules/*" -not -path "./venv/*" -not -path "./code/backend/*/venv/*" -not -path "./web-frontend/node_modules/*" -not -path "./mobile-frontend/node_modules/*")
 
     if [ -n "$MARKDOWN_FILES" ]; then
         if ! echo "$MARKDOWN_FILES" | xargs markdownlint --config .markdownlint.jsonc; then

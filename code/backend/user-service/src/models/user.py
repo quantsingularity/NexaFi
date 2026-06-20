@@ -1,10 +1,14 @@
+# Use the real shared BaseModel so the model has working persistence
+# (__init__ from kwargs, save, find_one, and the shared db_manager). The
+# previous placeholder inherited object, so User(**kwargs) and User.save()
+# both failed at runtime.
+import os
+import sys
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-
-class BaseModel:
-    """Placeholder for BaseModel to avoid import errors in this file.
-    The actual BaseModel is imported and set in main.py."""
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "shared"))
+from database.manager import BaseModel
 
 
 class User(BaseModel):

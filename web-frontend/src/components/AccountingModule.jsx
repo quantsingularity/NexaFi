@@ -93,7 +93,10 @@ const AccountingModule = () => {
 
   useEffect(() => {
     loadAccountingData();
-  }, [loadAccountingData]);
+    // Load once on mount. Depending on loadAccountingData would re-fire the effect
+    // whenever the addNotification identity changes and loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const AccountsOverview = () => {
     const accountsByType = accounts.reduce((acc, account) => {

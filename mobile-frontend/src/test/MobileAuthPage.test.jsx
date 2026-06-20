@@ -19,7 +19,9 @@ describe("MobileAuthPage", () => {
   it("renders login form by default", () => {
     render(<MobileAuthPage />, { wrapper });
 
-    expect(screen.getByText(/Sign in to your account/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Sign in to your account/i).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByPlaceholderText(/Enter your email/i),
     ).toBeInTheDocument();

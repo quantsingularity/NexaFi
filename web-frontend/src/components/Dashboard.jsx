@@ -160,7 +160,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, [loadDashboardData]);
+    // Dashboard data only needs to load once on mount. loadDashboardData is
+    // recreated when the addNotification identity changes, so depending on it
+    // here would re-fire the effect on every render and loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const MetricCard = ({ title, value, change, icon: Icon, trend }) => (
     <Card className="hover:shadow-lg transition-shadow">
@@ -281,7 +285,7 @@ const Dashboard = () => {
             Welcome back, {user?.first_name}!
           </h1>
           <p className="text-gray-600 mt-1">
-            Here's what's happening with {user?.business_name} today.
+            Here's what's happening with {user?.company_name} today.
           </p>
         </div>
         <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">

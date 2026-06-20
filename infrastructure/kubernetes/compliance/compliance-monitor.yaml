@@ -120,7 +120,7 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/v1/health
               port: 8080
               scheme: HTTP
             initialDelaySeconds: 30
@@ -129,7 +129,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /ready
+              path: /api/v1/health
               port: 8080
               scheme: HTTP
             initialDelaySeconds: 5

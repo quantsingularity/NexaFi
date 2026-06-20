@@ -17,7 +17,6 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -225,7 +224,7 @@ const Header = ({ onMenuClick }) => {
                     {user?.first_name} {user?.last_name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {user?.business_name}
+                    {user?.company_name}
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4" />

@@ -14,7 +14,10 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-import geoip2.database
+try:
+    import geoip2.database
+except ImportError:  # optional dependency, guarded at point of use
+    geoip2 = None
 import redis
 import user_agents
 from sqlalchemy import (
@@ -184,7 +187,7 @@ class ContextAnalyzer:
         self.db_session = db_session
         self.logger = logging.getLogger(__name__)
         self.geoip_reader = None
-        if geoip_db_path and os.path.exists(geoip_db_path):
+        if geoip2 is not None and geoip_db_path and os.path.exists(geoip_db_path):
             try:
                 self.geoip_reader = geoip2.database.Reader(geoip_db_path)
             except Exception as e:

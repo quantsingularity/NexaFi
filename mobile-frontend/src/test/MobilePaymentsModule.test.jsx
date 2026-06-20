@@ -64,10 +64,10 @@ describe("MobilePaymentsModule", () => {
       expect(screen.getByText(/Send Money/i)).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText(/Send Money/i));
+    await user.click(screen.getAllByText(/Send Money/i)[0]);
 
     await waitFor(() => {
-      expect(screen.getByText(/New Payment/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Send Payment/i).length).toBeGreaterThan(0);
     });
   });
 

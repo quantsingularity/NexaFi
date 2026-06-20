@@ -1,5 +1,4 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AuthProvider,
@@ -58,11 +57,11 @@ describe("AuthContext", () => {
   });
 
   it("starts unauthenticated with no user", () => {
-    let captured = {};
+    let _captured = {};
     renderWithAuth(
       <AuthConsumer
         onRender={(v) => {
-          captured = v;
+          _captured = v;
         }}
       />,
     );
@@ -219,7 +218,7 @@ describe("AuthContext", () => {
         password: "securepass",
         first_name: "New",
         last_name: "User",
-        business_name: "Test Co",
+        company_name: "Test Co",
       });
     });
 
@@ -241,7 +240,9 @@ describe("AuthContext", () => {
     await act(async () => {
       try {
         await authRef.login({ email: "x", password: "y" });
-      } catch {}
+      } catch {
+        // login is expected to throw here; the error state is asserted below
+      }
     });
     expect(screen.getByTestId("error").textContent).not.toBe("");
 
@@ -280,12 +281,12 @@ describe("AppContext", () => {
   });
 
   it("starts with default light theme", () => {
-    let appRef = {};
+    let _appRef = {};
     render(
       <AppProvider>
         <AppConsumer
           onRender={(v) => {
-            appRef = v;
+            _appRef = v;
           }}
         />
       </AppProvider>,
@@ -351,7 +352,6 @@ describe("AppContext", () => {
       </AppProvider>,
     );
 
-    let notifId;
     act(() => {
       appRef.addNotification({ type: "info", title: "T", message: "M" });
     });

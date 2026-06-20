@@ -48,7 +48,7 @@ const MobileAuthPage = () => {
     email: "",
     password: "",
     confirm_password: "",
-    business_name: "",
+    company_name: "",
     phone: "",
   });
 
@@ -203,7 +203,7 @@ const MobileAuthPage = () => {
                   <p className="text-sm text-gray-500 mb-4 text-center">
                     Sign in to your account
                   </p>
-                  <form onSubmit={handleLogin} className="space-y-4">
+                  <form onSubmit={handleLogin} noValidate className="space-y-4">
                     <div className="space-y-2">
                       <Label
                         htmlFor="login-email"
@@ -297,7 +297,11 @@ const MobileAuthPage = () => {
                   <p className="text-sm text-gray-500 mb-4 text-center">
                     Create your account
                   </p>
-                  <form onSubmit={handleRegister} className="space-y-4">
+                  <form
+                    onSubmit={handleRegister}
+                    noValidate
+                    className="space-y-4"
+                  >
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label
@@ -384,11 +388,11 @@ const MobileAuthPage = () => {
                         <Input
                           id="business-name"
                           placeholder="Your business name"
-                          value={registerData.business_name}
+                          value={registerData.company_name}
                           onChange={(e) =>
                             setRegisterData((prev) => ({
                               ...prev,
-                              business_name: e.target.value,
+                              company_name: e.target.value,
                             }))
                           }
                           className="pl-10 h-12 text-base"

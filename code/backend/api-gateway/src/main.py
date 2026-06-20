@@ -19,7 +19,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "nexafi-default-secret-change-in-production"
 )
-init_auth_manager(app.config["SECRET_KEY"])
+auth_manager = init_auth_manager(app.config["SECRET_KEY"])
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
 setup_request_logging(app)
 logger = get_logger("api_gateway")
@@ -67,6 +67,31 @@ SERVICES = {
         "timeout": 60,
         "retry_count": 2,
         "circuit_breaker": {"failure_threshold": 3, "recovery_timeout": 120},
+    },
+    "notification-service": {
+        "url": os.environ.get(
+            "NOTIFICATION_SERVICE_URL", "http://notification-service:5007"
+        ),
+        "health_endpoint": "/api/v1/health",
+        "routes": ["/api/v1/notifications"],
+        "timeout": 30,
+        "retry_count": 3,
+        "circuit_breaker": {"failure_threshold": 5, "recovery_timeout": 60},
+    },
+    "compliance-service": {
+        "url": os.environ.get(
+            "COMPLIANCE_SERVICE_URL", "http://compliance-service:5005"
+        ),
+        "health_endpoint": "/api/v1/health",
+        "routes": [
+            "/api/v1/compliance",
+            "/api/v1/kyc",
+            "/api/v1/aml",
+            "/api/v1/sanctions",
+        ],
+        "timeout": 30,
+        "retry_count": 3,
+        "circuit_breaker": {"failure_threshold": 5, "recovery_timeout": 60},
     },
 }
 circuit_breaker_state: Dict[str, Dict[str, Any]] = {}
@@ -316,14 +341,7 @@ def proxy_request(path: str) -> Tuple[Response, int]:
     if request.is_json:
         data = request.get_json()
     user_id = getattr(g, "current_user", {}).get("user_id")
-    audit_logger.log_api_access(
-        user_id=user_id,
-        endpoint=full_path,
-        method=request.method,
-        status_code=200,
-        ip_address=request.environ.get("HTTP_X_FORWARDED_FOR", request.remote_addr),
-        user_agent=request.headers.get("User-Agent", ""),
-    )
+    start_time = time.time()
     result, status_code = forward_request(
         service_name,
         service_config,
@@ -332,6 +350,15 @@ def proxy_request(path: str) -> Tuple[Response, int]:
         headers=dict(request.headers),
         data=data,
         params=dict(request.args),
+    )
+    audit_logger.log_api_access(
+        user_id=user_id,
+        endpoint=full_path,
+        method=request.method,
+        status_code=status_code,
+        ip_address=request.environ.get("HTTP_X_FORWARDED_FOR", request.remote_addr),
+        user_agent=request.headers.get("User-Agent", ""),
+        response_time=time.time() - start_time,
     )
     return (jsonify(result), status_code)
 

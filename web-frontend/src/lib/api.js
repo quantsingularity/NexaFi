@@ -101,6 +101,13 @@ class ApiClient {
       await this.request("/auth/logout", {
         method: "POST",
       });
+    } catch (error) {
+      // Logging out locally must always succeed, even if the server call
+      // fails (for example when offline). The token is still cleared below.
+      console.warn(
+        "Logout request failed; clearing local session anyway.",
+        error,
+      );
     } finally {
       this.setToken(null);
     }

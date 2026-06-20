@@ -196,13 +196,29 @@ const appReducer = (state, action) => {
 const initialAppState = {
   loading: false,
   error: null,
-  theme: localStorage.getItem("nexafi_theme") || "light",
+  theme: "light",
   sidebarOpen: true,
   notifications: [],
 };
 
+// Read persisted state when the provider actually mounts, rather than when the
+// module is first imported. This makes theme restoration robust regardless of
+// import timing.
+const initAppState = (base) => ({
+  ...base,
+  theme: localStorage.getItem("nexafi_theme") || "light",
+});
+
 export const AppProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(appReducer, initialAppState);
+  const [state, dispatch] = useReducer(
+    appReducer,
+    initialAppState,
+    initAppState,
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", state.theme === "dark");
+  }, [state.theme]);
 
   const setLoading = (loading) => {
     dispatch({ type: "SET_LOADING", payload: loading });

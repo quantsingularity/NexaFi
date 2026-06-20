@@ -46,7 +46,7 @@ const SettingsModule = () => {
     last_name: user?.last_name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    business_name: user?.business_name || "",
+    company_name: user?.company_name || "",
     business_address: user?.business_address || "",
     business_phone: user?.business_phone || "",
     business_website: user?.business_website || "",
@@ -240,14 +240,14 @@ const SettingsModule = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="business_name">Business Name</Label>
+            <Label htmlFor="company_name">Business Name</Label>
             <Input
-              id="business_name"
-              value={profileData.business_name}
+              id="company_name"
+              value={profileData.company_name}
               onChange={(e) =>
                 setProfileData((prev) => ({
                   ...prev,
-                  business_name: e.target.value,
+                  company_name: e.target.value,
                 }))
               }
               placeholder="Enter your business name"

@@ -15,9 +15,15 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 warnings.filterwarnings("ignore")
-import lime
-import lime.lime_tabular
-import shap
+try:
+    import lime
+    import lime.lime_tabular
+except ImportError:  # optional explainability dependency, guarded at point of use
+    lime = None
+try:
+    import shap
+except ImportError:  # optional explainability dependency, guarded at point of use
+    shap = None
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import partial_dependence, permutation_importance
 
@@ -27,7 +33,13 @@ except ImportError:
     DEEP_LEARNING_AVAILABLE = False
 import uuid
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+except ImportError:  # optional plotting dependency, guarded at point of use
+    plt = None
 import redis
 import structlog
 from sqlalchemy import (

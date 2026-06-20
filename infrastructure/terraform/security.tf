@@ -109,8 +109,14 @@ resource "aws_wafv2_web_acl" "nexafi_api" {
     statement {
       sqli_match_statement {
         field_to_match { body { oversize_handling = "CONTINUE" } }
-        text_transformation { priority = 1; type = "URL_DECODE" }
-        text_transformation { priority = 2; type = "HTML_ENTITY_DECODE" }
+        text_transformation {
+          priority = 1
+          type = "URL_DECODE"
+        }
+        text_transformation {
+          priority = 2
+          type = "HTML_ENTITY_DECODE"
+        }
       }
     }
     visibility_config {
@@ -127,8 +133,14 @@ resource "aws_wafv2_web_acl" "nexafi_api" {
     statement {
       xss_match_statement {
         field_to_match { body { oversize_handling = "CONTINUE" } }
-        text_transformation { priority = 1; type = "URL_DECODE" }
-        text_transformation { priority = 2; type = "HTML_ENTITY_DECODE" }
+        text_transformation {
+          priority = 1
+          type = "URL_DECODE"
+        }
+        text_transformation {
+          priority = 2
+          type = "HTML_ENTITY_DECODE"
+        }
       }
     }
     visibility_config {
@@ -438,9 +450,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "security_logs" {
     id     = "security_log_lifecycle"
     status = "Enabled"
     filter { prefix = "" }
-    transition { days = 30; storage_class = "STANDARD_IA" }
-    transition { days = 90; storage_class = "GLACIER" }
-    transition { days = 365; storage_class = "DEEP_ARCHIVE" }
+    transition {
+      days = 30
+      storage_class = "STANDARD_IA"
+    }
+    transition {
+      days = 90
+      storage_class = "GLACIER"
+    }
+    transition {
+      days = 365
+      storage_class = "DEEP_ARCHIVE"
+    }
     expiration { days = 2555 }
   }
 }

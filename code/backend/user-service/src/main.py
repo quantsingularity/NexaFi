@@ -63,7 +63,7 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 5001))
 
 # Initialize Auth Manager
-init_auth_manager(app.config["SECRET_KEY"])
+auth_manager = init_auth_manager(app.config["SECRET_KEY"])
 
 # CORS Configuration (Restrict in production)
 CORS(

@@ -1,4 +1,6 @@
-#!/bin/bash\n\nset -euo pipefail
+#!/bin/bash
+
+set -euo pipefail
 
 # Setup script for NexaFi
 
@@ -25,15 +27,19 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 echo "Setting up backend dependencies..."
 
 # Install Python dependencies for each service in a virtual environment
-for service_dir in backend/*/; do
+for service_dir in code/backend/*/; do
   if [ -f "${service_dir}requirements.txt" ]; then
     echo "Installing dependencies for ${service_dir}..."
-    cd "${service_dir}" || { echo "Failed to change directory to ${service_dir}"; exit 1; }
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-    deactivate
-    cd ..
+    # Run in a subshell so the working directory is restored automatically.
+    # The previous version descended two levels but only ran "cd ..", which
+    # broke the loop after the first service.
+    (
+      cd "${service_dir}" || exit 1
+      python3 -m venv venv
+      source venv/bin/activate
+      pip install -r requirements.txt
+      deactivate
+    ) || { echo "Failed to set up ${service_dir}"; exit 1; }
   fi
 done
 

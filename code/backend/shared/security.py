@@ -813,3 +813,146 @@ class SecurityMonitor:
             "events_by_type": events or [],
             "top_threat_indicators": indicators or [],
         }
+
+
+@dataclass
+class SessionInfo:
+    """Lightweight view of a stored session returned by validation."""
+
+    session_id: str
+    user_id: str
+    security_level: str
+    mfa_verified: bool
+    is_active: bool
+    expires_at: float
+
+    @property
+    def is_valid(self) -> bool:
+        """A session is valid when it is active and not yet expired."""
+        return bool(self.is_active) and time.time() < float(self.expires_at)
+
+
+class SecureSessionManager:
+    """
+    Database-backed secure session store.
+
+    Sessions are identified by an unguessable token and persisted via the
+    shared database manager. Used by the auth service to track login
+    sessions, step-up MFA state, and logout/invalidation.
+    """
+
+    DEFAULT_TTL_SECONDS = 3600
+
+    def __init__(self, db_manager: object, encryption: object = None) -> None:
+        self.db_manager = db_manager
+        self.encryption = encryption
+        self.logger = logging.getLogger(__name__)
+        self._initialize_session_tables()
+
+    def _initialize_session_tables(self) -> None:
+        statements = [
+            """
+            CREATE TABLE IF NOT EXISTS secure_sessions (
+                session_id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                device_fingerprint TEXT,
+                security_level TEXT DEFAULT 'low',
+                mfa_verified INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                created_at REAL NOT NULL,
+                last_seen_at REAL NOT NULL,
+                expires_at REAL NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_secure_sessions_user_id "
+            "ON secure_sessions(user_id)",
+        ]
+        for stmt in statements:
+            self.db_manager.execute_query(stmt)
+
+    def create_session(
+        self,
+        user_id: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        device_fingerprint: Optional[str] = None,
+        security_level: object = None,
+        ttl_seconds: Optional[int] = None,
+    ) -> str:
+        """Create a new session and return its opaque session token."""
+        session_id = secrets.token_urlsafe(48)
+        now = time.time()
+        ttl = ttl_seconds or self.DEFAULT_TTL_SECONDS
+        level_value = getattr(security_level, "value", security_level) or "low"
+
+        self.db_manager.execute_query(
+            """
+            INSERT INTO secure_sessions (
+                session_id, user_id, ip_address, user_agent,
+                device_fingerprint, security_level, mfa_verified,
+                is_active, created_at, last_seen_at, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?)
+            """,
+            (
+                session_id,
+                str(user_id),
+                ip_address,
+                user_agent,
+                device_fingerprint,
+                str(level_value),
+                now,
+                now,
+                now + ttl,
+            ),
+        )
+        return session_id
+
+    def validate_session(self, session_token: str) -> Optional[SessionInfo]:
+        """Return a SessionInfo for a token, or None if it does not exist."""
+        if not session_token:
+            return None
+        row = self.db_manager.fetch_one(
+            "SELECT * FROM secure_sessions WHERE session_id = ?",
+            (session_token,),
+        )
+        if not row:
+            return None
+
+        session = SessionInfo(
+            session_id=row["session_id"],
+            user_id=row["user_id"],
+            security_level=row.get("security_level", "low"),
+            mfa_verified=bool(row.get("mfa_verified", 0)),
+            is_active=bool(row.get("is_active", 0)),
+            expires_at=float(row.get("expires_at", 0) or 0),
+        )
+
+        if session.is_valid:
+            self.db_manager.execute_query(
+                "UPDATE secure_sessions SET last_seen_at = ? WHERE session_id = ?",
+                (time.time(), session_token),
+            )
+        return session
+
+    def mark_mfa_verified(self, session_id: str) -> bool:
+        """Flag a session as having passed step-up MFA."""
+        if not session_id:
+            return False
+        self.db_manager.execute_query(
+            "UPDATE secure_sessions SET mfa_verified = 1, last_seen_at = ? "
+            "WHERE session_id = ?",
+            (time.time(), session_id),
+        )
+        return True
+
+    def invalidate_session(self, session_id: str) -> bool:
+        """Deactivate a session (logout)."""
+        if not session_id:
+            return False
+        self.db_manager.execute_query(
+            "UPDATE secure_sessions SET is_active = 0 WHERE session_id = ?",
+            (session_id,),
+        )
+        return True

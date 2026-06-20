@@ -63,16 +63,20 @@ ENV SERVICE_PORT=${SERVICE_PORT} \
 EXPOSE ${SERVICE_PORT}
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:${SERVICE_PORT}/health || exit 1
+  CMD curl -f "http://localhost:${SERVICE_PORT}/api/v1/health" || exit 1
 
-CMD ["python", "-m", "gunicorn", \
-     "--bind", "0.0.0.0:${SERVICE_PORT}", \
-     "--workers", "4", \
-     "--worker-class", "gthread", \
-     "--threads", "2", \
-     "--timeout", "120", \
-     "--keep-alive", "5", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--log-level", "info", \
-     "app:app"]
+# Shell form so ${SERVICE_PORT} is expanded at runtime. Exec (JSON array) form
+# does not perform environment-variable substitution, which would make gunicorn
+# try to bind the literal string "0.0.0.0:${SERVICE_PORT}".
+# PYTHONPATH includes /app, so the Flask app in src/main.py is "src.main:app".
+CMD gunicorn \
+    --bind "0.0.0.0:${SERVICE_PORT}" \
+    --workers 4 \
+    --worker-class gthread \
+    --threads 2 \
+    --timeout 120 \
+    --keep-alive 5 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    src.main:app

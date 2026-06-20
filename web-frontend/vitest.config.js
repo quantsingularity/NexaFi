@@ -10,7 +10,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.js",
     include: ["src/**/*.{test,spec}.{js,jsx}"],
-    css: true,
+    css: false,
   },
   resolve: {
     alias: {

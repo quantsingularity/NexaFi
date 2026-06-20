@@ -19,7 +19,10 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import cx_Oracle
+try:
+    import cx_Oracle
+except ImportError:  # optional Oracle DB driver, guarded at point of use
+    cx_Oracle = None
 import jwt
 import pandas as pd
 import requests
@@ -228,6 +231,10 @@ class OracleDatabaseConnector:
     def connect(self) -> bool:
         """Connect to Oracle Database"""
         try:
+            if cx_Oracle is None:
+                raise RuntimeError(
+                    "cx_Oracle is required for Oracle connections but is not installed"
+                )
             if self.oracle_config.database_service_name:
                 dsn = cx_Oracle.makedsn(
                     self.oracle_config.database_host,

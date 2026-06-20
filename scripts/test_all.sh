@@ -36,8 +36,8 @@ run_backend_tests() {
         return
     fi
 
-    # Run tests from the root 'tests' directory, focusing on Python tests
-    if ! pytest tests/integration tests/unit/shared; then
+    # Run the backend Python test suites from their real locations.
+    if ! pytest code/backend/tests code/ml_services/tests code/platform_services/tests; then
         print_error "Backend Python tests failed."
         ALL_TESTS_SUCCESS=false
     else

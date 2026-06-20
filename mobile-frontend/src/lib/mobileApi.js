@@ -1,18 +1,18 @@
 // Mobile-optimized API configuration and utilities
-const API_BASE_URL = "http://localhost:5000"; // API Gateway URL
+const API_BASE_URL = "http://localhost:5000/api/v1"; // API Gateway (all routes under /api/v1)
 
 class MobileApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
-    this.token = localStorage.getItem("token");
+    this.token = localStorage.getItem("access_token");
   }
 
   setToken(token) {
     this.token = token;
     if (token) {
-      localStorage.setItem("token", token);
+      localStorage.setItem("access_token", token);
     } else {
-      localStorage.removeItem("token");
+      localStorage.removeItem("access_token");
     }
   }
 
@@ -65,22 +65,38 @@ class MobileApiClient {
 
   // Authentication endpoints
   async login(credentials) {
-    return this.request("/auth/login", {
+    const response = await this.request("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
+    const token = response?.token || response?.access_token;
+    if (token) {
+      this.setToken(token);
+    }
+    return response;
   }
 
   async register(userData) {
-    return this.request("/auth/register", {
+    const response = await this.request("/auth/register", {
       method: "POST",
       body: JSON.stringify(userData),
     });
+    const token = response?.token || response?.access_token;
+    if (token) {
+      this.setToken(token);
+    }
+    return response;
   }
 
   async logout() {
     try {
       await this.request("/auth/logout", { method: "POST" });
+    } catch (error) {
+      // Logging out locally must always succeed even if the server call fails.
+      console.warn(
+        "Logout request failed; clearing local session anyway.",
+        error,
+      );
     } finally {
       this.setToken(null);
     }
@@ -114,13 +130,11 @@ class MobileApiClient {
   // Accounting endpoints
   async getAccounts(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request(
-      `/accounting/accounts${queryString ? `?${queryString}` : ""}`,
-    );
+    return this.request(`/accounts${queryString ? `?${queryString}` : ""}`);
   }
 
   async createAccount(accountData) {
-    return this.request("/accounting/accounts", {
+    return this.request("/accounts", {
       method: "POST",
       body: JSON.stringify(accountData),
     });
@@ -129,12 +143,12 @@ class MobileApiClient {
   async getJournalEntries(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     return this.request(
-      `/accounting/journal-entries${queryString ? `?${queryString}` : ""}`,
+      `/journal-entries${queryString ? `?${queryString}` : ""}`,
     );
   }
 
   async createJournalEntry(entryData) {
-    return this.request("/accounting/journal-entries", {
+    return this.request("/journal-entries", {
       method: "POST",
       body: JSON.stringify(entryData),
     });
@@ -143,17 +157,17 @@ class MobileApiClient {
   async getFinancialReports(reportType, params = {}) {
     const queryString = new URLSearchParams(params).toString();
     return this.request(
-      `/accounting/reports/${reportType}${queryString ? `?${queryString}` : ""}`,
+      `/reports/${reportType}${queryString ? `?${queryString}` : ""}`,
     );
   }
 
   // Payment endpoints
   async getPaymentMethods() {
-    return this.request("/payments/methods");
+    return this.request("/payment-methods");
   }
 
   async addPaymentMethod(methodData) {
-    return this.request("/payments/methods", {
+    return this.request("/payment-methods", {
       method: "POST",
       body: JSON.stringify(methodData),
     });
@@ -161,24 +175,22 @@ class MobileApiClient {
 
   async getTransactions(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request(
-      `/payments/transactions${queryString ? `?${queryString}` : ""}`,
-    );
+    return this.request(`/transactions${queryString ? `?${queryString}` : ""}`);
   }
 
   async createTransaction(transactionData) {
-    return this.request("/payments/transactions", {
+    return this.request("/transactions", {
       method: "POST",
       body: JSON.stringify(transactionData),
     });
   }
 
   async getWallets() {
-    return this.request("/payments/wallets");
+    return this.request("/wallets");
   }
 
   async createWallet(walletData) {
-    return this.request("/payments/wallets", {
+    return this.request("/wallets", {
       method: "POST",
       body: JSON.stringify(walletData),
     });
@@ -187,22 +199,22 @@ class MobileApiClient {
   // AI endpoints
   async getInsights(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request(`/ai/insights${queryString ? `?${queryString}` : ""}`);
+    return this.request(`/insights${queryString ? `?${queryString}` : ""}`);
   }
 
   async getChatSessions() {
-    return this.request("/ai/chat/sessions");
+    return this.request("/chat/sessions");
   }
 
   async sendChatMessage(sessionId, message) {
-    return this.request(`/ai/chat/sessions/${sessionId}/messages`, {
+    return this.request(`/chat/sessions/${sessionId}/messages`, {
       method: "POST",
       body: JSON.stringify({ message }),
     });
   }
 
   async generatePrediction(predictionType, params = {}) {
-    return this.request(`/ai/predictions/${predictionType}`, {
+    return this.request(`/predictions/${predictionType}`, {
       method: "POST",
       body: JSON.stringify(params),
     });

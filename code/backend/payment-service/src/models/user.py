@@ -1,34 +1,12 @@
-from typing import Any, Dict, Optional
+# Use the real shared BaseModel (working __init__/save/find_one and shared
+# db_manager). The previous local BaseModel had no-op or broken-delegation
+# persistence methods.
+import os
+import sys
+from typing import Optional
 
-
-class BaseModel:
-    table_name = None
-    db_manager = None
-
-    def __init__(self, **kwargs) -> None:
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    @classmethod
-    def find_by_id(cls, id_value: object) -> object:
-        pass
-
-    @classmethod
-    def find_all(cls, where_clause: str = "", params: tuple = ()) -> object:
-        pass
-
-    @classmethod
-    def find_one(cls, where_clause: str, params: tuple = ()) -> object:
-        pass
-
-    def save(self) -> object:
-        pass
-
-    def delete(self) -> object:
-        pass
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "shared"))
+from database.manager import BaseModel
 
 
 class PaymentMethod(BaseModel):

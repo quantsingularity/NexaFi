@@ -170,9 +170,9 @@ const MobileLayout = ({ children }) => {
                     <p className="text-xs text-gray-500 truncate">
                       {user?.email}
                     </p>
-                    {user?.business_name && (
+                    {user?.company_name && (
                       <p className="text-xs text-blue-600 truncate">
-                        {user.business_name}
+                        {user.company_name}
                       </p>
                     )}
                   </div>

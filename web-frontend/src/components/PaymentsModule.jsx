@@ -65,9 +65,12 @@ import apiClient from "../lib/api";
 const PaymentsModule = () => {
   const { addNotification } = useApp();
   const [activeTab, setActiveTab] = useState("overview");
+  // eslint-disable-next-line no-unused-vars -- fetched data surfaced during UI modernization
   const [paymentMethods, setPaymentMethods] = useState([]);
+  // eslint-disable-next-line no-unused-vars -- fetched data surfaced during UI modernization
   const [transactions, setTransactions] = useState([]);
   const [wallets, setWallets] = useState([]);
+  // eslint-disable-next-line no-unused-vars -- fetched data surfaced during UI modernization
   const [analytics, setAnalytics] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -113,7 +116,10 @@ const PaymentsModule = () => {
 
   useEffect(() => {
     loadPaymentData();
-  }, [loadPaymentData]);
+    // Load once on mount. Depending on loadPaymentData would re-fire the effect
+    // whenever the addNotification identity changes and loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const PaymentOverview = () => {
     const mockAnalyticsData = [

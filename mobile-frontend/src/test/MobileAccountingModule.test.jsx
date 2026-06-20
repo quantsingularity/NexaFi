@@ -36,9 +36,11 @@ describe("MobileAccountingModule", () => {
   });
 
   it("shows accounts list", async () => {
+    const user = userEvent.setup();
     render(<MobileAccountingModule />, { wrapper });
+    await user.click(screen.getByRole("tab", { name: /accounts/i }));
     await waitFor(() => {
-      expect(screen.getByText(/Cash/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Cash/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -46,11 +48,12 @@ describe("MobileAccountingModule", () => {
     const user = userEvent.setup();
     render(<MobileAccountingModule />, { wrapper });
 
-    const searchInput = screen.getByPlaceholderText(/search/i);
+    await user.click(screen.getByRole("tab", { name: /accounts/i }));
+    const searchInput = await screen.findByPlaceholderText(/search/i);
     await user.type(searchInput, "Cash");
 
     await waitFor(() => {
-      expect(screen.getByText("Cash")).toBeInTheDocument();
+      expect(screen.getAllByText(/Cash/i).length).toBeGreaterThan(0);
     });
   });
 

@@ -84,14 +84,24 @@ running_processes: List[Any] = []
 
 def _start_service(service: Dict[str, Any]) -> object:
     """Start a service and return the process."""
-    base_dir = os.path.dirname(__file__)
-    service_path = os.path.join(base_dir, service["path"])
+    # Service paths (e.g. "user-service/src") are relative to the backend
+    # root, which is the parent of this tests/ directory.
+    backend_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    service_path = os.path.join(backend_root, service["path"])
+
+    if not os.path.isdir(service_path):
+        print(f"x Service path not found: {service_path}")
+        return None
 
     env = os.environ.copy()
     env["PYTHONPATH"] = (
-        os.path.join(base_dir, "shared") + ":" + env.get("PYTHONPATH", "")
+        os.path.join(backend_root, "shared") + ":" + env.get("PYTHONPATH", "")
     )
     env["PORT"] = str(service["port"])
+    # Inject the environment each service requires to boot. Tests must not
+    # depend on a developer's shell already exporting these.
+    env.setdefault("SECRET_KEY", "test-secret-key-for-service-health-checks")
+    env.setdefault("DATABASE_URL", f"sqlite:////tmp/nexafi_test_{service['name']}.db")
 
     print(f"Starting {service['name']} on port {service['port']}...")
 
@@ -106,7 +116,7 @@ def _start_service(service: Dict[str, Any]) -> object:
         )
         return process
     except Exception as e:
-        print(f"✗ Failed to start {service['name']}: {e}")
+        print(f"x Failed to start {service['name']}: {e}")
         return None
 
 

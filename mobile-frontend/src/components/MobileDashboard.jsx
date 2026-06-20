@@ -144,7 +144,11 @@ const MobileDashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, [loadDashboardData]);
+    // Load once on mount. Depending on loadDashboardData would re-fire when the
+    // addNotification identity changes and loop; referencing it in the
+    // dependency array before its declaration would also throw (TDZ).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadDashboardData = useCallback(async () => {
     try {

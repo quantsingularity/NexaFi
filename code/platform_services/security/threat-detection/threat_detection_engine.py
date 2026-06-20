@@ -22,7 +22,11 @@ import joblib
 import numpy as np
 import redis
 import requests
-import slack_sdk
+
+try:
+    import slack_sdk
+except ImportError:  # optional alerting dependency, guarded at point of use
+    slack_sdk = None
 from prometheus_client import Counter, Histogram
 from scipy import stats
 from sklearn.ensemble import IsolationForest
@@ -38,7 +42,11 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
-from twilio.rest import Client as TwilioClient
+
+try:
+    from twilio.rest import Client as TwilioClient
+except ImportError:  # optional SMS dependency, guarded at point of use
+    TwilioClient = None
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
@@ -981,6 +989,9 @@ class AutomatedResponseSystem:
             slack_channel = self.config.get("slack_channel")
             if not slack_token or not slack_channel:
                 return
+            if slack_sdk is None:
+                self.logger.warning("slack_sdk not installed; skipping Slack alert")
+                return
             client = slack_sdk.WebClient(token=slack_token)
             client.chat_postMessage(
                 channel=slack_channel,
@@ -1003,6 +1014,9 @@ class AutomatedResponseSystem:
             twilio_from = self.config.get("twilio_from")
             sms_recipients = self.config.get("sms_recipients", [])
             if not all([twilio_sid, twilio_token, twilio_from, sms_recipients]):
+                return
+            if TwilioClient is None:
+                self.logger.warning("twilio not installed; skipping SMS alert")
                 return
             client = TwilioClient(twilio_sid, twilio_token)
             short_message = f"SECURITY ALERT: {threat_event.threat_type.value.upper()} from {threat_event.source_ip}"

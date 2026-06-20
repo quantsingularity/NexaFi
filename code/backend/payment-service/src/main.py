@@ -8,8 +8,10 @@ sys.path.insert(
     0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "shared")
 )  # shared library
 
+from datetime import datetime, timezone
+
 from database.manager import BaseModel, initialize_database
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from routes.user import payment_bp
 
@@ -18,7 +20,7 @@ app.config["SECRET_KEY"] = os.environ.get(
     "SECRET_KEY", "nexafi-default-secret-change-in-production"
 )
 CORS(app, origins="*", allow_headers=["Content-Type", "Authorization", "X-User-ID"])
-app.register_blueprint(payment_bp, url_prefix="/api/v1/payment")
+app.register_blueprint(payment_bp, url_prefix="/api/v1")
 db_path = os.path.join(os.path.dirname(__file__), "database", "app.db")
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 db_manager, migration_manager = initialize_database(db_path)
@@ -32,6 +34,22 @@ PAYMENT_MIGRATIONS = {
 for version, migration in PAYMENT_MIGRATIONS.items():
     migration_manager.apply_migration(
         version, migration["description"], migration["sql"]
+    )
+
+
+@app.route("/api/v1/health", methods=["GET"])
+def health_check() -> object:
+    """Standard service health endpoint, consistent with the other services."""
+    return (
+        jsonify(
+            {
+                "status": "healthy",
+                "service": "payment-service",
+                "version": "2.0.0",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        ),
+        200,
     )
 
 

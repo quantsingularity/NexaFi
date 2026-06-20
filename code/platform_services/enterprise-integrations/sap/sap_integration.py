@@ -18,7 +18,11 @@ from typing import Any, Dict, List, Optional
 
 import requests
 from oauthlib.oauth2 import WebApplicationClient
-from pyrfc import Connection
+
+try:
+    from pyrfc import Connection
+except ImportError:  # optional SAP RFC dependency, guarded at point of use
+    Connection = None
 from requests.auth import HTTPBasicAuth
 
 _bi_path = _os.path.join(
@@ -272,6 +276,10 @@ class SAPRFCConnector:
                 "passwd": self.config.credentials["password"],
                 "lang": self.sap_config.sap_language,
             }
+            if Connection is None:
+                raise RuntimeError(
+                    "pyrfc is required for SAP RFC connections but is not installed"
+                )
             self.connection = Connection(**connection_params)
             return True
         except Exception as e:

@@ -1,4 +1,6 @@
-#!/bin/bash\n\nset -euo pipefail
+#!/bin/bash
+
+set -euo pipefail
 
 # Run script for NexaFi
 
@@ -15,7 +17,7 @@ cd ..
 
 # --- Start Backend Services ---
 echo "Starting backend services..."
-cd backend
+cd code/backend
 ./start_services.sh || { echo "Failed to start backend services."; exit 1; }
 cd ..
 

@@ -32,7 +32,10 @@ describe("MobileApiClient", () => {
       });
 
       expect(result).toEqual(mockResponse);
-      expect(localStorage.setItem).toHaveBeenCalledWith("token", "test-token");
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        "access_token",
+        "test-token",
+      );
     });
 
     it("includes auth token in subsequent requests", async () => {
@@ -63,7 +66,7 @@ describe("MobileApiClient", () => {
 
       await mobileApiClient.logout();
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("token");
+      expect(localStorage.removeItem).toHaveBeenCalledWith("access_token");
       expect(mobileApiClient.token).toBeNull();
     });
   });
@@ -83,7 +86,7 @@ describe("MobileApiClient", () => {
       await expect(mobileApiClient.getProfile()).rejects.toThrow(
         "Unauthorized",
       );
-      expect(localStorage.removeItem).toHaveBeenCalledWith("token");
+      expect(localStorage.removeItem).toHaveBeenCalledWith("access_token");
 
       window.location = originalLocation;
     });
@@ -136,6 +139,7 @@ describe("MobileApiClient", () => {
     });
 
     it("clears all cached data", () => {
+      const originalKeys = Object.keys;
       Object.keys = vi.fn(() => [
         "cache_key1",
         "cache_key2",
@@ -143,12 +147,17 @@ describe("MobileApiClient", () => {
         "token",
       ]);
 
-      mobileApiClient.clearCache();
+      try {
+        mobileApiClient.clearCache();
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("cache_key1");
-      expect(localStorage.removeItem).toHaveBeenCalledWith("cache_key2");
-      expect(localStorage.removeItem).not.toHaveBeenCalledWith("other_key");
-      expect(localStorage.removeItem).not.toHaveBeenCalledWith("token");
+        expect(localStorage.removeItem).toHaveBeenCalledWith("cache_key1");
+        expect(localStorage.removeItem).toHaveBeenCalledWith("cache_key2");
+        expect(localStorage.removeItem).not.toHaveBeenCalledWith("other_key");
+        expect(localStorage.removeItem).not.toHaveBeenCalledWith("token");
+      } finally {
+        // Restore the global so pretty-format and later tests are not poisoned.
+        Object.keys = originalKeys;
+      }
     });
   });
 
@@ -164,7 +173,7 @@ describe("MobileApiClient", () => {
       await mobileApiClient.getDashboardData();
 
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:5000/dashboard",
+        "http://localhost:5000/api/v1/dashboard",
         expect.any(Object),
       );
     });
@@ -174,7 +183,7 @@ describe("MobileApiClient", () => {
       await mobileApiClient.getTransactions(params);
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/payments/transactions?"),
+        expect.stringContaining("/transactions?"),
         expect.any(Object),
       );
     });
@@ -199,7 +208,7 @@ describe("MobileApiClient", () => {
       await mobileApiClient.getProfile();
 
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:5000/users/profile",
+        "http://localhost:5000/api/v1/users/profile",
         expect.any(Object),
       );
     });
@@ -208,7 +217,7 @@ describe("MobileApiClient", () => {
       await mobileApiClient.refreshToken();
 
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:5000/auth/refresh",
+        "http://localhost:5000/api/v1/auth/refresh",
         expect.objectContaining({ method: "POST" }),
       );
     });

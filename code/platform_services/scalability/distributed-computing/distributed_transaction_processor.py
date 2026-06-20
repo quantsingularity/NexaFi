@@ -18,7 +18,12 @@ from typing import Any, Dict, List, Optional
 import pika
 import redis
 import structlog
-from kafka import KafkaConsumer, KafkaProducer
+
+try:
+    from kafka import KafkaConsumer, KafkaProducer
+except ImportError:  # optional queue backend, guarded at point of use
+    KafkaConsumer = None
+    KafkaProducer = None
 from prometheus_client import Counter, Gauge, Histogram
 from sqlalchemy import (
     Boolean,
@@ -170,6 +175,10 @@ class MessageQueue:
             )
             self.channel = self.connection.channel()
         elif self.queue_type == "kafka":
+            if KafkaProducer is None:
+                raise RuntimeError(
+                    "kafka-python is required for the kafka queue backend but is not installed"
+                )
             self.producer = KafkaProducer(
                 bootstrap_servers=self.config.get("kafka_servers", ["localhost:9092"]),
                 value_serializer=lambda v: json.dumps(v).encode("utf-8"),

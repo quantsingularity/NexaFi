@@ -118,9 +118,15 @@ auth_manager = None
 
 
 def init_auth_manager(secret_key: str) -> object:
-    """Initialize global auth manager"""
+    """Initialize global auth manager and return it.
+
+    Callers that imported ``auth_manager`` by value (``from middleware.auth
+    import auth_manager``) must capture this return value, otherwise their local
+    name keeps pointing at the pre-init ``None``.
+    """
     global auth_manager
     auth_manager = AuthManager(secret_key)
+    return auth_manager
 
 
 ROLE_PERMISSIONS = {

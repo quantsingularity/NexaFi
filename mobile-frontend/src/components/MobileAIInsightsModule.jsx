@@ -32,6 +32,7 @@ import { useApp, useAuth } from "../contexts/MobileContext";
 import mobileApiClient from "../lib/mobileApi";
 
 const MobileAIInsightsModule = () => {
+  // eslint-disable-next-line no-unused-vars -- surfaced during UI modernization
   const { user } = useAuth();
   const { addNotification, isOnline } = useApp();
   const [loading, setLoading] = useState(true);
@@ -137,7 +138,11 @@ const MobileAIInsightsModule = () => {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    // Load once on mount. Depending on loadData would re-fire when the
+    // addNotification identity changes and loop; referencing it in the
+    // dependency array before its declaration would also throw (TDZ).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     scrollToBottom();

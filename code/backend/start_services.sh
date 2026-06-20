@@ -1,10 +1,15 @@
 #!/bin/bash
 
 # Includes new services and improved error handling
+# Assumes all dependencies are already installed in the active environment
 
 set -e
 
 echo "Starting NexaFi Backend Services ..."
+
+# Move to the directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # Colors for output
 RED='\033[0;31m'
@@ -30,31 +35,22 @@ start_service() {
 
     echo -e "${YELLOW}Starting $service_name on port $port...${NC}"
 
-    if ! check_port $port; then
+    if ! check_port "$port"; then
         echo -e "${RED}Cannot start $service_name - port $port is in use${NC}"
         return 1
     fi
 
-    cd "$service_dir"
-
-    # Install dependencies if requirements.txt exists
-    if [ -f "requirements.txt" ]; then
-        echo "Installing dependencies for $service_name..."
-        pip3 install -r requirements.txt >/dev/null 2>&1 || {
-            echo -e "${RED}Failed to install dependencies for $service_name${NC}"
-            return 1
-        }
-    fi
+    cd "$SCRIPT_DIR/$service_dir"
 
     # Set environment variables
     export SERVICE_NAME="$service_name"
     export SERVICE_PORT="$port"
-    export PYTHONPATH="${PYTHONPATH}:$(pwd)/../../shared"
+    export PYTHONPATH="${PYTHONPATH}:$SCRIPT_DIR/shared"
 
     # Start the service in background
-    nohup python3 src/main.py > "../logs/${service_name}.log" 2>&1 &
+    nohup python3 src/main.py > "$SCRIPT_DIR/logs/${service_name}.log" 2>&1 &
     local pid=$!
-    echo $pid > "../logs/${service_name}.pid"
+    echo $pid > "$SCRIPT_DIR/logs/${service_name}.pid"
 
     # Wait a moment and check if service started successfully
     sleep 2
@@ -92,14 +88,7 @@ wait_for_service() {
 }
 
 # Create logs directory
-mkdir -p logs
-
-# Install global dependencies
-echo "Installing global dependencies..."
-pip3 install -r requirements.txt >/dev/null 2>&1 || {
-    echo -e "${RED}Failed to install global dependencies${NC}"
-    exit 1
-}
+mkdir -p "$SCRIPT_DIR/logs"
 
 # Start Redis (if available) for rate limiting and caching
 if command -v redis-server >/dev/null 2>&1; then
@@ -132,7 +121,7 @@ for service_info in "${services[@]}"; do
     IFS=':' read -r service_name port <<< "$service_info"
     service_dir="$service_name"
 
-    if [ -d "$service_dir" ]; then
+    if [ -d "$SCRIPT_DIR/$service_dir" ]; then
         if start_service "$service_name" "$port" "$service_dir"; then
             # Wait for service to be ready (except for API gateway)
             if [ "$service_name" != "api-gateway" ]; then
@@ -149,7 +138,7 @@ for service_info in "${services[@]}"; do
 done
 
 # Special handling for API Gateway - wait for it to be ready
-if [ -d "api-gateway" ]; then
+if [ -d "$SCRIPT_DIR/api-gateway" ]; then
     echo "Waiting for API Gateway to be ready..."
     if wait_for_service "api-gateway" "5000"; then
         echo -e "${GREEN}API Gateway is ready and routing requests${NC}"

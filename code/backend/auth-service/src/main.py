@@ -52,7 +52,7 @@ app.config["SECRET_KEY"] = os.environ.get(
 # Initialize auth manager for require_auth decorator
 from middleware.auth import init_auth_manager
 
-init_auth_manager(app.config["SECRET_KEY"])
+auth_manager = init_auth_manager(app.config["SECRET_KEY"])
 
 # Optimization: Restrict CORS origins in production
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*")

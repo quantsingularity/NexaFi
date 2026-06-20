@@ -43,10 +43,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useApp } from "../contexts/MobileContext";
 
 const MobileAccountingModule = () => {
-  const { addNotification, isOnline } = useApp();
   const [activeTab, setActiveTab] = useState("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("current-month");
@@ -398,6 +396,7 @@ const MobileAccountingModule = () => {
       </Select>
 
       {/* Journal Entries */}
+      <h3 className="text-sm font-semibold text-gray-900">Journal Entries</h3>
       <div className="space-y-3">
         {journalEntries.map((entry) => (
           <motion.div

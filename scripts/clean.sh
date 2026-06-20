@@ -51,9 +51,9 @@ clean_frontend() {
 # Remove log and PID files
 clean_logs() {
     print_status "Cleaning log and PID files..."
-    if [ -d "backend/logs" ]; then
-        rm -rf backend/logs
-        print_status "Removed backend/logs"
+    if [ -d "code/backend/logs" ]; then
+        rm -rf code/backend/logs
+        print_status "Removed code/backend/logs"
     fi
     print_success "Logs and PIDs cleaned."
 }

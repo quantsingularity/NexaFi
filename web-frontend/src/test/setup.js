@@ -38,3 +38,21 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
 };
+
+// jsdom cannot parse some modern (Tailwind v4) CSS that components inject via
+// <style> tags. The error is harmless in tests and only adds noise, so filter
+// out that specific message while leaving all other console errors intact.
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  const first = args[0];
+  if (
+    typeof first === "string" &&
+    first.includes("Could not parse CSS stylesheet")
+  ) {
+    return;
+  }
+  if (first instanceof Error && first.message.includes("Could not parse CSS")) {
+    return;
+  }
+  originalConsoleError(...args);
+};

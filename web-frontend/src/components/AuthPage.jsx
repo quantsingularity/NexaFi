@@ -26,7 +26,7 @@ const AuthPage = () => {
     password: "",
     first_name: "",
     last_name: "",
-    business_name: "",
+    company_name: "",
     confirmPassword: "",
   });
 
@@ -75,7 +75,7 @@ const AuthPage = () => {
         password: formData.password,
         first_name: formData.first_name,
         last_name: formData.last_name,
-        business_name: formData.business_name,
+        company_name: formData.company_name,
       });
     } catch (err) {
       console.error("Registration failed:", err);
@@ -232,16 +232,14 @@ const AuthPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="register_business_name">
-                      Business Name
-                    </Label>
+                    <Label htmlFor="register_company_name">Business Name</Label>
                     <div className="relative">
                       <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        id="register_business_name"
-                        name="business_name"
+                        id="register_company_name"
+                        name="company_name"
                         placeholder="Your business name"
-                        value={formData.business_name}
+                        value={formData.company_name}
                         onChange={handleInputChange}
                         className="pl-10"
                         required
