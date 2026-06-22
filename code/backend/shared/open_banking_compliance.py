@@ -108,19 +108,34 @@ class FAPI2SecurityProfile:
         self.algorithm = "RS256"
 
     def _load_private_key(self, key_path: str) -> object:
-        """Load RSA private key"""
+        """Load an RSA private key, generating one if none exists.
+
+        If the generated key cannot be persisted (for example the target
+        directory is not writable), fall back to an in-memory ephemeral key so
+        the service still starts rather than crashing.
+        """
         if not os.path.exists(key_path):
             private_key = rsa.generate_private_key(
                 public_exponent=65537, key_size=2048, backend=default_backend()
             )
-            os.makedirs(os.path.dirname(key_path), exist_ok=True)
-            with open(key_path, "wb") as f:
-                f.write(
-                    private_key.private_bytes(
-                        encoding=serialization.Encoding.PEM,
-                        format=serialization.PrivateFormat.PKCS8,
-                        encryption_algorithm=serialization.NoEncryption(),
+            try:
+                directory = os.path.dirname(key_path)
+                if directory:
+                    os.makedirs(directory, exist_ok=True)
+                with open(key_path, "wb") as f:
+                    f.write(
+                        private_key.private_bytes(
+                            encoding=serialization.Encoding.PEM,
+                            format=serialization.PrivateFormat.PKCS8,
+                            encryption_algorithm=serialization.NoEncryption(),
+                        )
                     )
+            except OSError as e:
+                logging.getLogger(__name__).warning(
+                    "Could not persist FAPI private key to %s (%s); "
+                    "using an in-memory ephemeral key.",
+                    key_path,
+                    e,
                 )
             return private_key
         with open(key_path, "rb") as f:
@@ -129,16 +144,26 @@ class FAPI2SecurityProfile:
             )
 
     def _load_public_key(self, key_path: str) -> object:
-        """Load RSA public key"""
+        """Load an RSA public key, deriving it from the private key if absent."""
         if not os.path.exists(key_path):
             public_key = self.private_key.public_key()
-            os.makedirs(os.path.dirname(key_path), exist_ok=True)
-            with open(key_path, "wb") as f:
-                f.write(
-                    public_key.public_bytes(
-                        encoding=serialization.Encoding.PEM,
-                        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            try:
+                directory = os.path.dirname(key_path)
+                if directory:
+                    os.makedirs(directory, exist_ok=True)
+                with open(key_path, "wb") as f:
+                    f.write(
+                        public_key.public_bytes(
+                            encoding=serialization.Encoding.PEM,
+                            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                        )
                     )
+            except OSError as e:
+                logging.getLogger(__name__).warning(
+                    "Could not persist FAPI public key to %s (%s); "
+                    "using an in-memory ephemeral key.",
+                    key_path,
+                    e,
                 )
             return public_key
         with open(key_path, "rb") as f:

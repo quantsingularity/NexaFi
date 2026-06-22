@@ -88,8 +88,12 @@ mfa_manager = MultiFactorAuthentication(db_manager)
 session_manager = SecureSessionManager(db_manager, encryption)
 
 # Load keys safely
-PRIVATE_KEY_PATH = os.environ.get("FAPI_PRIVATE_KEY", "/home/user/keys/private_key.pem")
-PUBLIC_KEY_PATH = os.environ.get("FAPI_PUBLIC_KEY", "/home/user/keys/public_key.pem")
+PRIVATE_KEY_PATH = os.environ.get(
+    "FAPI_PRIVATE_KEY", os.path.expanduser("~/.nexafi/keys/private_key.pem")
+)
+PUBLIC_KEY_PATH = os.environ.get(
+    "FAPI_PUBLIC_KEY", os.path.expanduser("~/.nexafi/keys/public_key.pem")
+)
 
 fapi_security = FAPI2SecurityProfile(
     private_key_path=PRIVATE_KEY_PATH,
