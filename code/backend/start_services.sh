@@ -35,34 +35,33 @@ start_service() {
         return 1
     fi
 
-    cd "$service_dir"
-
-    # Install dependencies if requirements.txt exists
-    if [ -f "requirements.txt" ]; then
-        echo "Installing dependencies for $service_name..."
-        pip3 install -r requirements.txt >/dev/null 2>&1 || {
-            echo -e "${RED}Failed to install dependencies for $service_name${NC}"
-            return 1
-        }
-    fi
-
-    # Set environment variables
-    export SERVICE_NAME="$service_name"
-    export SERVICE_PORT="$port"
-    export PYTHONPATH="${PYTHONPATH}:$(pwd)/../../shared"
-
-    # Start the service in background
-    nohup python3 src/main.py > "../logs/${service_name}.log" 2>&1 &
-    local pid=$!
-    echo $pid > "../logs/${service_name}.pid"
+    # Launch inside a subshell so the working directory is NOT changed for the
+    # caller. Previously this function ran a bare "cd", so after the first
+    # service every later "[ -d $service_dir ]" check ran from inside that
+    # service's directory and failed ("directory not found"). The PID is written
+    # to a file because $! from a subshell is not visible to the parent.
+    (
+        cd "$service_dir" || exit 1
+        export SERVICE_NAME="$service_name"
+        export SERVICE_PORT="$port"
+        export PORT="$port"
+        # shared is one level up from the service directory.
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)/../shared"
+        nohup python3 src/main.py > "../logs/${service_name}.log" 2>&1 &
+        echo $! > "../logs/${service_name}.pid"
+    )
 
     # Wait a moment and check if service started successfully
     sleep 2
-    if kill -0 $pid 2>/dev/null; then
+    local pid
+    pid="$(cat "logs/${service_name}.pid" 2>/dev/null)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
         echo -e "${GREEN}$service_name started successfully (PID: $pid)${NC}"
         return 0
     else
         echo -e "${RED}Failed to start $service_name${NC}"
+        echo -e "${RED}--- last lines of logs/${service_name}.log ---${NC}"
+        tail -n 15 "logs/${service_name}.log" 2>/dev/null
         return 1
     fi
 }
@@ -88,18 +87,13 @@ wait_for_service() {
     done
 
     echo -e "${RED}$service_name failed to become ready${NC}"
+    echo -e "${RED}--- last lines of logs/${service_name}.log ---${NC}"
+    tail -n 20 "logs/${service_name}.log" 2>/dev/null
     return 1
 }
 
 # Create logs directory
 mkdir -p logs
-
-# Install global dependencies
-echo "Installing global dependencies..."
-pip3 install -r requirements.txt >/dev/null 2>&1 || {
-    echo -e "${RED}Failed to install global dependencies${NC}"
-    exit 1
-}
 
 # Start Redis (if available) for rate limiting and caching
 if command -v redis-server >/dev/null 2>&1; then
@@ -115,6 +109,32 @@ else
     echo -e "${YELLOW}Warning: Redis not found. Rate limiting and caching will use fallback methods.${NC}"
 fi
 
+# Required service configuration. The services exit at startup if SECRET_KEY or
+# DATABASE_URL is missing. Defaults are provided here so the stack runs without
+# a .env; anything already exported in your shell takes precedence.
+export SECRET_KEY="${SECRET_KEY:-nexafi-local-dev-secret-change-me}"
+# DEBUG=false disables the Flask reloader. On the Windows filesystem under WSL
+# (/mnt/c) the reloader's file watcher stalls, which leaves the process alive
+# but never serving (the "started but failed to become ready" symptom).
+export DEBUG="${DEBUG:-false}"
+# Put the dev SQLite database on the fast Linux-side filesystem rather than
+# /mnt/c, where SQLite locking over the 9p mount is slow and flaky. All services
+# share one file so they see the same users table. Override DATABASE_URL to use
+# Postgres or another location.
+mkdir -p /tmp/nexafi-data
+export DATABASE_URL="${DATABASE_URL:-sqlite:////tmp/nexafi-data/nexafi.db}"
+
+# When running locally (not in Docker), the gateway must reach the other
+# services on localhost. Without these, it falls back to the Docker service
+# hostnames (e.g. http://user-service:5001), which do not resolve on the host
+# and cause "Temporary failure in name resolution" and 503s.
+export USER_SERVICE_URL="${USER_SERVICE_URL:-http://localhost:5001}"
+export LEDGER_SERVICE_URL="${LEDGER_SERVICE_URL:-http://localhost:5002}"
+export PAYMENT_SERVICE_URL="${PAYMENT_SERVICE_URL:-http://localhost:5003}"
+export AI_SERVICE_URL="${AI_SERVICE_URL:-http://localhost:5004}"
+export COMPLIANCE_SERVICE_URL="${COMPLIANCE_SERVICE_URL:-http://localhost:5005}"
+export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://localhost:5007}"
+
 # Array of services to start
 declare -a services=(
     "user-service:5001"
@@ -122,7 +142,7 @@ declare -a services=(
     "payment-service:5003"
     "ai-service:5004"
     "compliance-service:5005"
-    "notification-service:5006"
+    "notification-service:5007"
     "api-gateway:5000"  # Start gateway last
 )
 
@@ -172,7 +192,7 @@ if [ ${#failed_services[@]} -eq 0 ]; then
     echo "  Payment Service:     http://localhost:5003"
     echo "  AI Service:          http://localhost:5004"
     echo "  Compliance Service:  http://localhost:5005"
-    echo "  Notification Service: http://localhost:5006"
+    echo "  Notification Service: http://localhost:5007"
     echo ""
     echo "Health Check: curl http://localhost:5000/health"
     echo "Service List: curl http://localhost:5000/api/v1/services"

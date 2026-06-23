@@ -19,10 +19,16 @@ load_dotenv()
 # -------------------------------------------------------------------------
 # Path Configuration
 # -------------------------------------------------------------------------
-# Base directory for the service
+# BASE_DIR is this service's src directory; SHARED_DIR is the shared library.
+# Both are added to sys.path so local packages ("models", "routes", ...) and
+# shared modules import correctly no matter how the service is launched
+# (python src/main.py, gunicorn main:app, runpy, or from any other directory).
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Add shared directory to Python path for internal modules
-sys.path.append(os.path.join(BASE_DIR, "..", "..", "shared"))
+SHARED_DIR = os.path.join(BASE_DIR, "..", "..", "shared")
+for _path in (BASE_DIR, SHARED_DIR):
+    _abs = os.path.abspath(_path)
+    if _abs not in sys.path:
+        sys.path.insert(0, _abs)
 
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database

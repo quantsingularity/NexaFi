@@ -17,7 +17,14 @@ from typing import Any, Dict, Optional
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
+# Add this service's src directory (local packages like "models"/"routes")
+# and the shared library to sys.path so imports work regardless of how the
+# service is launched (python src/main.py, gunicorn, runpy, or any CWD).
+_SERVICE_SRC = os.path.dirname(os.path.abspath(__file__))
+_SHARED_DIR = os.path.abspath(os.path.join(_SERVICE_SRC, "..", "..", "shared"))
+for _p in (_SERVICE_SRC, _SHARED_DIR):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 from audit.audit_logger import AuditEventType, AuditSeverity, audit_action, audit_logger
 from database.manager import BaseModel, initialize_database
 from middleware.auth import require_auth, require_permission
