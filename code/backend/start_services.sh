@@ -138,11 +138,15 @@ export NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL:-http://localhost:50
 # Array of services to start
 declare -a services=(
     "user-service:5001"
+    "auth-service:5011"
     "ledger-service:5002"
     "payment-service:5003"
     "ai-service:5004"
     "compliance-service:5005"
+    "document-service:5006"
     "notification-service:5007"
+    "credit-service:5008"
+    "open-banking-gateway:5010"
     "api-gateway:5000"  # Start gateway last
 )
 
@@ -188,11 +192,15 @@ if [ ${#failed_services[@]} -eq 0 ]; then
     echo "Service URLs:"
     echo "  API Gateway:         http://localhost:5000"
     echo "  User Service:        http://localhost:5001"
+    echo "  Auth Service:        http://localhost:5011"
     echo "  Ledger Service:      http://localhost:5002"
     echo "  Payment Service:     http://localhost:5003"
     echo "  AI Service:          http://localhost:5004"
     echo "  Compliance Service:  http://localhost:5005"
+    echo "  Document Service:    http://localhost:5006"
     echo "  Notification Service: http://localhost:5007"
+    echo "  Credit Service:      http://localhost:5008"
+    echo "  Open Banking Gateway: http://localhost:5010"
     echo ""
     echo "Health Check: curl http://localhost:5000/health"
     echo "Service List: curl http://localhost:5000/api/v1/services"

@@ -197,7 +197,9 @@ const initialAppState = {
   loading: false,
   error: null,
   theme: "light",
-  sidebarOpen: true,
+  // Mobile drawer starts closed. On large screens the sidebar is always shown
+  // via the lg:translate-x-0 class regardless of this flag.
+  sidebarOpen: false,
   notifications: [],
 };
 

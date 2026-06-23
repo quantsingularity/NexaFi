@@ -70,12 +70,14 @@ const Sidebar = ({ isOpen, onClose }) => {
         />
       )}
 
-      {/* Sidebar */}
-      <motion.div
-        initial={{ x: -300 }}
-        animate={{ x: isOpen ? 0 : -300 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-50 lg:relative lg:translate-x-0"
+      {/* Sidebar: a permanent column on large screens (lg:translate-x-0) and a
+          slide-in drawer on mobile. The transform is driven by CSS classes
+          rather than an inline style so the lg:translate-x-0 rule is not
+          overridden and the sidebar stays visible on desktop after navigation. */}
+      <div
+        className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -127,7 +129,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             );
           })}
         </nav>
-      </motion.div>
+      </div>
     </>
   );
 };
